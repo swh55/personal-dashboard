@@ -1,0 +1,19 @@
+{
+  "name": "لوحة التحكم الشخصية",
+  "short_name": "لوحة التحكم",
+  "description": "لوحة تحكم متكاملة لرجل الأعمال — تقويم، اتصالات، مهام، مالية، وأكثر",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0e1a",
+  "theme_color": "#0a0e1a",
+  "dir": "rtl",
+  "lang": "ar",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

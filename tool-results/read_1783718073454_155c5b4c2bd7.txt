@@ -1,0 +1,724 @@
+     1→"use client";
+     2→
+     3→import * as React from "react";
+     4→import {
+     5→  Plus,
+     6→  Pencil,
+     7→  Trash2,
+     8→  RefreshCw,
+     9→  CircleAlert,
+    10→  Pill,
+    11→  Moon,
+    12→  Activity,
+    13→  BedDouble,
+    14→  Sun,
+    15→  StickyNote,
+    16→  Timer,
+    17→  Star,
+    18→} from "lucide-react";
+    19→import {
+    20→  LineChart,
+    21→  Line,
+    22→  XAxis,
+    23→  YAxis,
+    24→  CartesianGrid,
+    25→  ResponsiveContainer,
+    26→  Tooltip,
+    27→} from "recharts";
+    28→import { useApi, toast, formatDate, formatTime } from "@/lib/api";
+    29→import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+    30→import { Button } from "@/components/ui/button";
+    31→import { Input } from "@/components/ui/input";
+    32→import { Label } from "@/components/ui/label";
+    33→import { Textarea } from "@/components/ui/textarea";
+    34→import { Badge } from "@/components/ui/badge";
+    35→import { Switch } from "@/components/ui/switch";
+    36→import { Skeleton } from "@/components/ui/skeleton";
+    37→import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+    38→import { ScrollArea } from "@/components/ui/scroll-area";
+    39→import {
+    40→  Dialog,
+    41→  DialogContent,
+    42→  DialogDescription,
+    43→  DialogFooter,
+    44→  DialogHeader,
+    45→  DialogTitle,
+    46→} from "@/components/ui/dialog";
+    47→import {
+    48→  Select,
+    49→  SelectContent,
+    50→  SelectItem,
+    51→  SelectTrigger,
+    52→  SelectValue,
+    53→} from "@/components/ui/select";
+    54→import {
+    55→  AlertDialog,
+    56→  AlertDialogAction,
+    57→  AlertDialogCancel,
+    58→  AlertDialogContent,
+    59→  AlertDialogDescription,
+    60→  AlertDialogFooter,
+    61→  AlertDialogHeader,
+    62→  AlertDialogTitle,
+    63→} from "@/components/ui/alert-dialog";
+    64→
+    65→interface Medication {
+    66→  id: string;
+    67→  name: string;
+    68→  dosage: string | null;
+    69→  frequency: string;
+    70→  startDate: string;
+    71→  endDate: string | null;
+    72→  notes: string | null;
+    73→  active: boolean;
+    74→  createdAt: string;
+    75→}
+    76→
+    77→interface SleepLog {
+    78→  id: string;
+    79→  date: string;
+    80→  bedtime: string | null;
+    81→  wakeTime: string | null;
+    82→  duration: number;
+    83→  quality: string;
+    84→  note: string | null;
+    85→  createdAt: string;
+    86→}
+    87→
+    88→interface HealthStats {
+    89→  medicationsActive: number;
+    90→  avgSleepMinutes: number;
+    91→  avgSleepHours: number;
+    92→  avgQuality: number;
+    93→  sleepLogsCount: number;
+    94→}
+    95→
+    96→interface ApiResponse {
+    97→  data: { medications: Medication[]; sleepLogs: SleepLog[] };
+    98→  stats: HealthStats;
+    99→}
+   100→
+   101→const QUALITY_OPTIONS = [
+   102→  { value: "poor", label: "سيئة", emoji: "😞", color: "bg-rose-500/15 text-rose-500 border-rose-500/30" },
+   103→  { value: "fair", label: "مقبولة", emoji: "😐", color: "bg-amber-500/15 text-amber-500 border-amber-500/30" },
+   104→  { value: "good", label: "جيدة", emoji: "🙂", color: "bg-emerald-500/15 text-emerald-500 border-emerald-500/30" },
+   105→  { value: "excellent", label: "ممتازة", emoji: "😄", color: "bg-blue-500/15 text-blue-500 border-blue-500/30" },
+   106→];
+   107→
+   108→const FREQUENCY_OPTIONS = [
+   109→  { value: "daily", label: "يومياً" },
+   110→  { value: "twice-daily", label: "مرتين يومياً" },
+   111→  { value: "weekly", label: "أسبوعياً" },
+   112→  { value: "as-needed", label: "عند الحاجة" },
+   113→];
+   114→
+   115→function qualityMeta(q: string) {
+   116→  return QUALITY_OPTIONS.find((x) => x.value === q) || QUALITY_OPTIONS[2];
+   117→}
+   118→
+   119→function minutesToHours(min: number): string {
+   120→  const h = Math.floor(min / 60);
+   121→  const m = min % 60;
+   122→  return `${h} س ${m} د`;
+   123→}
+   124→
+   125→const EMPTY_MED = {
+   126→  name: "",
+   127→  dosage: "",
+   128→  frequency: "daily",
+   129→  startDate: new Date().toISOString().slice(0, 10),
+   130→  endDate: "",
+   131→  notes: "",
+   132→};
+   133→
+   134→const EMPTY_SLEEP = {
+   135→  date: new Date().toISOString().slice(0, 10),
+   136→  bedtime: "",
+   137→  wakeTime: "",
+   138→  quality: "good",
+   139→  note: "",
+   140→};
+   141→
+   142→export function HealthSection() {
+   143→  const { data: resp, loading, error, reload } = useApi<ApiResponse>("/api/health");
+   144→  const medications = resp?.data?.medications || [];
+   145→  const sleepLogs = resp?.data?.sleepLogs || [];
+   146→  const stats = resp?.stats || { medicationsActive: 0, avgSleepMinutes: 0, avgSleepHours: 0, avgQuality: 0, sleepLogsCount: 0 };
+   147→
+   148→  const [medDialogOpen, setMedDialogOpen] = React.useState(false);
+   149→  const [sleepDialogOpen, setSleepDialogOpen] = React.useState(false);
+   150→  const [editingMed, setEditingMed] = React.useState<Medication | null>(null);
+   151→  const [deleteMed, setDeleteMed] = React.useState<Medication | null>(null);
+   152→  const [deleteSleep, setDeleteSleep] = React.useState<SleepLog | null>(null);
+   153→  const [submitting, setSubmitting] = React.useState(false);
+   154→  const [medForm, setMedForm] = React.useState(EMPTY_MED);
+   155→  const [sleepForm, setSleepForm] = React.useState(EMPTY_SLEEP);
+   156→
+   157→  const sleepChart = React.useMemo(() => {
+   158→    return sleepLogs
+   159→      .slice()
+   160→      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+   161→      .map((s) => ({
+   162→        date: new Date(s.date).toLocaleDateString("ar-SY", { day: "numeric", month: "short" }),
+   163→        hours: +(s.duration / 60).toFixed(2),
+   164→        quality: qualityMeta(s.quality).label,
+   165→      }));
+   166→  }, [sleepLogs]);
+   167→
+   168→  function openAddMed() {
+   169→    setEditingMed(null);
+   170→    setMedForm(EMPTY_MED);
+   171→    setMedDialogOpen(true);
+   172→  }
+   173→
+   174→  function openEditMed(m: Medication) {
+   175→    setEditingMed(m);
+   176→    setMedForm({
+   177→      name: m.name,
+   178→      dosage: m.dosage || "",
+   179→      frequency: m.frequency,
+   180→      startDate: new Date(m.startDate).toISOString().slice(0, 10),
+   181→      endDate: m.endDate ? new Date(m.endDate).toISOString().slice(0, 10) : "",
+   182→      notes: m.notes || "",
+   183→    });
+   184→    setMedDialogOpen(true);
+   185→  }
+   186→
+   187→  function openAddSleep() {
+   188→    setSleepForm(EMPTY_SLEEP);
+   189→    setSleepDialogOpen(true);
+   190→  }
+   191→
+   192→  async function submitMed() {
+   193→    if (!medForm.name.trim()) {
+   194→      toast.error("اسم الدواء مطلوب");
+   195→      return;
+   196→    }
+   197→    setSubmitting(true);
+   198→    try {
+   199→      const payload: any = {
+   200→        name: medForm.name.trim(),
+   201→        dosage: medForm.dosage || null,
+   202→        frequency: medForm.frequency,
+   203→        startDate: new Date(medForm.startDate).toISOString(),
+   204→        endDate: medForm.endDate ? new Date(medForm.endDate).toISOString() : null,
+   205→        notes: medForm.notes || null,
+   206→      };
+   207→      const res = await fetch("/api/health", {
+   208→        method: editingMed ? "PUT" : "POST",
+   209→        headers: { "Content-Type": "application/json" },
+   210→        body: JSON.stringify(
+   211→          editingMed
+   212→            ? { type: "medication", id: editingMed.id, ...payload }
+   213→            : { type: "medication", ...payload }
+   214→        ),
+   215→      });
+   216→      const json = await res.json();
+   217→      if (!json.success) throw new Error(json.error || "فشل الحفظ");
+   218→      toast.success(editingMed ? "تم تحديث الدواء" : "تمت إضافة الدواء");
+   219→      setMedDialogOpen(false);
+   220→      reload();
+   221→    } catch (e: any) {
+   222→      toast.error(e.message || "خطأ");
+   223→    } finally {
+   224→      setSubmitting(false);
+   225→    }
+   226→  }
+   227→
+   228→  async function toggleMedActive(m: Medication) {
+   229→    try {
+   230→      const res = await fetch("/api/health", {
+   231→        method: "PUT",
+   232→        headers: { "Content-Type": "application/json" },
+   233→        body: JSON.stringify({ type: "medication", id: m.id, active: !m.active }),
+   234→      });
+   235→      const json = await res.json();
+   236→      if (!json.success) throw new Error(json.error || "فشل التحديث");
+   237→      toast.success(m.active ? "تم إيقاف الدواء" : "تم تفعيل الدواء");
+   238→      reload();
+   239→    } catch (e: any) {
+   240→      toast.error(e.message || "خطأ");
+   241→    }
+   242→  }
+   243→
+   244→  async function submitSleep() {
+   245→    if (!sleepForm.bedtime || !sleepForm.wakeTime) {
+   246→      toast.error("وقت النوم والاستيقاظ مطلوبان");
+   247→      return;
+   248→    }
+   249→    setSubmitting(true);
+   250→    try {
+   251→      const res = await fetch("/api/health", {
+   252→        method: "POST",
+   253→        headers: { "Content-Type": "application/json" },
+   254→        body: JSON.stringify({
+   255→          type: "sleep",
+   256→          date: sleepForm.date,
+   257→          bedtime: sleepForm.bedtime,
+   258→          wakeTime: sleepForm.wakeTime,
+   259→          quality: sleepForm.quality,
+   260→          note: sleepForm.note || null,
+   261→        }),
+   262→      });
+   263→      const json = await res.json();
+   264→      if (!json.success) throw new Error(json.error || "فشل الحفظ");
+   265→      toast.success("تمت إضافة سجل النوم");
+   266→      setSleepDialogOpen(false);
+   267→      reload();
+   268→    } catch (e: any) {
+   269→      toast.error(e.message || "خطأ");
+   270→    } finally {
+   271→      setSubmitting(false);
+   272→    }
+   273→  }
+   274→
+   275→  async function confirmDeleteMed() {
+   276→    if (!deleteMed) return;
+   277→    try {
+   278→      const res = await fetch(`/api/health?id=${deleteMed.id}&type=medication`, { method: "DELETE" });
+   279→      const json = await res.json();
+   280→      if (!json.success) throw new Error(json.error || "فشل الحذف");
+   281→      toast.success("تم حذف الدواء");
+   282→      setDeleteMed(null);
+   283→      reload();
+   284→    } catch (e: any) {
+   285→      toast.error(e.message || "خطأ");
+   286→    }
+   287→  }
+   288→
+   289→  async function confirmDeleteSleep() {
+   290→    if (!deleteSleep) return;
+   291→    try {
+   292→      const res = await fetch(`/api/health?id=${deleteSleep.id}&type=sleep`, { method: "DELETE" });
+   293→      const json = await res.json();
+   294→      if (!json.success) throw new Error(json.error || "فشل الحذف");
+   295→      toast.success("تم حذف السجل");
+   296→      setDeleteSleep(null);
+   297→      reload();
+   298→    } catch (e: any) {
+   299→      toast.error(e.message || "خطأ");
+   300→    }
+   301→  }
+   302→
+   303→  return (
+   304→    <div className="flex h-full flex-col gap-4">
+   305→      {/* header */}
+   306→      <div className="flex flex-wrap items-center justify-between gap-2">
+   307→        <div>
+   308→          <h1 className="text-2xl font-bold tracking-tight">الصحة</h1>
+   309→          <p className="text-sm text-muted-foreground">الأدوية، النوم، والمتابعة الصحية</p>
+   310→        </div>
+   311→        <div className="flex items-center gap-2">
+   312→          <Button variant="outline" size="sm" onClick={() => reload()}>
+   313→            <RefreshCw className="size-4" />
+   314→            تحديث
+   315→          </Button>
+   316→          <Button variant="outline" size="sm" onClick={openAddSleep}>
+   317→            <Moon className="size-4" />
+   318→            سجل نوم
+   319→          </Button>
+   320→          <Button size="sm" onClick={openAddMed}>
+   321→            <Plus className="size-4" />
+   322→            دواء جديد
+   323→          </Button>
+   324→        </div>
+   325→      </div>
+   326→
+   327→      {/* stats */}
+   328→      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+   329→        <StatCard icon={Pill} label="أدوية نشطة" value={`${stats.medicationsActive}`} sub={`${medications.length} إجمالي`} accent="emerald" />
+   330→        <StatCard icon={Moon} label="متوسط النوم" value={`${stats.avgSleepHours} س`} sub={minutesToHours(stats.avgSleepMinutes)} accent="amber" />
+   331→        <StatCard icon={Star} label="متوسط الجودة" value={`${stats.avgQuality} / 4`} sub={`${stats.sleepLogsCount} سجل`} accent="emerald" />
+   332→      </div>
+   333→
+   334→      {error ? (
+   335→        <Alert variant="destructive">
+   336→          <CircleAlert />
+   337→          <AlertTitle>تعذر تحميل البيانات الصحية</AlertTitle>
+   338→          <AlertDescription>
+   339→            {error}
+   340→            <div className="mt-2"><Button size="sm" variant="outline" onClick={() => reload()}>إعادة المحاولة</Button></div>
+   341→          </AlertDescription>
+   342→        </Alert>
+   343→      ) : null}
+   344→
+   345→      <div className="grid flex-1 min-h-0 gap-4 lg:grid-cols-[1fr_1fr]">
+   346→        {/* medications */}
+   347→        <Card className="flex flex-col min-h-0">
+   348→          <CardHeader className="pb-2">
+   349→            <CardTitle className="flex items-center gap-2 text-sm">
+   350→              <Pill className="size-4 text-emerald-glow" />
+   351→              الأدوية
+   352→            </CardTitle>
+   353→          </CardHeader>
+   354→          <CardContent className="flex-1 min-h-0">
+   355→            <ScrollArea className="custom-scroll h-full max-h-[60vh] -mx-1 px-1">
+   356→              {loading ? (
+   357→                <div className="flex flex-col gap-2">
+   358→                  {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-xl" />)}
+   359→                </div>
+   360→              ) : medications.length > 0 ? (
+   361→                <div className="flex flex-col gap-2 pb-2">
+   362→                  {medications.map((m) => (
+   363→                    <div
+   364→                      key={m.id}
+   365→                      className={`group rounded-xl border p-3 transition-shadow hover:shadow-md ${m.active ? "border-emerald-glow/30 bg-emerald-glow/5" : "border-border opacity-70"}`}
+   366→                    >
+   367→                      <div className="flex items-start justify-between gap-2">
+   368→                        <div className="flex items-center gap-2 min-w-0">
+   369→                          <div className={`flex size-9 items-center justify-center rounded-md shrink-0 ${m.active ? "bg-emerald-glow/15 text-emerald-glow" : "bg-muted text-muted-foreground"}`}>
+   370→                            <Pill className="size-4" />
+   371→                          </div>
+   372→                          <div className="min-w-0">
+   373→                            <div className="flex items-center gap-2">
+   374→                              <span className="text-sm font-semibold truncate">{m.name}</span>
+   375→                              <Badge variant="outline" className="text-[10px]">{FREQUENCY_OPTIONS.find((f) => f.value === m.frequency)?.label || m.frequency}</Badge>
+   376→                            </div>
+   377→                            {m.dosage ? <div className="text-xs text-muted-foreground">{m.dosage}</div> : null}
+   378→                          </div>
+   379→                        </div>
+   380→                        <div className="flex items-center gap-1">
+   381→                          <Switch checked={m.active} onCheckedChange={() => toggleMedActive(m)} aria-label="تفعيل الدواء" />
+   382→                          <Button size="icon" variant="ghost" className="size-7 opacity-0 transition-opacity group-hover:opacity-100" onClick={() => openEditMed(m)} aria-label="تعديل">
+   383→                            <Pencil className="size-3.5" />
+   384→                          </Button>
+   385→                          <Button size="icon" variant="ghost" className="size-7 text-destructive opacity-0 transition-opacity group-hover:opacity-100" onClick={() => setDeleteMed(m)} aria-label="حذف">
+   386→                            <Trash2 className="size-3.5" />
+   387→                          </Button>
+   388→                        </div>
+   389→                      </div>
+   390→                      <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+   391→                        <span className="inline-flex items-center gap-1">
+   392→                          <Activity className="size-3" />
+   393→                          {formatDate(m.startDate, { day: "numeric", month: "short", year: "numeric" })}
+   394→                        </span>
+   395→                        {m.endDate ? (
+   396→                          <span className="inline-flex items-center gap-1">
+   397→                            ← {formatDate(m.endDate, { day: "numeric", month: "short", year: "numeric" })}
+   398→                          </span>
+   399→                        ) : null}
+   400→                      </div>
+   401→                      {m.notes ? (
+   402→                        <div className="mt-2 rounded-md bg-muted/40 p-2 text-xs text-muted-foreground">
+   403→                          <StickyNote className="size-3 inline ml-1" />
+   404→                          {m.notes}
+   405→                        </div>
+   406→                      ) : null}
+   407→                    </div>
+   408→                  ))}
+   409→                </div>
+   410→              ) : (
+   411→                <EmptyState
+   412→                  icon={Pill}
+   413→                  title="لا أدوية"
+   414→                  desc="أضف أدويتك لمتابعتها"
+   415→                  action={<Button size="sm" variant="outline" onClick={openAddMed}><Plus className="size-4" />دواء جديد</Button>}
+   416→                />
+   417→              )}
+   418→            </ScrollArea>
+   419→          </CardContent>
+   420→        </Card>
+   421→
+   422→        {/* sleep */}
+   423→        <Card className="flex flex-col min-h-0">
+   424→          <CardHeader className="pb-2 flex-row items-center justify-between">
+   425→            <CardTitle className="flex items-center gap-2 text-sm">
+   426→              <Moon className="size-4 text-amber-glow" />
+   427→              سجل النوم
+   428→            </CardTitle>
+   429→            <Button size="sm" variant="outline" className="h-7" onClick={openAddSleep}>
+   430→              <Plus className="size-3.5" />
+   431→              جديد
+   432→            </Button>
+   433→          </CardHeader>
+   434→          <CardContent className="flex-1 min-h-0 flex flex-col gap-3">
+   435→            {/* chart */}
+   436→            <div className="h-32 shrink-0">
+   437→              {loading ? (
+   438→                <Skeleton className="h-full w-full rounded-xl" />
+   439→              ) : sleepChart.length > 0 ? (
+   440→                <ResponsiveContainer width="100%" height="100%">
+   441→                  <LineChart data={sleepChart} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
+   442→                    <CartesianGrid strokeDasharray="3 3" stroke="oklch(1 0 0 / 8%)" />
+   443→                    <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="oklch(0.7 0 0)" />
+   444→                    <YAxis domain={[0, 12]} tick={{ fontSize: 10 }} stroke="oklch(0.7 0 0)" />
+   445→                    <Tooltip
+   446→                      formatter={(v: number) => [`${v} ساعة`, "النوم"]}
+   447→                      contentStyle={{ direction: "rtl", fontSize: "12px", borderRadius: "8px" }}
+   448→                    />
+   449→                    <Line
+   450→                      type="monotone"
+   451→                      dataKey="hours"
+   452→                      stroke="oklch(0.78 0.18 152)"
+   453→                      strokeWidth={2}
+   454→                      dot={{ r: 3, fill: "oklch(0.82 0.16 75)" }}
+   455→                      activeDot={{ r: 5 }}
+   456→                    />
+   457→                  </LineChart>
+   458→                </ResponsiveContainer>
+   459→              ) : (
+   460→                <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
+   461→                  لا بيانات نوم بعد
+   462→                </div>
+   463→              )}
+   464→            </div>
+   465→
+   466→            <ScrollArea className="custom-scroll flex-1 min-h-0 -mx-1 px-1">
+   467→              {!loading && sleepLogs.length > 0 ? (
+   468→                <div className="flex flex-col gap-1.5 pb-2">
+   469→                  {sleepLogs.map((s) => {
+   470→                    const q = qualityMeta(s.quality);
+   471→                    return (
+   472→                      <div
+   473→                        key={s.id}
+   474→                        className="group flex items-center gap-2 rounded-lg border p-2 transition-shadow hover:shadow-sm"
+   475→                      >
+   476→                        <div className="flex flex-col items-center justify-center min-w-[44px] shrink-0">
+   477→                          <span className="text-[10px] text-muted-foreground">{new Date(s.date).toLocaleDateString("ar-SY", { weekday: "short" })}</span>
+   478→                          <span className="text-sm font-bold">{new Date(s.date).getDate()}</span>
+   479→                        </div>
+   480→                        <div className="min-w-0 flex-1">
+   481→                          <div className="flex flex-wrap items-center gap-1.5">
+   482→                            <Badge variant="outline" className={`text-[10px] ${q.color} border`}>
+   483→                              <span className="ml-1">{q.emoji}</span>
+   484→                              {q.label}
+   485→                            </Badge>
+   486→                            <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+   487→                              <Timer className="size-3" />
+   488→                              {minutesToHours(s.duration)}
+   489→                            </span>
+   490→                          </div>
+   491→                          <div className="mt-0.5 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+   492→                            {s.bedtime ? (
+   493→                              <span className="inline-flex items-center gap-1">
+   494→                                <BedDouble className="size-3" />
+   495→                                {formatTime(s.bedtime)}
+   496→                              </span>
+   497→                            ) : null}
+   498→                            {s.wakeTime ? (
+   499→                              <span className="inline-flex items-center gap-1">
+   500→                                <Sun className="size-3" />
+   501→                                {formatTime(s.wakeTime)}
+   502→                              </span>
+   503→                            ) : null}
+   504→                          </div>
+   505→                          {s.note ? <div className="mt-0.5 text-[11px] text-muted-foreground truncate">{s.note}</div> : null}
+   506→                        </div>
+   507→                        <Button
+   508→                          size="icon"
+   509→                          variant="ghost"
+   510→                          className="size-7 text-destructive opacity-0 transition-opacity group-hover:opacity-100"
+   511→                          onClick={() => setDeleteSleep(s)}
+   512→                          aria-label="حذف"
+   513→                        >
+   514→                          <Trash2 className="size-3.5" />
+   515→                        </Button>
+   516→                      </div>
+   517→                    );
+   518→                  })}
+   519→                </div>
+   520→              ) : !loading ? (
+   521→                <EmptyState
+   522→                  icon={Moon}
+   523→                  title="لا سجلات نوم"
+   524→                  desc="أضف أول سجل لمتابعة نمط نومك"
+   525→                  action={<Button size="sm" variant="outline" onClick={openAddSleep}><Plus className="size-4" />سجل نوم</Button>}
+   526→                />
+   527→              ) : null}
+   528→            </ScrollArea>
+   529→          </CardContent>
+   530→        </Card>
+   531→      </div>
+   532→
+   533→      {/* medication dialog */}
+   534→      <Dialog open={medDialogOpen} onOpenChange={setMedDialogOpen}>
+   535→        <DialogContent className="max-w-md">
+   536→          <DialogHeader>
+   537→            <DialogTitle>{editingMed ? "تعديل دواء" : "إضافة دواء"}</DialogTitle>
+   538→            <DialogDescription>أدخل تفاصيل الدواء والمتابعة.</DialogDescription>
+   539→          </DialogHeader>
+   540→          <div className="grid gap-3 max-h-[60vh] overflow-y-auto custom-scroll py-1">
+   541→            <div className="grid gap-1.5">
+   542→              <Label htmlFor="m-name">اسم الدواء *</Label>
+   543→              <Input id="m-name" value={medForm.name} onChange={(e) => setMedForm((f) => ({ ...f, name: e.target.value }))} placeholder="مثال: باراسيتامول" />
+   544→            </div>
+   545→            <div className="grid grid-cols-2 gap-2">
+   546→              <div className="grid gap-1.5">
+   547→                <Label htmlFor="m-dose">الجرعة</Label>
+   548→                <Input id="m-dose" value={medForm.dosage} onChange={(e) => setMedForm((f) => ({ ...f, dosage: e.target.value }))} placeholder="500mg" />
+   549→              </div>
+   550→              <div className="grid gap-1.5">
+   551→                <Label>التكرار</Label>
+   552→                <Select value={medForm.frequency} onValueChange={(v) => setMedForm((f) => ({ ...f, frequency: v }))}>
+   553→                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+   554→                  <SelectContent>
+   555→                    {FREQUENCY_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+   556→                  </SelectContent>
+   557→                </Select>
+   558→              </div>
+   559→            </div>
+   560→            <div className="grid grid-cols-2 gap-2">
+   561→              <div className="grid gap-1.5">
+   562→                <Label htmlFor="m-start">تاريخ البدء</Label>
+   563→                <Input id="m-start" type="date" value={medForm.startDate} onChange={(e) => setMedForm((f) => ({ ...f, startDate: e.target.value }))} />
+   564→              </div>
+   565→              <div className="grid gap-1.5">
+   566→                <Label htmlFor="m-end">تاريخ الانتهاء</Label>
+   567→                <Input id="m-end" type="date" value={medForm.endDate} onChange={(e) => setMedForm((f) => ({ ...f, endDate: e.target.value }))} />
+   568→              </div>
+   569→            </div>
+   570→            <div className="grid gap-1.5">
+   571→              <Label htmlFor="m-notes">ملاحظات</Label>
+   572→              <Textarea id="m-notes" rows={2} value={medForm.notes} onChange={(e) => setMedForm((f) => ({ ...f, notes: e.target.value }))} placeholder="مثال: بعد الأكل" />
+   573→            </div>
+   574→          </div>
+   575→          <DialogFooter>
+   576→            <Button variant="outline" onClick={() => setMedDialogOpen(false)}>إلغاء</Button>
+   577→            <Button onClick={submitMed} disabled={submitting}>
+   578→              {submitting ? "جارٍ الحفظ..." : "حفظ"}
+   579→            </Button>
+   580→          </DialogFooter>
+   581→        </DialogContent>
+   582→      </Dialog>
+   583→
+   584→      {/* sleep dialog */}
+   585→      <Dialog open={sleepDialogOpen} onOpenChange={setSleepDialogOpen}>
+   586→        <DialogContent className="max-w-md">
+   587→          <DialogHeader>
+   588→            <DialogTitle>إضافة سجل نوم</DialogTitle>
+   589→            <DialogDescription>سجّل ساعات نومك وجودتها.</DialogDescription>
+   590→          </DialogHeader>
+   591→          <div className="grid gap-3 py-1">
+   592→            <div className="grid gap-1.5">
+   593→              <Label htmlFor="s-date">التاريخ</Label>
+   594→              <Input id="s-date" type="date" value={sleepForm.date} onChange={(e) => setSleepForm((f) => ({ ...f, date: e.target.value }))} />
+   595→            </div>
+   596→            <div className="grid grid-cols-2 gap-2">
+   597→              <div className="grid gap-1.5">
+   598→                <Label htmlFor="s-bed">وقت النوم</Label>
+   599→                <Input
+   600→                  id="s-bed"
+   601→                  type="datetime-local"
+   602→                  value={sleepForm.bedtime}
+   603→                  onChange={(e) => setSleepForm((f) => ({ ...f, bedtime: e.target.value }))}
+   604→                />
+   605→              </div>
+   606→              <div className="grid gap-1.5">
+   607→                <Label htmlFor="s-wake">وقت الاستيقاظ</Label>
+   608→                <Input
+   609→                  id="s-wake"
+   610→                  type="datetime-local"
+   611→                  value={sleepForm.wakeTime}
+   612→                  onChange={(e) => setSleepForm((f) => ({ ...f, wakeTime: e.target.value }))}
+   613→                />
+   614→              </div>
+   615→            </div>
+   616→            <div className="grid gap-1.5">
+   617→              <Label>الجودة</Label>
+   618→              <Select value={sleepForm.quality} onValueChange={(v) => setSleepForm((f) => ({ ...f, quality: v }))}>
+   619→                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+   620→                <SelectContent>
+   621→                  {QUALITY_OPTIONS.map((q) => (
+   622→                    <SelectItem key={q.value} value={q.value}>
+   623→                      {q.emoji} {q.label}
+   624→                    </SelectItem>
+   625→                  ))}
+   626→                </SelectContent>
+   627→              </Select>
+   628→            </div>
+   629→            <div className="grid gap-1.5">
+   630→              <Label htmlFor="s-note">ملاحظات</Label>
+   631→              <Textarea id="s-note" rows={2} value={sleepForm.note} onChange={(e) => setSleepForm((f) => ({ ...f, note: e.target.value }))} placeholder="مثال: استيقظت مرتين" />
+   632→            </div>
+   633→          </div>
+   634→          <DialogFooter>
+   635→            <Button variant="outline" onClick={() => setSleepDialogOpen(false)}>إلغاء</Button>
+   636→            <Button onClick={submitSleep} disabled={submitting}>
+   637→              {submitting ? "جارٍ الحفظ..." : "حفظ"}
+   638→            </Button>
+   639→          </DialogFooter>
+   640→        </DialogContent>
+   641→      </Dialog>
+   642→
+   643→      {/* delete med */}
+   644→      <AlertDialog open={!!deleteMed} onOpenChange={(o) => !o && setDeleteMed(null)}>
+   645→        <AlertDialogContent>
+   646→          <AlertDialogHeader>
+   647→            <AlertDialogTitle>حذف الدواء</AlertDialogTitle>
+   648→            <AlertDialogDescription>سيتم نقل الدواء إلى سلة المحذوفات.</AlertDialogDescription>
+   649→          </AlertDialogHeader>
+   650→          <AlertDialogFooter>
+   651→            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+   652→            <AlertDialogAction onClick={confirmDeleteMed} className="bg-destructive text-white hover:bg-destructive/90">حذف</AlertDialogAction>
+   653→          </AlertDialogFooter>
+   654→        </AlertDialogContent>
+   655→      </AlertDialog>
+   656→
+   657→      {/* delete sleep */}
+   658→      <AlertDialog open={!!deleteSleep} onOpenChange={(o) => !o && setDeleteSleep(null)}>
+   659→        <AlertDialogContent>
+   660→          <AlertDialogHeader>
+   661→            <AlertDialogTitle>حذف سجل النوم</AlertDialogTitle>
+   662→            <AlertDialogDescription>سيتم حذف السجل نهائياً.</AlertDialogDescription>
+   663→          </AlertDialogHeader>
+   664→          <AlertDialogFooter>
+   665→            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+   666→            <AlertDialogAction onClick={confirmDeleteSleep} className="bg-destructive text-white hover:bg-destructive/90">حذف</AlertDialogAction>
+   667→          </AlertDialogFooter>
+   668→        </AlertDialogContent>
+   669→      </AlertDialog>
+   670→    </div>
+   671→  );
+   672→}
+   673→
+   674→function StatCard({
+   675→  icon: Icon,
+   676→  label,
+   677→  value,
+   678→  sub,
+   679→  accent,
+   680→}: {
+   681→  icon: React.ComponentType<{ className?: string }>;
+   682→  label: string;
+   683→  value: string;
+   684→  sub?: string;
+   685→  accent: "emerald" | "amber";
+   686→}) {
+   687→  const accentClass = accent === "emerald" ? "text-emerald-glow bg-emerald-glow/10" : "text-amber-glow bg-amber-glow/10";
+   688→  return (
+   689→    <Card>
+   690→      <CardContent className="flex items-center gap-3 p-3">
+   691→        <div className={`flex size-9 items-center justify-center rounded-md shrink-0 ${accentClass}`}>
+   692→          <Icon className="size-4" />
+   693→        </div>
+   694→        <div className="min-w-0">
+   695→          <div className="text-xs text-muted-foreground truncate">{label}</div>
+   696→          <div className="text-base font-bold truncate">{value}</div>
+   697→          {sub ? <div className="text-[10px] text-muted-foreground truncate">{sub}</div> : null}
+   698→        </div>
+   699→      </CardContent>
+   700→    </Card>
+   701→  );
+   702→}
+   703→
+   704→function EmptyState({
+   705→  icon: Icon,
+   706→  title,
+   707→  desc,
+   708→  action,
+   709→}: {
+   710→  icon: React.ComponentType<{ className?: string }>;
+   711→  title: string;
+   712→  desc: string;
+   713→  action?: React.ReactNode;
+   714→}) {
+   715→  return (
+   716→    <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
+   717→      <Icon className="size-10 text-muted-foreground/40" />
+   718→      <p className="text-sm font-medium">{title}</p>
+   719→      <p className="text-xs text-muted-foreground">{desc}</p>
+   720→      {action}
+   721→    </div>
+   722→  );
+   723→}
+   724→

@@ -1,0 +1,401 @@
+// Prisma schema for the Personal Business Dashboard
+// SQLite database
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- Core: Contacts & Calls ----------
+model Contact {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  whatsapp  String?
+  email     String?
+  relation  String   @default("other") // family, friend, work, business, other
+  category  String?
+  note      String?
+  favorite  Boolean  @default(false)
+  avatar    String?
+  deletedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  calls     CallLog[]
+  reminders ContactReminder[]
+}
+
+model CallLog {
+  id         String   @id @default(cuid())
+  contactId  String?
+  contact    Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  name       String
+  phone      String
+  type       String   @default("call") // call, whatsapp, sms
+  direction  String   @default("outgoing") // incoming, outgoing, missed
+  note       String?
+  createdAt  DateTime @default(now())
+}
+
+// ---------- Notes ----------
+model Note {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  color     String   @default("default") // default, yellow, green, blue, red, purple
+  pinned    Boolean  @default(false)
+  deletedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------- Calendar / Events ----------
+model Event {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  startDate   DateTime
+  endDate     DateTime?
+  allDay      Boolean  @default(false)
+  type        String   @default("personal") // work, personal, family, health, other
+  color       String   @default("emerald") // emerald, amber, rose, blue, violet, slate
+  location    String?
+  deletedAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ---------- Tasks ----------
+model Task {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  status      String   @default("todo") // todo, doing, done
+  priority    String   @default("medium") // low, medium, high
+  category    String   @default("general")
+  dueDate     DateTime?
+  projectId   String?
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  deletedAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ---------- Expenses ----------
+model Expense {
+  id          String   @id @default(cuid())
+  amount      Float
+  currency    String   @default("syp") // syp, usd
+  category    String   @default("general")
+  description String?
+  date        DateTime @default(now())
+  deletedAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ---------- Budgets ----------
+model Budget {
+  id        String @id @default(cuid())
+  category  String
+  limit     Float
+  month     Int // 1-12
+  year      Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([category, month, year])
+}
+
+// ---------- Assets & Accounts ----------
+model Asset {
+  id          String   @id @default(cuid())
+  name        String
+  amount      Float
+  currency    String   @default("syp")
+  type        String   @default("cash") // cash, bank, real-estate, gold, stocks, other
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Account {
+  id            String   @id @default(cuid())
+  name          String
+  balance       Float
+  currency      String   @default("syp")
+  type          String   @default("bank") // bank, cash, savings, credit
+  institution   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// ---------- Debts ----------
+model Debt {
+  id          String   @id @default(cuid())
+  personName  String
+  amount      Float
+  currency    String   @default("syp") // syp, usd
+  type        String   @default("owed") // owed (for me), owe (against me)
+  description String?
+  dueDate     DateTime?
+  settled     Boolean  @default(false)
+  settledAt   DateTime?
+  deletedAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ---------- Projects ----------
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  status      String   @default("active") // active, paused, completed, archived
+  color       String   @default("emerald")
+  progress    Int      @default(0) // 0-100
+  startDate   DateTime?
+  endDate     DateTime?
+  tasks       Task[]
+  deletedAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ---------- Meetings ----------
+model Meeting {
+  id          String   @id @default(cuid())
+  title       String
+  agenda      String?
+  notes       String?
+  location    String?
+  participants String? // comma separated names
+  startDate   DateTime
+  endDate     DateTime?
+  status      String   @default("scheduled") // scheduled, completed, cancelled
+  deletedAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ---------- Occasions ----------
+model Occasion {
+  id        String   @id @default(cuid())
+  title     String
+  date      DateTime
+  type      String   @default("birthday") // birthday, anniversary, holiday, other
+  recurring Boolean  @default(true)
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------- Diary ----------
+model DiaryEntry {
+  id        String   @id @default(cuid())
+  title     String?
+  content   String
+  mood      String   @default("neutral") // happy, sad, neutral, angry, excited, anxious
+  weather   String?
+  date      DateTime @default(now())
+  deletedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------- Habits ----------
+model Habit {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  frequency   String   @default("daily") // daily, weekly
+  target      Int      @default(1)
+  color       String   @default("emerald")
+  icon        String   @default("CheckCircle")
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  logs        HabitLog[]
+}
+
+model HabitLog {
+  id        String   @id @default(cuid())
+  habitId   String
+  habit     Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  date      DateTime @default(now())
+  value     Int      @default(1)
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@unique([habitId, date])
+}
+
+// ---------- Health: Medications & Sleep ----------
+model Medication {
+  id          String   @id @default(cuid())
+  name        String
+  dosage      String?
+  frequency   String   @default("daily")
+  startDate   DateTime @default(now())
+  endDate     DateTime?
+  notes       String?
+  active      Boolean  @default(true)
+  deletedAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SleepLog {
+  id        String   @id @default(cuid())
+  date      DateTime @default(now())
+  bedtime   DateTime?
+  wakeTime  DateTime?
+  duration  Int      @default(0) // in minutes
+  quality   String   @default("good") // poor, fair, good, excellent
+  note      String?
+  createdAt DateTime @default(now())
+}
+
+// ---------- Pantry / Home ----------
+model PantryItem {
+  id        String   @id @default(cuid())
+  name      String
+  quantity  Int      @default(1)
+  unit      String   @default("piece") // piece, kg, g, l, ml, pack
+  lowStock  Int      @default(1)
+  category  String   @default("other") // grains, dairy, meat, vegetables, fruits, beverages, cleaning, other
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------- Waiting List ----------
+model WaitingItem {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  priority    Int      @default(0)
+  ready       Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ---------- Saved Locations ----------
+model SavedLocation {
+  id        String   @id @default(cuid())
+  name      String
+  address   String   @default("")
+  lat       Float
+  lng       Float
+  icon      String   @default("MapPin")
+  color     String   @default("blue")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------- Contact Reminders ----------
+model ContactReminder {
+  id             String   @id @default(cuid())
+  contactId      String?
+  contact        Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  contactName    String
+  frequency      String   @default("weekly") // daily, weekly, monthly
+  lastContacted  DateTime?
+  nextReminder   DateTime?
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+// ---------- Happiness ----------
+model HappinessLog {
+  id        String   @id @default(cuid())
+  date      DateTime @unique
+  score     Int // 1-10
+  factors   String? // JSON
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------- Quran ----------
+model QuranLog {
+  id        String   @id @default(cuid())
+  surah     Int
+  fromAyah  Int
+  toAyah    Int
+  juz       Int?
+  note      String?
+  date      DateTime @default(now())
+  createdAt DateTime @default(now())
+}
+
+// ---------- Integrations ----------
+model Integration {
+  id        String   @id @default(cuid())
+  service   String   @unique // google_calendar, google_drive, telegram, email, github, google_contacts, cloud_sync
+  name      String
+  connected Boolean  @default(false)
+  config    String? // JSON
+  lastSync  DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------- Activity Log ----------
+model ActivityLog {
+  id        String   @id @default(cuid())
+  action    String // create, update, delete, toggle, export, import, sync
+  entity    String // contact, note, task, ...
+  message   String
+  createdAt DateTime @default(now())
+}
+
+// ---------- Scheduled Messages ----------
+model ScheduledMessage {
+  id        String   @id @default(cuid())
+  recipient String
+  message   String
+  channel   String   @default("whatsapp") // whatsapp, sms, telegram, email
+  scheduledAt DateTime
+  sent      Boolean  @default(false)
+  sentAt    DateTime?
+  deletedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------- Automation ----------
+model AutomationRule {
+  id        String   @id @default(cuid())
+  name      String
+  trigger   String // event type
+  action    String // action to perform
+  config    String? // JSON
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------- Suggestions ----------
+model Suggestion {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  category  String   @default("general")
+  status    String   @default("pending") // pending, accepted, rejected
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------- Settings (key-value store) ----------
+model AppSetting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+}
