@@ -118,28 +118,28 @@ function pad2(n: number): string {
   return String(n).padStart(2, "0");
 }
 
-function getHijriDate(): string {
+function getHijriDate(date: Date): string {
   try {
     return new Intl.DateTimeFormat("ar-SA-u-ca-islamic", {
       day: "numeric",
       month: "long",
       year: "numeric",
-    }).format(new Date());
+    }).format(date);
   } catch {
     return "ربيع الأول 1447";
   }
 }
 
-function getGregorianDateAr(): string {
+function getGregorianDateAr(date: Date): string {
   try {
     return new Intl.DateTimeFormat("ar-SY", {
       weekday: "long",
       day: "numeric",
       month: "long",
       year: "numeric",
-    }).format(new Date());
+    }).format(date);
   } catch {
-    return formatDate(new Date());
+    return formatDate(date);
   }
 }
 
@@ -186,20 +186,22 @@ export function IslamicSection() {
   const [deleteId, setDeleteId] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
   const [form, setForm] = React.useState(EMPTY_FORM);
-  const [now, setNow] = React.useState(new Date());
+  // Start as null to avoid SSR hydration mismatch (server timezone differs
+  // from the browser's). Set on mount, then tick every minute.
+  const [now, setNow] = React.useState<Date | null>(null);
 
-  // Tick every minute for prayer countdown
   React.useEffect(() => {
+    setNow(new Date());
     const t = setInterval(() => setNow(new Date()), 60000);
     return () => clearInterval(t);
   }, []);
 
-  // Rotating dhikr based on day of year
-  const dayOfYear = Math.floor(
-    (now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / 86400000,
-  );
+  // Rotating dhikr based on day of year (guarded for null `now` during SSR)
+  const dayOfYear = now
+    ? Math.floor((now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / 86400000)
+    : 0;
   const todaysDhikr = DHIKR_LIST[dayOfYear % DHIKR_LIST.length];
-  const nextPrayer = React.useMemo(() => getNextPrayerIndex(), [now]);
+  const nextPrayer = React.useMemo(() => (now ? getNextPrayerIndex() : { index: 0, untilMs: 0 }), [now]);
 
   function openAdd() {
     setForm(EMPTY_FORM);
@@ -281,8 +283,8 @@ export function IslamicSection() {
             </div>
             <div className="min-w-0">
               <div className="text-xs text-muted-foreground">التاريخ الهجري</div>
-              <div className="text-lg font-bold">{getHijriDate()}</div>
-              <div className="text-xs text-muted-foreground">{getGregorianDateAr()}</div>
+              <div className="text-lg font-bold">{now ? getHijriDate(now) : "—"}</div>
+              <div className="text-xs text-muted-foreground">{now ? getGregorianDateAr(now) : "—"}</div>
             </div>
           </div>
         </div>

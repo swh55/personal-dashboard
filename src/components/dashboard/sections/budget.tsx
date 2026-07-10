@@ -121,9 +121,9 @@ const EMPTY_FORM = {
 };
 
 export function BudgetSection() {
-  const now = new Date();
-  const [month, setMonth] = React.useState(now.getMonth() + 1);
-  const [year, setYear] = React.useState(now.getFullYear());
+  // Derive month/year on the client only to avoid SSR timezone mismatch.
+  const [month, setMonth] = React.useState<number>(() => new Date().getMonth() + 1);
+  const [year, setYear] = React.useState<number>(() => new Date().getFullYear());
 
   const { data, raw, loading, error, reload } = useApi<BudgetItem[]>(
     `/api/budget?month=${month}&year=${year}`

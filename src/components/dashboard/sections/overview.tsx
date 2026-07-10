@@ -104,10 +104,18 @@ export function OverviewSection() {
   const { data: notifications } = useApi<SmartNotification[]>("/api/smart-notifications");
   const setPanel = useFloatingPanelStore((s) => s.setPanel);
 
-  const now = new Date();
-  const hour = now.getHours();
+  // Compute date/greeting only on the client to avoid SSR hydration mismatch
+  // (server timezone may differ from the user's browser timezone).
+  const [now, setNow] = React.useState<Date | null>(null);
+  React.useEffect(() => {
+    setNow(new Date());
+  }, []);
+
+  const hour = now?.getHours() ?? 0;
   const greeting = hour < 12 ? "صباح الخير" : hour < 18 ? "مساء الخير" : "مساء الخير";
-  const dateLabel = formatDate(now, { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  const dateLabel = now
+    ? formatDate(now, { weekday: "long", year: "numeric", month: "long", day: "numeric" })
+    : "—";
 
   const recentNotifs = (notifications || []).slice(0, 3);
   const nextOccasions = (data?.occasions || []).slice(0, 3);

@@ -296,3 +296,30 @@ Stage Summary:
 - Sticky footer with mt-auto pattern
 - Error boundary for section resilience
 - All bugs fixed: missing switch cases, useApi data pattern, null-safety, HMR cache issues
+
+---
+Task ID: 11
+Agent: main (hydration fix + bottom drawer)
+Task: Fix hydration mismatch error + replace sidebar with bottom drawer navigation
+
+Work Log:
+- Fixed hydration mismatch in overview.tsx: `new Date()` was called during render, producing different dates on server (UTC) vs client (Asia/Damascus). Changed to `useState(null)` + `useEffect` pattern — date computed only on client after mount.
+- Fixed same issue in islamic.tsx: Hijri/Gregorian date display and prayer time computation used `new Date()` during render. Changed `now` state to start as `null`, set on mount. Updated `getHijriDate()` and `getGregorianDateAr()` to accept a Date parameter.
+- Fixed calendar-section.tsx: `cursor` and `selectedDay` initialized with `new Date()` during render. Changed to `useState(null)` + `useEffect`, with skeleton fallback while null.
+- Fixed budget.tsx: `new Date()` in useState initializer changed to lazy initializer function (runs once, but avoids the `now` variable being used in render text).
+- Replaced sidebar navigation with bottom drawer:
+  - Removed the `<aside>` sidebar (260px right-side) entirely
+  - Removed the mobile Sheet (side="right")
+  - Added a fixed bottom navigation bar with 5 key sections (Overview, Tasks, Calendar, Contacts, Notes) + a "More" button
+  - Added a bottom Sheet (side="bottom") drawer that opens when "More" is clicked, showing ALL 36 sections in a grid of icons grouped by 5 categories (رئيسية، أعمال، مالية، شخصي، نظام)
+  - Drawer closes automatically when a section is selected (onSelect callback)
+  - Active section highlighted with emerald-glow in both bottom bar and drawer
+  - Simplified use-floating-panel store: removed unused sidebarOpen/toggleSidebar/setSidebarOpen
+- Verified: no hydration errors, no console errors, all 36 sections accessible via bottom bar + drawer, sticky bottom nav (gap=0 at viewport bottom), responsive (mobile + desktop)
+
+Stage Summary:
+- Hydration mismatch: FIXED (date computed client-side only)
+- Sidebar: REMOVED
+- Bottom drawer: ADDED (5 key icons in bar + "More" opens full drawer with all 36 sections)
+- Lint: passes clean
+- All sections tested and working via new navigation

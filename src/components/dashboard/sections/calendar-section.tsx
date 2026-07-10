@@ -109,16 +109,29 @@ function toLocalInputValue(d: Date): string {
 }
 
 export function CalendarSection() {
-  const today = new Date();
-  const [cursor, setCursor] = React.useState<Date>(startOfMonth(today));
-  const [selectedDay, setSelectedDay] = React.useState<Date | null>(today);
+  // Initialize cursor/selectedDay as null and set them on mount to avoid
+  // SSR hydration mismatch when the server timezone differs from the client's.
+  const [cursor, setCursor] = React.useState<Date | null>(null);
+  const [selectedDay, setSelectedDay] = React.useState<Date | null>(null);
+
+  React.useEffect(() => {
+    const t = new Date();
+    setCursor(startOfMonth(t));
+    setSelectedDay(t);
+  }, []);
+
+  const today = React.useMemo(() => new Date(), []);
 
   // fetch events for visible month range (with prev/next week padding)
-  const monthStart = startOfWeek(startOfMonth(cursor), { weekStartsOn: 6 });
-  const monthEnd = endOfWeek(endOfMonth(cursor), { weekStartsOn: 6 });
+  // Guard for null cursor (before mount) — use today as fallback so the URL is stable.
+  const cursorDate = cursor || today;
+  const monthStart = startOfWeek(startOfMonth(cursorDate), { weekStartsOn: 6 });
+  const monthEnd = endOfWeek(endOfMonth(cursorDate), { weekStartsOn: 6 });
   const from = monthStart.toISOString();
   const to = monthEnd.toISOString();
-  const { data, loading, error, reload } = useApi<EventItem[]>(`/api/events?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
+  const { data, loading, error, reload } = useApi<EventItem[] | null>(
+    cursor ? `/api/events?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}` : null
+  );
 
   // dialog state
   const [dialogOpen, setDialogOpen] = React.useState(false);
@@ -241,6 +254,22 @@ export function CalendarSection() {
     }
   }
 
+  // While cursor is null (before mount), render a stable skeleton to avoid
+  // any SSR hydration mismatch from date/timezone differences.
+  if (!cursor) {
+    return (
+      <div className="flex h-full flex-col gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">التقويم</h1>
+            <p className="text-sm text-muted-foreground">إدارة الأحداث والمواعيد</p>
+          </div>
+        </div>
+        <Skeleton className="h-96 w-full rounded-xl" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-full flex-col gap-4">
       {/* header */}
@@ -280,14 +309,14 @@ export function CalendarSection() {
           <CardHeader className="border-b">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" onClick={() => setCursor((c) => subMonths(c, 1))} aria-label="الشهر السابق">
+                <Button variant="ghost" size="icon" onClick={() => setCursor((c) => subMonths(c || today, 1))} aria-label="الشهر السابق">
                   <ChevronRight className="size-4" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => setCursor((c) => addMonths(c, 1))} aria-label="الشهر التالي">
+                <Button variant="ghost" size="icon" onClick={() => setCursor((c) => addMonths(c || today, 1))} aria-label="الشهر التالي">
                   <ChevronLeft className="size-4" />
                 </Button>
                 <CardTitle className="text-lg">
-                  {format(cursor, "MMMM yyyy", { locale: ar })}
+                  {format(cursorDate, "MMMM yyyy", { locale: ar })}
                 </CardTitle>
               </div>
               <Button
@@ -319,7 +348,7 @@ export function CalendarSection() {
                 {days.map((day) => {
                   const key = format(day, "yyyy-MM-dd");
                   const dayEvents = eventsByDay.get(key) || [];
-                  const inMonth = isSameMonth(day, cursor);
+                  const inMonth = isSameMonth(day, cursorDate);
                   const isSel = selectedDay && isSameDay(day, selectedDay);
                   const todayFlag = isToday(day);
                   return (

@@ -44,16 +44,10 @@ export type PanelId =
 
 interface FloatingPanelState {
   activePanel: PanelId;
-  sidebarOpen: boolean;
   setPanel: (panel: PanelId) => void;
-  toggleSidebar: () => void;
-  setSidebarOpen: (open: boolean) => void;
 }
 
 export const useFloatingPanelStore = create<FloatingPanelState>((set) => ({
   activePanel: "overview",
-  sidebarOpen: false,
-  setPanel: (panel) => set({ activePanel: panel, sidebarOpen: false }),
-  toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
-  setSidebarOpen: (open) => set({ sidebarOpen: open }),
+  setPanel: (panel) => set({ activePanel: panel }),
 }));

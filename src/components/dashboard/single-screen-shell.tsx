@@ -38,7 +38,7 @@ import {
   Activity,
   Settings,
   Palette,
-  Menu,
+  Grid3x3,
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -137,92 +137,137 @@ const NAV_SECTIONS: NavSection[] = [
 
 const ALL_ITEMS: NavItem[] = NAV_SECTIONS.flatMap((s) => s.items);
 
-const QUICK_ACTIONS: { id: PanelId; label: string; icon: LucideIcon }[] = [
-  { id: "pomodoro", label: "بومودورو", icon: Timer },
-  { id: "ai", label: "المساعد الذكي", icon: Bot },
-  { id: "smartnotifs", label: "الإشعارات", icon: BellRing },
+// Quick-access items shown directly in the bottom bar (max 5 + "More" button)
+const BOTTOM_BAR_ITEMS: NavItem[] = [
+  { id: "overview", label: "الرئيسية", icon: Home },
+  { id: "tasks", label: "المهام", icon: ListTodo },
+  { id: "calendar", label: "التقويم", icon: Calendar },
+  { id: "contacts", label: "الاتصال", icon: Users },
+  { id: "notes", label: "الملاحظات", icon: StickyNote },
 ];
 
 /* ------------------------------------------------------------------ */
-/*  Sub-components                                                     */
+/*  Bottom drawer content (grid of all sections)                       */
 /* ------------------------------------------------------------------ */
 
-function NavButton({
-  item,
-  active,
-  onClick,
-}: {
-  item: NavItem;
-  active: boolean;
-  onClick: () => void;
-}) {
-  const Icon = item.icon;
-  return (
-    <Button
-      variant="ghost"
-      onClick={onClick}
-      aria-current={active ? "page" : undefined}
-      className={cn(
-        "w-full justify-start gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
-        active
-          ? "bg-emerald-glow/15 text-emerald-glow shadow-[inset_0_0_0_1px_var(--emerald-glow)] hover:bg-emerald-glow/20 hover:text-emerald-glow"
-          : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
-      )}
-    >
-      <Icon
-        className={cn(
-          "size-4 shrink-0",
-          active ? "text-emerald-glow" : "text-muted-foreground",
-        )}
-      />
-      <span className="truncate">{item.label}</span>
-      {active && (
-        <span className="ms-auto size-1.5 rounded-full bg-emerald-glow shadow-[0_0_8px_var(--emerald-glow)]" />
-      )}
-    </Button>
-  );
-}
-
-function SidebarContent() {
+function DrawerContent({ onSelect }: { onSelect: () => void }) {
   const { activePanel, setPanel } = useFloatingPanelStore();
 
   return (
     <div className="flex h-full flex-col">
-      {/* Brand */}
-      <div className="flex items-center gap-3 border-b border-border/60 px-4 py-5">
-        <div className="relative">
-          <div className="absolute inset-0 rounded-xl bg-emerald-glow/30 blur-md" />
-          <div className="relative flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-glow to-amber-glow text-lg font-bold text-background">
-            ع
-          </div>
-        </div>
-        <div className="flex flex-col leading-tight">
-          <span className="text-sm font-bold">لوحة التحكم</span>
-          <span className="text-xs text-muted-foreground">الشخصية</span>
-        </div>
-      </div>
+      <SheetHeader className="border-b border-border/60 pb-3">
+        <SheetTitle className="text-lg font-bold">جميع الأقسام</SheetTitle>
+        <SheetDescription className="text-xs">
+          اختر القسم الذي تريد فتحه
+        </SheetDescription>
+      </SheetHeader>
 
-      {/* Nav sections */}
-      <ScrollArea className="custom-scroll flex-1 px-2 py-3">
-        <nav className="flex flex-col gap-5 px-1 pb-4">
+      <ScrollArea className="custom-scroll flex-1">
+        <div className="flex flex-col gap-5 p-4 pb-8">
           {NAV_SECTIONS.map((section) => (
-            <div key={section.title} className="flex flex-col gap-1">
-              <h3 className="px-3 pb-1 text-[10px] font-bold tracking-wider text-muted-foreground/70">
+            <div key={section.title} className="flex flex-col gap-2">
+              <h3 className="px-1 text-[11px] font-bold tracking-wider text-muted-foreground/70">
                 {section.title}
               </h3>
-              {section.items.map((item) => (
-                <NavButton
-                  key={item.id}
-                  item={item}
-                  active={activePanel === item.id}
-                  onClick={() => setPanel(item.id)}
-                />
-              ))}
+              <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
+                {section.items.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activePanel === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setPanel(item.id);
+                        onSelect();
+                      }}
+                      aria-current={isActive ? "page" : undefined}
+                      className={cn(
+                        "flex flex-col items-center gap-1.5 rounded-xl border p-3 transition-all",
+                        isActive
+                          ? "border-emerald-glow/40 bg-emerald-glow/10 text-emerald-glow"
+                          : "border-border/50 bg-card/40 text-muted-foreground hover:border-border hover:bg-accent/40 hover:text-foreground",
+                      )}
+                    >
+                      <Icon
+                        className={cn(
+                          "size-5 shrink-0",
+                          isActive ? "text-emerald-glow" : "text-muted-foreground",
+                        )}
+                      />
+                      <span className="line-clamp-1 text-[10px] font-medium leading-tight">
+                        {item.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           ))}
-        </nav>
+        </div>
       </ScrollArea>
     </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Bottom navigation bar                                              */
+/* ------------------------------------------------------------------ */
+
+function BottomNavBar({ onMore }: { onMore: () => void }) {
+  const { activePanel, setPanel } = useFloatingPanelStore();
+
+  return (
+    <nav
+      className="sticky bottom-0 z-40 border-t border-border/60 bg-background/90 backdrop-blur-lg"
+      aria-label="التنقل السريع"
+    >
+      <div className="mx-auto flex max-w-2xl items-stretch justify-around px-1">
+        {BOTTOM_BAR_ITEMS.map((item) => {
+          const Icon = item.icon;
+          const isActive = activePanel === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => setPanel(item.id)}
+              aria-current={isActive ? "page" : undefined}
+              aria-label={item.label}
+              className={cn(
+                "flex flex-1 flex-col items-center gap-1 py-2.5 transition-colors",
+                isActive
+                  ? "text-emerald-glow"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <div
+                className={cn(
+                  "flex size-9 items-center justify-center rounded-xl transition-all",
+                  isActive
+                    ? "bg-emerald-glow/15 shadow-[0_0_12px_-2px_var(--emerald-glow)]"
+                    : "",
+                )}
+              >
+                <Icon className="size-5" />
+              </div>
+              <span className="text-[10px] font-medium leading-none">
+                {item.label}
+              </span>
+            </button>
+          );
+        })}
+
+        {/* More button */}
+        <button
+          onClick={onMore}
+          aria-label="عرض كل الأقسام"
+          className="flex flex-1 flex-col items-center gap-1 py-2.5 text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <div className="flex size-9 items-center justify-center rounded-xl bg-accent/40">
+            <Grid3x3 className="size-5" />
+          </div>
+          <span className="text-[10px] font-medium leading-none">المزيد</span>
+        </button>
+      </div>
+    </nav>
   );
 }
 
@@ -235,8 +280,8 @@ export function SingleScreenShell({
 }: {
   children: React.ReactNode;
 }) {
-  const { activePanel, sidebarOpen, setSidebarOpen, setPanel } =
-    useFloatingPanelStore();
+  const { activePanel, setPanel } = useFloatingPanelStore();
+  const [drawerOpen, setDrawerOpen] = React.useState(false);
 
   const currentItem = ALL_ITEMS.find((i) => i.id === activePanel);
   const panelLabel = currentItem?.label ?? "الرئيسية";
@@ -250,84 +295,89 @@ export function SingleScreenShell({
   }, [activePanel]);
 
   return (
-    <div className="flex min-h-screen w-full bg-background">
-      {/* Desktop sidebar (right side in RTL) */}
-      <aside className="sticky top-0 hidden h-screen w-[260px] shrink-0 border-s border-border/60 bg-card/30 backdrop-blur md:flex md:flex-col">
-        <SidebarContent />
-      </aside>
+    <div className="flex min-h-screen w-full flex-col bg-background">
+      {/* Top bar */}
+      <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/60 bg-background/80 px-4 backdrop-blur-md md:px-6">
+        {/* Brand */}
+        <div className="flex items-center gap-2.5">
+          <div className="relative">
+            <div className="absolute inset-0 rounded-lg bg-emerald-glow/30 blur-md" />
+            <div className="relative flex size-9 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-glow to-amber-glow text-base font-bold text-background">
+              ع
+            </div>
+          </div>
+        </div>
 
-      {/* Mobile sidebar (Sheet) */}
-      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-        <SheetContent
-          side="right"
-          className="w-[280px] gap-0 p-0 sm:max-w-[280px]"
-        >
-          <SheetHeader className="sr-only">
-            <SheetTitle>القائمة الرئيسية</SheetTitle>
-            <SheetDescription>
-              اختر القسم الذي تريد فتحه من لوحة التحكم
-            </SheetDescription>
-          </SheetHeader>
-          <SidebarContent />
-        </SheetContent>
-      </Sheet>
+        <div className="flex items-center gap-2">
+          <PanelIcon className="size-5 text-emerald-glow" />
+          <h1 className="text-base font-bold md:text-lg">{panelLabel}</h1>
+        </div>
 
-      {/* Main column */}
-      <div className="flex min-h-screen flex-1 flex-col">
-        {/* Top bar */}
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/60 bg-background/80 px-4 backdrop-blur-md md:px-6">
+        {/* Quick actions */}
+        <div className="ms-auto flex items-center gap-1.5">
           <Button
             variant="ghost"
-            size="icon"
-            className="md:hidden"
-            onClick={() => setSidebarOpen(true)}
-            aria-label="فتح القائمة"
+            size="sm"
+            onClick={() => setPanel("pomodoro")}
+            aria-label="بومودورو"
+            className={cn(
+              "gap-1.5 rounded-lg",
+              activePanel === "pomodoro"
+                ? "bg-emerald-glow text-background hover:bg-emerald-glow/90"
+                : "text-muted-foreground hover:text-foreground",
+            )}
           >
-            <Menu className="size-5" />
+            <Timer className="size-4" />
+            <span className="hidden sm:inline">بومودورو</span>
           </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setPanel("ai")}
+            aria-label="المساعد الذكي"
+            className={cn(
+              "gap-1.5 rounded-lg",
+              activePanel === "ai"
+                ? "bg-emerald-glow text-background hover:bg-emerald-glow/90"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            <Bot className="size-4" />
+            <span className="hidden sm:inline">المساعد</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setPanel("smartnotifs")}
+            aria-label="الإشعارات"
+            className={cn(
+              "gap-1.5 rounded-lg",
+              activePanel === "smartnotifs"
+                ? "bg-emerald-glow text-background hover:bg-emerald-glow/90"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            <BellRing className="size-4" />
+            <span className="hidden sm:inline">الإشعارات</span>
+          </Button>
+        </div>
+      </header>
 
-          <div className="flex items-center gap-2">
-            <PanelIcon className="size-5 text-emerald-glow" />
-            <h1 className="text-base font-bold md:text-lg">{panelLabel}</h1>
-          </div>
+      {/* Scrollable content area */}
+      <main className="flex-1 p-4 md:p-6">{children}</main>
 
-          {/* Quick actions */}
-          <div className="ms-auto flex items-center gap-1.5">
-            {QUICK_ACTIONS.map((qa) => {
-              const Icon = qa.icon;
-              const isActive = activePanel === qa.id;
-              return (
-                <Button
-                  key={qa.id}
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setPanel(qa.id)}
-                  aria-label={qa.label}
-                  className={cn(
-                    "gap-1.5 rounded-lg",
-                    isActive
-                      ? "bg-emerald-glow text-background hover:bg-emerald-glow/90"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  <Icon className="size-4" />
-                  <span className="hidden lg:inline">{qa.label}</span>
-                </Button>
-              );
-            })}
-          </div>
-        </header>
+      {/* Bottom navigation bar (replaces sidebar) */}
+      <BottomNavBar onMore={() => setDrawerOpen(true)} />
 
-        {/* Scrollable content area */}
-        <main className="flex-1 p-4 md:p-6">{children}</main>
-
-        {/* Sticky footer */}
-        <footer className="mt-auto border-t border-border/60 bg-background/60 px-4 py-3 md:px-6">
-          <p className="text-center text-xs text-muted-foreground">
-            © 2025 لوحة التحكم الشخصية
-          </p>
-        </footer>
-      </div>
+      {/* Bottom drawer with ALL sections */}
+      <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
+        <SheetContent
+          side="bottom"
+          className="h-[80vh] max-h-[80vh] gap-0 p-0"
+        >
+          <DrawerContent onSelect={() => setDrawerOpen(false)} />
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
