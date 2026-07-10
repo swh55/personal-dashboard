@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">لوحة التحكم الشخصية</string>
+    <string name="title_activity_main">لوحة التحكم الشخصية</string>
+    <string name="package_name">com.abdullah.dashboard</string>
+    <string name="custom_url_scheme">com.abdullah.dashboard</string>
+</resources>

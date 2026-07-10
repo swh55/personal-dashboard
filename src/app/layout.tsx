@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
+import { LocalModeInitializer } from "@/components/local-mode-initializer";
 
 const cairo = Cairo({
   variable: "--font-cairo",
@@ -59,6 +60,7 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange
         >
+          <LocalModeInitializer />
           {children}
           <Toaster />
           <SonnerToaster position="top-center" richColors closeButton style={{ zIndex: 9999 }} />
