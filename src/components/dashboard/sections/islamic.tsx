@@ -261,11 +261,11 @@ export function IslamicSection() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className="flex h-full flex-col gap-1">
       {/* header */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-1">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">القسم الإسلامي</h1>
+          <h1 className="text-lg font-bold tracking-tight">القسم الإسلامي</h1>
           <p className="text-sm text-muted-foreground">قرآن، أذكار، ومواقيت الصلاة</p>
         </div>
         <Button variant="outline" size="sm" onClick={() => reload()}>
@@ -277,13 +277,13 @@ export function IslamicSection() {
       {/* date banner */}
       <Card className="overflow-hidden">
         <div className="bg-gradient-to-l from-emerald-glow/15 to-amber-glow/10 p-2">
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1 flex-wrap">
             <div className="flex size-11 items-center justify-center rounded-full bg-emerald-glow/15 text-emerald-glow shrink-0">
               <CalendarHeart className="size-5" />
             </div>
             <div className="min-w-0">
               <div className="text-xs text-muted-foreground">التاريخ الهجري</div>
-              <div className="text-lg font-bold">{now ? getHijriDate(now) : "—"}</div>
+              <div className="text-base font-bold">{now ? getHijriDate(now) : "—"}</div>
               <div className="text-xs text-muted-foreground">{now ? getGregorianDateAr(now) : "—"}</div>
             </div>
           </div>
@@ -301,9 +301,9 @@ export function IslamicSection() {
         </Alert>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-2 lg:grid-cols-[1fr_320px] flex-1 min-h-0">
+      <div className="grid grid-cols-1 gap-1 lg:grid-cols-[1fr_320px] flex-1 min-h-0">
         {/* left: quran log */}
-        <div className="flex flex-col gap-2 min-h-0">
+        <div className="flex flex-col gap-1 min-h-0">
           {/* quran stats */}
           <div className="grid grid-cols-3 gap-1.5">
             <StatCard icon={BookOpen} label="آيات مقروءة" value={String(stats.totalAyahs)} accent="emerald" />
@@ -313,7 +313,7 @@ export function IslamicSection() {
 
           <Card className="flex flex-col flex-1 min-h-0">
             <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-base">
+              <CardTitle className="flex items-center gap-1 text-base">
                 <BookOpen className="size-4 text-emerald-glow" />
                 سجل القراءة
                 <Button size="sm" className="mr-auto h-7" onClick={openAdd}>
@@ -325,22 +325,22 @@ export function IslamicSection() {
             <CardContent className="flex-1 min-h-0">
               <ScrollArea className="custom-scroll h-full max-h-[60vh] -mx-1 px-1">
                 {loading ? (
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-1">
                     {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-xl" />)}
                   </div>
                 ) : logs.length > 0 ? (
-                  <div className="flex flex-col gap-2 pb-4">
+                  <div className="flex flex-col gap-1 pb-4">
                     {logs.map((l) => {
                       const surahName = surahNames[l.surah - 1] || `سورة ${l.surah}`;
                       const ayahCount = l.toAyah - l.fromAyah + 1;
                       return (
                         <Card key={l.id} className="group">
-                          <CardContent className="flex items-center gap-2 p-2">
-                            <div className="flex size-8 items-center justify-center rounded-md bg-emerald-glow/10 text-emerald-glow shrink-0">
+                          <CardContent className="flex items-center gap-1 p-1">
+                            <div className="flex size-6 items-center justify-center rounded-md bg-emerald-glow/10 text-emerald-glow shrink-0">
                               <BookOpen className="size-5" />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-2 flex-wrap">
+                              <div className="flex items-center gap-1 flex-wrap">
                                 <span className="text-sm font-semibold">{surahName}</span>
                                 <Badge variant="secondary" className="text-[10px]">آية {l.fromAyah} - {l.toAyah}</Badge>
                                 <Badge variant="outline" className="text-[10px] gap-1">
@@ -368,8 +368,8 @@ export function IslamicSection() {
                     })}
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
-                    <BookOpen className="size-8 text-muted-foreground/40" />
+                  <div className="flex flex-col items-center justify-center gap-1 py-12 text-center">
+                    <BookOpen className="size-6 text-muted-foreground/40" />
                     <p className="text-sm font-medium">لا سجلات قراءة</p>
                     <p className="text-xs text-muted-foreground">ابدأ بتسجيل أول جلسة قراءة</p>
                     <Button size="sm" variant="outline" className="mt-1" onClick={openAdd}>
@@ -384,11 +384,11 @@ export function IslamicSection() {
         </div>
 
         {/* right: prayer times + dhikr */}
-        <div className="flex flex-col gap-2 min-h-0">
+        <div className="flex flex-col gap-1 min-h-0">
           {/* prayer times */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-base">
+              <CardTitle className="flex items-center gap-1 text-base">
                 <Clock className="size-4 text-emerald-glow" />
                 مواقيت الصلاة
                 <Badge variant="outline" className="text-[10px] mr-auto">حلب</Badge>
@@ -401,11 +401,11 @@ export function IslamicSection() {
                 return (
                   <div
                     key={p.key}
-                    className={`flex items-center gap-2 rounded-lg p-2 ${
+                    className={`flex items-center gap-1 rounded-lg p-2 ${
                       isNext ? "bg-emerald-glow/10 border border-emerald-glow/30" : ""
                     }`}
                   >
-                    <div className={`flex size-9 items-center justify-center rounded-md shrink-0 ${
+                    <div className={`flex size-7 items-center justify-center rounded-md shrink-0 ${
                       isNext ? "bg-emerald-glow/20 text-emerald-glow" : "bg-muted text-muted-foreground"
                     }`}>
                       <Icon className="size-4" />
@@ -426,7 +426,7 @@ export function IslamicSection() {
                 );
               })}
               {weather?.forecast?.[0] ? (
-                <div className="mt-1 flex items-center justify-between gap-2 text-[10px] text-muted-foreground">
+                <div className="mt-1 flex items-center justify-between gap-1 text-[10px] text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <Sunrise className="size-3" />
                     {new Date(weather.forecast[0].sunrise).toLocaleTimeString("ar-SY", { hour: "2-digit", minute: "2-digit" })}
@@ -444,17 +444,17 @@ export function IslamicSection() {
           {/* daily dhikr */}
           <Card className="flex-1">
             <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-base">
+              <CardTitle className="flex items-center gap-1 text-base">
                 <Sparkles className="size-4 text-amber-glow" />
                 ذكر اليوم
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="rounded-xl bg-gradient-to-l from-amber-glow/10 to-emerald-glow/10 p-2 text-center">
-                <p className="text-lg font-arabic leading-relaxed" style={{ fontFamily: "var(--font-arabic, inherit)" }}>
+              <div className="rounded-xl bg-gradient-to-l from-amber-glow/10 to-emerald-glow/10 p-1 text-center">
+                <p className="text-base font-arabic leading-relaxed" style={{ fontFamily: "var(--font-arabic, inherit)" }}>
                   {todaysDhikr.ar}
                 </p>
-                <div className="mt-3 flex items-center justify-center gap-2 flex-wrap">
+                <div className="mt-3 flex items-center justify-center gap-1 flex-wrap">
                   <Badge variant="secondary" className="text-[10px]">{todaysDhikr.count}</Badge>
                 </div>
                 <p className="mt-2 text-xs text-muted-foreground">{todaysDhikr.virtue}</p>
@@ -471,7 +471,7 @@ export function IslamicSection() {
             <DialogTitle>تسجيل قراءة</DialogTitle>
             <DialogDescription>سجّل جلسة تلاوتك اليومية.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-2 max-h-[60vh] overflow-y-auto custom-scroll py-1">
+          <div className="grid gap-1 max-h-[60vh] overflow-y-auto custom-scroll py-1">
             <div className="grid gap-1.5">
               <Label>السورة *</Label>
               <Select value={form.surah} onValueChange={(v) => setForm((f) => ({ ...f, surah: v }))}>
@@ -485,7 +485,7 @@ export function IslamicSection() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-1">
               <div className="grid gap-1.5">
                 <Label htmlFor="q-from">من آية *</Label>
                 <Input
@@ -570,8 +570,8 @@ function StatCard({
   const accentClass = accent === "emerald" ? "text-emerald-glow bg-emerald-glow/10" : "text-amber-glow bg-amber-glow/10";
   return (
     <Card>
-      <CardContent className="flex items-center gap-2.5 p-2">
-        <div className={`flex size-9 items-center justify-center rounded-md shrink-0 ${accentClass}`}>
+      <CardContent className="flex items-center gap-1 p-1">
+        <div className={`flex size-7 items-center justify-center rounded-md shrink-0 ${accentClass}`}>
           <Icon className="size-4" />
         </div>
         <div className="min-w-0">

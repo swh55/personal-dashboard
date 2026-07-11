@@ -11,6 +11,16 @@ const config: CapacitorConfig = {
   server: {
     androidScheme: "https",
   },
+  // Allow external API calls to these domains
+  allowNavigation: [
+    "api.z.ai",
+    "api.open-meteo.com",
+    "openstreetmap.org",
+    "*.openstreetmap.org",
+    "tile.openstreetmap.org",
+    "unpkg.com",
+    "wa.me",
+  ],
 };
 
 export default config;

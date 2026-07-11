@@ -286,16 +286,16 @@ export function IntegrationsSection() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className="flex h-full flex-col gap-1">
       {/* Header */}
-      <header className="flex flex-wrap items-center justify-between gap-2">
+      <header className="flex flex-wrap items-center justify-between gap-1">
         <div>
-          <h2 className="text-xl font-bold tracking-tight">التكاملات</h2>
+          <h2 className="text-lg font-bold tracking-tight">التكاملات</h2>
           <p className="text-sm text-muted-foreground">
             اربط خدماتك الخارجية ومزامنتها مع لوحة التحكم
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Button variant="outline" size="sm" onClick={reload} disabled={loading}>
             <RefreshCw className={loading ? "size-4 animate-spin" : "size-4"} />
             <span className="hidden sm:inline">تحديث</span>
@@ -312,7 +312,7 @@ export function IntegrationsSection() {
       </header>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-1 sm:grid-cols-3">
         <StatCard
           label="إجمالي التكاملات"
           value={meta?.count ?? 0}
@@ -336,7 +336,7 @@ export function IntegrationsSection() {
       {/* Body */}
       <ScrollArea className="flex-1 custom-scroll -mx-1 px-1">
         {loading ? (
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-1 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
               <Skeleton key={i} className="h-40 w-full rounded-xl" />
             ))}
@@ -345,7 +345,7 @@ export function IntegrationsSection() {
           <Alert variant="destructive">
             <CircleAlert className="size-4" />
             <AlertTitle>تعذّر تحميل التكاملات</AlertTitle>
-            <AlertDescription className="flex items-center gap-2">
+            <AlertDescription className="flex items-center gap-1">
               <span>{error}</span>
               <Button size="sm" variant="outline" onClick={reload}>
                 إعادة المحاولة
@@ -354,7 +354,7 @@ export function IntegrationsSection() {
           </Alert>
         ) : integrations.length === 0 ? (
           <Card className="border-dashed">
-            <CardContent className="flex flex-col items-center justify-center gap-2 p-10 text-center">
+            <CardContent className="flex flex-col items-center justify-center gap-1 p-10 text-center">
               <div className="flex size-14 items-center justify-center rounded-full bg-emerald-glow/10 text-emerald-glow">
                 <Inbox className="size-7" />
               </div>
@@ -371,7 +371,7 @@ export function IntegrationsSection() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-1 sm:grid-cols-2 lg:grid-cols-3">
             {integrations.map((it) => {
               const m = serviceMeta(it.service);
               const Icon = m.icon;
@@ -382,12 +382,12 @@ export function IntegrationsSection() {
                   key={it.id}
                   className="group flex flex-col border-border/60 transition-colors hover:border-emerald-glow/40"
                 >
-                  <CardContent className="flex flex-1 flex-col gap-2 p-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2">
+                  <CardContent className="flex flex-1 flex-col gap-1 p-1">
+                    <div className="flex items-start justify-between gap-1">
+                      <div className="flex items-center gap-1">
                         <div
                           className={
-                            "flex size-8 items-center justify-center rounded-lg " +
+                            "flex size-6 items-center justify-center rounded-lg " +
                             m.bg +
                             " " +
                             m.color
@@ -415,7 +415,7 @@ export function IntegrationsSection() {
                       </Button>
                     </div>
 
-                    <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center justify-between gap-1">
                       <Badge
                         variant="outline"
                         className={
@@ -436,7 +436,7 @@ export function IntegrationsSection() {
                           </>
                         )}
                       </Badge>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
                         <span className="text-[11px] text-muted-foreground">
                           {it.connected ? "ربط" : "فصل"}
                         </span>
@@ -487,8 +487,8 @@ export function IntegrationsSection() {
               اختر خدمة لربطها مع لوحة التحكم
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-2 py-2">
-            <div className="grid gap-2">
+          <div className="grid gap-1 py-1">
+            <div className="grid gap-1">
               <Label htmlFor="service">الخدمة</Label>
               <Select
                 value={form.service}
@@ -506,7 +506,7 @@ export function IntegrationsSection() {
                     const Icon = m.icon;
                     return (
                       <SelectItem key={s} value={s}>
-                        <span className="flex items-center gap-2">
+                        <span className="flex items-center gap-1">
                           <Icon className={"size-4 " + m.color} />
                           {m.label}
                         </span>
@@ -516,7 +516,7 @@ export function IntegrationsSection() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid gap-2">
+            <div className="grid gap-1">
               <Label htmlFor="name">الاسم المعروض</Label>
               <Input
                 id="name"
@@ -583,12 +583,12 @@ function StatCard({
 }) {
   return (
     <Card className="border-border/60">
-      <CardContent className="flex items-center gap-2 p-2">
-        <div className={`flex size-8 items-center justify-center rounded-lg ${cls}`}>
+      <CardContent className="flex items-center gap-1 p-1">
+        <div className={`flex size-6 items-center justify-center rounded-lg ${cls}`}>
           {icon}
         </div>
         <div>
-          <div className="text-xl font-bold leading-none">{value}</div>
+          <div className="text-lg font-bold leading-none">{value}</div>
           <div className="mt-1 text-xs text-muted-foreground">{label}</div>
         </div>
       </CardContent>

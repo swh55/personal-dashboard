@@ -164,14 +164,14 @@ export function AccountsSection() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className="flex h-full flex-col gap-1">
       {/* header */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-1">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">الحسابات</h1>
+          <h1 className="text-lg font-bold tracking-tight">الحسابات</h1>
           <p className="text-sm text-muted-foreground">{stats.count} حساب · إدارة الحسابات البنكية والنقدية</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Button variant="outline" size="sm" onClick={() => reload()}>
             <RefreshCw className="size-4" />
             تحديث
@@ -184,19 +184,19 @@ export function AccountsSection() {
       </div>
 
       {/* hero + stats */}
-      <div className="grid gap-2 lg:grid-cols-[2fr_1fr_1fr]">
+      <div className="grid gap-1 lg:grid-cols-[2fr_1fr_1fr]">
         <Card className="overflow-hidden">
           <CardContent className="p-0 relative">
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-glow/15 via-transparent to-amber-glow/15 pointer-events-none" />
             <div className="relative p-3">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-1 text-sm text-muted-foreground">
                 <Wallet className="size-4" />
                 إجمالي الرصيد (بما يعادل الليرة)
               </div>
-              <div className="mt-1 text-xl font-bold tracking-tight text-emerald-glow">
+              <div className="mt-1 text-lg font-bold tracking-tight text-emerald-glow">
                 {formatCurrency(totalSYPValue, "syp")}
               </div>
-              <div className="mt-2 flex flex-wrap gap-2 text-xs">
+              <div className="mt-2 flex flex-wrap gap-1 text-xs">
                 <span className="inline-flex items-center gap-1">
                   <Coins className="size-3 text-emerald-glow" />
                   <span className="text-muted-foreground">بالليرة:</span>
@@ -212,24 +212,24 @@ export function AccountsSection() {
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="flex items-center gap-2 p-2">
-            <div className="flex size-9 items-center justify-center rounded-md bg-emerald-glow/10 text-emerald-glow shrink-0">
+          <CardContent className="flex items-center gap-1 p-1">
+            <div className="flex size-7 items-center justify-center rounded-md bg-emerald-glow/10 text-emerald-glow shrink-0">
               <Coins className="size-4" />
             </div>
             <div className="min-w-0">
               <div className="text-xs text-muted-foreground">عدد الحسابات</div>
-              <div className="text-lg font-bold">{stats.count}</div>
+              <div className="text-base font-bold">{stats.count}</div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="flex items-center gap-2 p-2">
-            <div className="flex size-9 items-center justify-center rounded-md bg-amber-glow/10 text-amber-glow shrink-0">
+          <CardContent className="flex items-center gap-1 p-1">
+            <div className="flex size-7 items-center justify-center rounded-md bg-amber-glow/10 text-amber-glow shrink-0">
               <DollarSign className="size-4" />
             </div>
             <div className="min-w-0">
               <div className="text-xs text-muted-foreground">إجمالي بالدولار</div>
-              <div className="text-lg font-bold truncate">{formatCurrency(stats.totalUSD, "usd")}</div>
+              <div className="text-base font-bold truncate">{formatCurrency(stats.totalUSD, "usd")}</div>
             </div>
           </CardContent>
         </Card>
@@ -248,11 +248,11 @@ export function AccountsSection() {
 
       <ScrollArea className="custom-scroll flex-1 min-h-0 -mx-1 px-1">
         {loading ? (
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-32 w-full rounded-xl" />)}
           </div>
         ) : accounts.length > 0 ? (
-          <div className="grid grid-cols-1 gap-2 pb-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-1 pb-4 sm:grid-cols-2 lg:grid-cols-3">
             {accounts.map((a) => {
               const t = typeMeta(a.type);
               const TIcon = t.icon;
@@ -260,10 +260,10 @@ export function AccountsSection() {
               const isNegative = a.balance < 0;
               return (
                 <Card key={a.id} className="group transition-shadow hover:shadow-md">
-                  <CardContent className="flex flex-col gap-2 p-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className={`flex size-8 items-center justify-center rounded-md shrink-0 ${t.color}`}>
+                  <CardContent className="flex flex-col gap-1 p-1">
+                    <div className="flex items-start justify-between gap-1">
+                      <div className="flex items-center gap-1 min-w-0">
+                        <div className={`flex size-6 items-center justify-center rounded-md shrink-0 ${t.color}`}>
                           <TIcon className="size-5" />
                         </div>
                         <div className="min-w-0">
@@ -284,7 +284,7 @@ export function AccountsSection() {
                       <div className="text-xs text-muted-foreground truncate">{a.institution}</div>
                     ) : null}
                     <div className="mt-1">
-                      <div className={`text-lg font-bold ${isNegative ? "text-rose-500" : isUSD ? "text-amber-glow" : "text-emerald-glow"}`}>
+                      <div className={`text-base font-bold ${isNegative ? "text-rose-500" : isUSD ? "text-amber-glow" : "text-emerald-glow"}`}>
                         {isNegative ? "-" : ""}{formatCurrency(Math.abs(a.balance), a.currency)}
                       </div>
                       {isUSD ? (
@@ -297,8 +297,8 @@ export function AccountsSection() {
             })}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
-            <Wallet className="size-8 text-muted-foreground/40" />
+          <div className="flex flex-col items-center justify-center gap-1 py-16 text-center">
+            <Wallet className="size-6 text-muted-foreground/40" />
             <p className="text-sm font-medium">لا حسابات</p>
             <p className="text-xs text-muted-foreground">أضف أول حساب لمتابعة أرصدتك</p>
             <Button size="sm" variant="outline" className="mt-1" onClick={openAdd}>
@@ -316,12 +316,12 @@ export function AccountsSection() {
             <DialogTitle>{editing ? "تعديل حساب" : "إضافة حساب"}</DialogTitle>
             <DialogDescription>أدخل تفاصيل الحساب المالي.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-2 max-h-[60vh] overflow-y-auto custom-scroll py-1">
+          <div className="grid gap-1 max-h-[60vh] overflow-y-auto custom-scroll py-1">
             <div className="grid gap-1.5">
               <Label htmlFor="a-name">اسم الحساب *</Label>
               <Input id="a-name" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="مثال: حساب البنك الرئيسي" />
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-1">
               <div className="grid gap-1.5">
                 <Label htmlFor="a-balance">الرصيد</Label>
                 <Input

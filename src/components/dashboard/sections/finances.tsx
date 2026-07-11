@@ -98,11 +98,11 @@ export function FinancesSection() {
   const { data: fin, loading, error, reload } = useApi<FinancesData>("/api/finances");
 
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className="flex h-full flex-col gap-1">
       {/* header */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-1">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">الوضع المالي</h1>
+          <h1 className="text-lg font-bold tracking-tight">الوضع المالي</h1>
           <p className="text-sm text-muted-foreground">نظرة شاملة على الأصول والحسابات والديون</p>
         </div>
         <Button variant="outline" size="sm" onClick={() => reload()}>
@@ -124,28 +124,28 @@ export function FinancesSection() {
 
       <ScrollArea className="custom-scroll flex-1 -mx-1 px-1">
         {loading || !fin ? (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
             <Skeleton className="h-32 w-full rounded-2xl" />
-            <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-1 md:grid-cols-4">
               {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
             </div>
-            <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-1 md:grid-cols-2">
               {Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-64 rounded-xl" />)}
             </div>
           </div>
         ) : (
-          <div className="flex flex-col gap-2 pb-4">
+          <div className="flex flex-col gap-1 pb-4">
             {/* net worth hero */}
             <Card className="overflow-hidden border-emerald-glow/30">
               <div className="bg-gradient-to-l from-emerald-glow/15 to-amber-glow/10 p-3">
-                <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center justify-between gap-1 flex-wrap">
                   <div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
                       <Scale className="size-4" />
                       صافي الثروة
                     </div>
                     <div
-                      className={`text-xl font-bold mt-1 ${
+                      className={`text-lg font-bold mt-1 ${
                         fin.netWorth >= 0 ? "text-emerald-glow" : "text-rose-500"
                       }`}
                     >
@@ -163,7 +163,7 @@ export function FinancesSection() {
             </Card>
 
             {/* 4 stat cards */}
-            <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-1 md:grid-cols-4">
               <StatCard
                 icon={Coins}
                 label="إجمالي الأصول"
@@ -192,14 +192,14 @@ export function FinancesSection() {
 
             {/* monthly spend */}
             <Card>
-              <CardContent className="flex items-center justify-between gap-2 p-2">
-                <div className="flex items-center gap-2">
-                  <div className="flex size-8 items-center justify-center rounded-md bg-amber-glow/10 text-amber-glow">
+              <CardContent className="flex items-center justify-between gap-1 p-1">
+                <div className="flex items-center gap-1">
+                  <div className="flex size-6 items-center justify-center rounded-md bg-amber-glow/10 text-amber-glow">
                     <TrendingDown className="size-5" />
                   </div>
                   <div>
                     <div className="text-xs text-muted-foreground">مصروفات هذا الشهر</div>
-                    <div className="text-lg font-bold">{formatCurrency(fin.monthSpend, "syp")}</div>
+                    <div className="text-base font-bold">{formatCurrency(fin.monthSpend, "syp")}</div>
                   </div>
                 </div>
                 <Badge variant="outline" className="text-xs">{fin.monthExpenseCount} مصروف</Badge>
@@ -207,11 +207,11 @@ export function FinancesSection() {
             </Card>
 
             {/* assets + accounts grid */}
-            <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-1 md:grid-cols-2">
               {/* assets */}
               <Card className="flex flex-col">
                 <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center gap-2 text-base">
+                  <CardTitle className="flex items-center gap-1 text-base">
                     <Coins className="size-4 text-emerald-glow" />
                     الأصول
                     <Badge variant="secondary" className="text-[10px] mr-auto">{fin.assets.length}</Badge>
@@ -219,14 +219,14 @@ export function FinancesSection() {
                 </CardHeader>
                 <CardContent className="flex-1 min-h-0">
                   {fin.assets.length > 0 ? (
-                    <div className="flex flex-col gap-2 max-h-72 overflow-y-auto custom-scroll">
+                    <div className="flex flex-col gap-1 max-h-72 overflow-y-auto custom-scroll">
                       {fin.assets.map((a) => (
-                        <div key={a.id} className="flex items-center gap-2 rounded-lg border p-2.5">
-                          <div className="flex size-9 items-center justify-center rounded-md bg-emerald-glow/10 text-emerald-glow shrink-0">
+                        <div key={a.id} className="flex items-center gap-1 rounded-lg border p-2.5">
+                          <div className="flex size-7 items-center justify-center rounded-md bg-emerald-glow/10 text-emerald-glow shrink-0">
                             <PiggyBank className="size-4" />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1">
                               <span className="text-sm font-semibold truncate">{a.name}</span>
                               <Badge variant="outline" className="text-[10px]">{ASSET_TYPE_LABELS[a.type] || a.type}</Badge>
                             </div>
@@ -249,7 +249,7 @@ export function FinancesSection() {
               {/* accounts */}
               <Card className="flex flex-col">
                 <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center gap-2 text-base">
+                  <CardTitle className="flex items-center gap-1 text-base">
                     <Landmark className="size-4 text-amber-glow" />
                     الحسابات
                     <Badge variant="secondary" className="text-[10px] mr-auto">{fin.accounts.length}</Badge>
@@ -257,14 +257,14 @@ export function FinancesSection() {
                 </CardHeader>
                 <CardContent className="flex-1 min-h-0">
                   {fin.accounts.length > 0 ? (
-                    <div className="flex flex-col gap-2 max-h-72 overflow-y-auto custom-scroll">
+                    <div className="flex flex-col gap-1 max-h-72 overflow-y-auto custom-scroll">
                       {fin.accounts.map((a) => (
-                        <div key={a.id} className="flex items-center gap-2 rounded-lg border p-2.5">
-                          <div className="flex size-9 items-center justify-center rounded-md bg-amber-glow/10 text-amber-glow shrink-0">
+                        <div key={a.id} className="flex items-center gap-1 rounded-lg border p-2.5">
+                          <div className="flex size-7 items-center justify-center rounded-md bg-amber-glow/10 text-amber-glow shrink-0">
                             <CreditCard className="size-4" />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1">
                               <span className="text-sm font-semibold truncate">{a.name}</span>
                               <Badge variant="outline" className="text-[10px]">{ACCOUNT_TYPE_LABELS[a.type] || a.type}</Badge>
                             </div>
@@ -293,7 +293,7 @@ export function FinancesSection() {
             {/* debts overview */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-2 text-base">
+                <CardTitle className="flex items-center gap-1 text-base">
                   <Scale className="size-4 text-emerald-glow" />
                   نظرة على الديون
                   <Badge variant="secondary" className="text-[10px] mr-auto">{fin.debts.length}</Badge>
@@ -301,40 +301,40 @@ export function FinancesSection() {
               </CardHeader>
               <CardContent>
                 {fin.debts.length > 0 ? (
-                  <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-1 md:grid-cols-2">
                     {/* owed to me */}
                     <div className="rounded-lg border border-emerald-glow/20 bg-emerald-glow/5 p-2">
-                      <div className="flex items-center gap-2 text-xs font-semibold text-emerald-glow mb-2">
+                      <div className="flex items-center gap-1 text-xs font-semibold text-emerald-glow mb-2">
                         <TrendingUp className="size-4" />
                         ديون لي ({fin.debts.filter((d) => d.type === "owed").length})
                       </div>
                       <div className="flex flex-col gap-1.5 max-h-44 overflow-y-auto custom-scroll">
                         {fin.debts.filter((d) => d.type === "owed").map((d) => (
-                          <div key={d.id} className="flex items-center justify-between gap-2 text-sm">
+                          <div key={d.id} className="flex items-center justify-between gap-1 text-sm">
                             <span className="truncate">{d.personName}</span>
                             <span className="font-medium text-emerald-glow shrink-0">{formatCurrency(d.amount, d.currency)}</span>
                           </div>
                         ))}
                         {fin.debts.filter((d) => d.type === "owed").length === 0 ? (
-                          <div className="text-xs text-muted-foreground py-2 text-center">لا ديون لك</div>
+                          <div className="text-xs text-muted-foreground py-1 text-center">لا ديون لك</div>
                         ) : null}
                       </div>
                     </div>
                     {/* owe */}
                     <div className="rounded-lg border border-rose-500/20 bg-rose-500/5 p-2">
-                      <div className="flex items-center gap-2 text-xs font-semibold text-rose-500 mb-2">
+                      <div className="flex items-center gap-1 text-xs font-semibold text-rose-500 mb-2">
                         <TrendingDown className="size-4" />
                         ديون عليّ ({fin.debts.filter((d) => d.type === "owe").length})
                       </div>
                       <div className="flex flex-col gap-1.5 max-h-44 overflow-y-auto custom-scroll">
                         {fin.debts.filter((d) => d.type === "owe").map((d) => (
-                          <div key={d.id} className="flex items-center justify-between gap-2 text-sm">
+                          <div key={d.id} className="flex items-center justify-between gap-1 text-sm">
                             <span className="truncate">{d.personName}</span>
                             <span className="font-medium text-rose-500 shrink-0">{formatCurrency(d.amount, d.currency)}</span>
                           </div>
                         ))}
                         {fin.debts.filter((d) => d.type === "owe").length === 0 ? (
-                          <div className="text-xs text-muted-foreground py-2 text-center">لا ديون عليك</div>
+                          <div className="text-xs text-muted-foreground py-1 text-center">لا ديون عليك</div>
                         ) : null}
                       </div>
                     </div>
@@ -370,8 +370,8 @@ function StatCard({
         : "text-rose-500 bg-rose-500/10";
   return (
     <Card>
-      <CardContent className="flex items-center gap-2.5 p-2">
-        <div className={`flex size-9 items-center justify-center rounded-md shrink-0 ${accentClass}`}>
+      <CardContent className="flex items-center gap-1 p-1">
+        <div className={`flex size-7 items-center justify-center rounded-md shrink-0 ${accentClass}`}>
           <Icon className="size-4" />
         </div>
         <div className="min-w-0">
@@ -386,7 +386,7 @@ function StatCard({
 function EmptyMini({ text, icon: Icon }: { text: string; icon: React.ComponentType<{ className?: string }> }) {
   return (
     <div className="flex flex-col items-center justify-center gap-1 py-8 text-center">
-      <Icon className="size-8 text-muted-foreground/40" />
+      <Icon className="size-6 text-muted-foreground/40" />
       <p className="text-xs text-muted-foreground">{text}</p>
     </div>
   );

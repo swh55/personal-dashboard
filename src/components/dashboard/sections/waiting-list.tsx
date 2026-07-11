@@ -200,16 +200,16 @@ export function WaitingListSection() {
   ];
 
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className="flex h-full flex-col gap-1">
       {/* header */}
-      <header className="flex flex-wrap items-center justify-between gap-2">
+      <header className="flex flex-wrap items-center justify-between gap-1">
         <div>
-          <h2 className="text-xl font-bold tracking-tight">قائمة الانتظار</h2>
+          <h2 className="text-lg font-bold tracking-tight">قائمة الانتظار</h2>
           <p className="text-sm text-muted-foreground">
             العناصر والأفكار في انتظار تنفيذها — مرتّبة حسب الأولوية
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Button variant="outline" size="sm" onClick={reload} disabled={loading}>
             <RefreshCw className={loading ? "size-4 animate-spin" : "size-4"} />
             <span className="hidden sm:inline">تحديث</span>
@@ -222,17 +222,17 @@ export function WaitingListSection() {
       </header>
 
       {/* stats */}
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-1">
         {statCards.map((s) => {
           const I = s.icon;
           return (
             <Card key={s.label} className="border-border/60">
-              <CardContent className="flex items-center gap-2 p-2">
-                <div className={`flex size-9 items-center justify-center rounded-md shrink-0 ${s.cls}`}>
+              <CardContent className="flex items-center gap-1 p-1">
+                <div className={`flex size-7 items-center justify-center rounded-md shrink-0 ${s.cls}`}>
                   <I className="size-4" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-lg font-bold leading-none">{s.value}</div>
+                  <div className="text-base font-bold leading-none">{s.value}</div>
                   <div className="text-[11px] text-muted-foreground truncate">{s.label}</div>
                 </div>
               </CardContent>
@@ -272,13 +272,13 @@ export function WaitingListSection() {
 
       <ScrollArea className="custom-scroll flex-1 min-h-0 -mx-1 px-1">
         {loading ? (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
             {Array.from({ length: 5 }).map((_, i) => (
               <Skeleton key={i} className="h-20 w-full rounded-xl" />
             ))}
           </div>
         ) : filtered.length > 0 ? (
-          <div className="flex flex-col gap-2 pb-4">
+          <div className="flex flex-col gap-1 pb-4">
             {filtered.map((it) => {
               const pm = priorityMeta(it.priority);
               return (
@@ -286,7 +286,7 @@ export function WaitingListSection() {
                   key={it.id}
                   className={`group transition-shadow hover:shadow-md ${it.ready ? "border-emerald-glow/30 bg-emerald-glow/5" : ""}`}
                 >
-                  <CardContent className="flex items-start gap-2 p-2">
+                  <CardContent className="flex items-start gap-1 p-1">
                     {/* priority stars */}
                     <div className="flex flex-col items-center gap-1 pt-0.5 w-14 shrink-0">
                       <div className="flex items-center gap-0.5">
@@ -303,7 +303,7 @@ export function WaitingListSection() {
                     </div>
 
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
                         <span className={`text-sm font-semibold truncate ${it.ready ? "line-through text-muted-foreground" : ""}`}>
                           {it.title}
                         </span>
@@ -349,8 +349,8 @@ export function WaitingListSection() {
             })}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
-            <ListChecks className="size-8 text-muted-foreground/40" />
+          <div className="flex flex-col items-center justify-center gap-1 py-16 text-center">
+            <ListChecks className="size-6 text-muted-foreground/40" />
             <p className="text-sm font-medium">قائمة فارغة</p>
             <p className="text-xs text-muted-foreground">أضف أفكاراً أو مهاماً تنتظر التنفيذ</p>
             <Button size="sm" variant="outline" className="mt-1" onClick={openAdd}>
@@ -368,7 +368,7 @@ export function WaitingListSection() {
             <DialogTitle>{editing ? "تعديل عنصر" : "إضافة عنصر"}</DialogTitle>
             <DialogDescription>سجّل فكرة أو مهمة بانتظار وقت تنفيذها.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-2 py-1">
+          <div className="grid gap-1 py-1">
             <div className="grid gap-1.5">
               <Label htmlFor="wl-title">العنوان *</Label>
               <Input
@@ -399,7 +399,7 @@ export function WaitingListSection() {
                     const pm = priorityMeta(p);
                     return (
                       <SelectItem key={p} value={String(p)}>
-                        <span className="inline-flex items-center gap-2">
+                        <span className="inline-flex items-center gap-1">
                           {Array.from({ length: 5 }).map((_, idx) => (
                             <Star key={idx} className={`size-3 ${idx < p ? pm.star + " fill-current" : "text-muted-foreground/30"}`} />
                           ))}

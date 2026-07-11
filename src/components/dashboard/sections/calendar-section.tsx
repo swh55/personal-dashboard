@@ -343,10 +343,10 @@ export function CalendarSection() {
   // any SSR hydration mismatch from date/timezone differences.
   if (!cursor) {
     return (
-      <div className="flex h-full flex-col gap-2">
-        <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex h-full flex-col gap-1">
+        <div className="flex flex-wrap items-center justify-between gap-1">
           <div>
-            <h1 className="text-xl font-bold tracking-tight">التقويم</h1>
+            <h1 className="text-lg font-bold tracking-tight">التقويم</h1>
             <p className="text-sm text-muted-foreground">إدارة الأحداث والمواعيد</p>
           </div>
         </div>
@@ -356,14 +356,14 @@ export function CalendarSection() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className="flex h-full flex-col gap-1">
       {/* header */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-1">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">التقويم</h1>
+          <h1 className="text-lg font-bold tracking-tight">التقويم</h1>
           <p className="text-sm text-muted-foreground">إدارة الأحداث والمواعيد</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Button variant="outline" size="sm" onClick={() => reload()}>
             <RefreshCw className="size-4" />
             تحديث
@@ -403,19 +403,19 @@ export function CalendarSection() {
         </Alert>
       ) : null}
 
-      <div className="grid flex-1 grid-cols-1 gap-2 overflow-hidden lg:grid-cols-3">
+      <div className="grid flex-1 grid-cols-1 gap-1 overflow-hidden lg:grid-cols-3">
         {/* calendar grid */}
         <Card className="lg:col-span-2 flex flex-col overflow-hidden">
           <CardHeader className="border-b">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 <Button variant="ghost" size="icon" onClick={() => setCursor((c) => subMonths(c || today, 1))} aria-label="الشهر السابق">
                   <ChevronRight className="size-4" />
                 </Button>
                 <Button variant="ghost" size="icon" onClick={() => setCursor((c) => addMonths(c || today, 1))} aria-label="الشهر التالي">
                   <ChevronLeft className="size-4" />
                 </Button>
-                <CardTitle className="text-lg">
+                <CardTitle className="text-base">
                   {format(cursorDate, "MMMM yyyy", { locale: ar })}
                 </CardTitle>
               </div>
@@ -431,7 +431,7 @@ export function CalendarSection() {
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="flex-1 overflow-hidden p-2">
+          <CardContent className="flex-1 overflow-hidden p-1">
             <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-muted-foreground mb-1">
               {WEEKDAYS.map((d) => (
                 <div key={d} className="py-1">{d}</div>
@@ -484,7 +484,7 @@ export function CalendarSection() {
         {/* selected day panel */}
         <Card className="flex flex-col overflow-hidden">
           <CardHeader className="border-b">
-            <CardTitle className="flex items-center gap-2 text-base">
+            <CardTitle className="flex items-center gap-1 text-base">
               <CalendarDays className="size-4 text-emerald-glow" />
               {selectedDay
                 ? format(selectedDay, "EEEE d MMMM", { locale: ar })
@@ -509,8 +509,8 @@ export function CalendarSection() {
                     />
                   ))
                 ) : (
-                  <div className="flex flex-col items-center justify-center gap-2 py-10 text-center">
-                    <CircleDot className="size-8 text-muted-foreground/40" />
+                  <div className="flex flex-col items-center justify-center gap-1 py-10 text-center">
+                    <CircleDot className="size-6 text-muted-foreground/40" />
                     <p className="text-sm font-medium">لا أحداث في هذا اليوم</p>
                     <Button size="sm" variant="outline" onClick={() => openAdd(selectedDay || today)}>
                       <Plus className="size-4" />
@@ -531,11 +531,11 @@ export function CalendarSection() {
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
-            <div className="p-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="p-2 grid gap-1 sm:grid-cols-2 lg:grid-cols-3">
               {[0, 1, 2].map((i) => <Skeleton key={i} className="h-16 w-full" />)}
             </div>
           ) : upcoming.length > 0 ? (
-            <div className="grid gap-2 p-2 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-1 p-2 sm:grid-cols-2 lg:grid-cols-3">
               {upcoming.map((ev) => (
                 <EventCard
                   key={ev.id}
@@ -550,8 +550,8 @@ export function CalendarSection() {
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center gap-2 py-10 text-center">
-              <CalendarDays className="size-8 text-muted-foreground/40" />
+            <div className="flex flex-col items-center justify-center gap-1 py-10 text-center">
+              <CalendarDays className="size-6 text-muted-foreground/40" />
               <p className="text-sm font-medium">لا أحداث قادمة</p>
             </div>
           )}
@@ -565,7 +565,7 @@ export function CalendarSection() {
             <DialogTitle>{editing ? "تعديل حدث" : "إضافة حدث جديد"}</DialogTitle>
             <DialogDescription>أدخل تفاصيل الحدث ثم اضغط حفظ.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-2 max-h-[60vh] overflow-y-auto custom-scroll py-1">
+          <div className="grid gap-1 max-h-[60vh] overflow-y-auto custom-scroll py-1">
             <div className="grid gap-1.5">
               <Label htmlFor="ev-title">العنوان *</Label>
               <Input
@@ -575,7 +575,7 @@ export function CalendarSection() {
                 placeholder="عنوان الحدث"
               />
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-1">
               <div className="grid gap-1.5">
                 <Label htmlFor="ev-start">تاريخ البدء *</Label>
                 <Input
@@ -595,7 +595,7 @@ export function CalendarSection() {
                 />
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               <input
                 id="ev-all-day"
                 type="checkbox"
@@ -605,7 +605,7 @@ export function CalendarSection() {
               />
               <Label htmlFor="ev-all-day" className="text-sm font-normal cursor-pointer">طوال اليوم</Label>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-1">
               <div className="grid gap-1.5">
                 <Label>النوع</Label>
                 <Select value={form.type} onValueChange={(v) => setForm((f) => ({ ...f, type: v }))}>
@@ -698,10 +698,10 @@ function EventCard({
   const isPhoneEvent = ev.id.startsWith("phone-");
   return (
     <div className={`group rounded-lg border p-2 ${compact ? "" : "bg-card"}`}>
-      <div className="flex items-start gap-2">
+      <div className="flex items-start gap-1">
         <span className={`mt-1 size-2.5 shrink-0 rounded-full ${colorClass(ev.color)}`} />
         <div className="min-w-0 flex-1">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center justify-between gap-1">
             <span className="text-sm font-medium truncate">{ev.title}</span>
             <Badge variant="secondary" className="shrink-0 text-[10px]">{typeLabel(ev.type)}</Badge>
           </div>

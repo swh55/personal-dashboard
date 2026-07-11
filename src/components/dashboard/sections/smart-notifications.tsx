@@ -135,10 +135,10 @@ export function SmartNotificationsSection() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-2">
-      <header className="flex flex-wrap items-center justify-between gap-2">
+    <div className="flex h-full flex-col gap-1">
+      <header className="flex flex-wrap items-center justify-between gap-1">
         <div>
-          <h2 className="flex items-center gap-2 text-xl font-bold tracking-tight">
+          <h2 className="flex items-center gap-1 text-lg font-bold tracking-tight">
             <Bell className="size-6 text-emerald-glow" />
             الإشعارات الذكية
           </h2>
@@ -146,7 +146,7 @@ export function SmartNotificationsSection() {
             تنبيهات مجمّعة من جميع أجزاء النظام
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Button
             variant="outline"
             size="sm"
@@ -164,7 +164,7 @@ export function SmartNotificationsSection() {
       </header>
 
       {/* Stats row */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-1 sm:grid-cols-4">
         <StatCard label="الإجمالي" value={stats.total} icon={Bell} cls="text-foreground" />
         <StatCard
           label="حرجة"
@@ -188,23 +188,23 @@ export function SmartNotificationsSection() {
         onValueChange={(v) => v && setFilter(v as SeverityFilter)}
         className="w-fit rounded-lg border border-border/60 p-0.5"
       >
-        <ToggleGroupItem value="all" className="h-8 px-3 text-xs">
+        <ToggleGroupItem value="all" className="h-8 px-2 text-xs">
           الكل ({stats.total})
         </ToggleGroupItem>
-        <ToggleGroupItem value="critical" className="h-8 px-3 text-xs">
+        <ToggleGroupItem value="critical" className="h-8 px-2 text-xs">
           حرجة ({stats.critical})
         </ToggleGroupItem>
-        <ToggleGroupItem value="warning" className="h-8 px-3 text-xs">
+        <ToggleGroupItem value="warning" className="h-8 px-2 text-xs">
           تحذير ({stats.warning})
         </ToggleGroupItem>
-        <ToggleGroupItem value="info" className="h-8 px-3 text-xs">
+        <ToggleGroupItem value="info" className="h-8 px-2 text-xs">
           معلومات ({stats.info})
         </ToggleGroupItem>
       </ToggleGroup>
 
       <ScrollArea className="flex-1 custom-scroll -mx-1 px-1">
         {loading ? (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
             {Array.from({ length: 5 }).map((_, i) => (
               <Skeleton key={i} className="h-20 w-full rounded-xl" />
             ))}
@@ -213,7 +213,7 @@ export function SmartNotificationsSection() {
           <Alert variant="destructive">
             <CircleAlert className="size-4" />
             <AlertTitle>تعذّر تحميل الإشعارات</AlertTitle>
-            <AlertDescription className="flex items-center gap-2">
+            <AlertDescription className="flex items-center gap-1">
               <span>{error}</span>
               <Button size="sm" variant="outline" onClick={reload}>
                 إعادة المحاولة
@@ -222,7 +222,7 @@ export function SmartNotificationsSection() {
           </Alert>
         ) : filtered.length === 0 ? (
           <Card className="border-dashed">
-            <CardContent className="flex flex-col items-center justify-center gap-2 p-10 text-center">
+            <CardContent className="flex flex-col items-center justify-center gap-1 p-10 text-center">
               <div className="flex size-14 items-center justify-center rounded-full bg-emerald-glow/10 text-emerald-glow">
                 <Inbox className="size-7" />
               </div>
@@ -244,7 +244,7 @@ export function SmartNotificationsSection() {
             </CardContent>
           </Card>
         ) : (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
             {filtered.map((n) => {
               const meta = SEVERITY_META[n.severity];
               const SevIcon = meta.icon;
@@ -256,17 +256,17 @@ export function SmartNotificationsSection() {
                     " transition-colors hover:border-border"
                   }
                 >
-                  <CardContent className="flex items-start gap-2 p-2">
+                  <CardContent className="flex items-start gap-1 p-1">
                     <div
                       className={
-                        "flex size-8 shrink-0 items-center justify-center rounded-xl " +
+                        "flex size-6 shrink-0 items-center justify-center rounded-xl " +
                         meta.iconCls
                       }
                     >
                       <NotifTypeIcon type={n.type} className="size-5" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
                         <p className="font-semibold leading-tight">{n.title}</p>
                         <Badge variant="outline" className={meta.badgeCls}>
                           <SevIcon className="size-3" />
@@ -311,10 +311,10 @@ function StatCard({
 }) {
   return (
     <Card className="border-border/60">
-      <CardContent className="flex items-center gap-2 p-2">
+      <CardContent className="flex items-center gap-1 p-1">
         <Icon className={"size-5 " + cls} />
         <div>
-          <div className={"text-xl font-bold leading-none " + cls}>
+          <div className={"text-lg font-bold leading-none " + cls}>
             {value.toLocaleString("en-US")}
           </div>
           <div className="mt-1 text-[11px] text-muted-foreground">{label}</div>

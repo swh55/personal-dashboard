@@ -189,14 +189,14 @@ export function ProjectsSection() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className="flex h-full flex-col gap-1">
       {/* header */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-1">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">المشاريع</h1>
+          <h1 className="text-lg font-bold tracking-tight">المشاريع</h1>
           <p className="text-sm text-muted-foreground">{stats.total} مشروع · متوسط التقدم {stats.avgProgress}%</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Button variant="outline" size="sm" onClick={() => reload()}>
             <RefreshCw className="size-4" />
             تحديث
@@ -209,7 +209,7 @@ export function ProjectsSection() {
       </div>
 
       {/* stats */}
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
+      <div className="grid grid-cols-2 gap-1 md:grid-cols-5">
         <StatCard icon={FolderKanban} label="الإجمالي" value={stats.total} accent="emerald" />
         <StatCard icon={PlayCircle} label="نشط" value={stats.active} accent="emerald" />
         <StatCard icon={PauseCircle} label="متوقف" value={stats.paused} accent="amber" />
@@ -219,7 +219,7 @@ export function ProjectsSection() {
 
       {/* filter */}
       <Card>
-        <CardContent className="flex items-center gap-2 p-2">
+        <CardContent className="flex items-center gap-1 p-1">
           <Filter className="size-4 text-muted-foreground" />
           <Select value={filter} onValueChange={setFilter}>
             <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
@@ -248,11 +248,11 @@ export function ProjectsSection() {
 
       <ScrollArea className="custom-scroll flex-1 -mx-1 px-1">
         {loading ? (
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-1 md:grid-cols-2 xl:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-44 rounded-xl" />)}
           </div>
         ) : filtered.length > 0 ? (
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3 pb-4">
+          <div className="grid grid-cols-1 gap-1 md:grid-cols-2 xl:grid-cols-3 pb-4">
             {filtered.map((p) => {
               const meta = STATUS_META[p.status] || STATUS_META.active;
               const colorHex = COLOR_HEX[p.color] || COLOR_HEX.emerald;
@@ -262,8 +262,8 @@ export function ProjectsSection() {
                   className="group cursor-pointer transition-shadow hover:shadow-md"
                   onClick={() => setDetail(p)}
                 >
-                  <CardContent className="flex flex-col gap-2 p-2">
-                    <div className="flex items-start gap-2">
+                  <CardContent className="flex flex-col gap-1 p-1">
+                    <div className="flex items-start gap-1">
                       <div
                         className="mt-0.5 size-3 rounded-full shrink-0"
                         style={{ backgroundColor: colorHex }}
@@ -288,7 +288,7 @@ export function ProjectsSection() {
                       <Progress value={p.progress} className="h-2" />
                     </div>
 
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground flex-wrap">
                       <span className="flex items-center gap-1">
                         <ListChecks className="size-3" />
                         {p._count?.tasks || 0} مهمة
@@ -311,8 +311,8 @@ export function ProjectsSection() {
             })}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
-            <FolderKanban className="size-8 text-muted-foreground/40" />
+          <div className="flex flex-col items-center justify-center gap-1 py-16 text-center">
+            <FolderKanban className="size-6 text-muted-foreground/40" />
             <p className="text-sm font-medium">لا مشاريع</p>
             <p className="text-xs text-muted-foreground">ابدأ بإضافة مشروعك الأول</p>
             <Button size="sm" variant="outline" className="mt-1" onClick={openAdd}>
@@ -329,7 +329,7 @@ export function ProjectsSection() {
           {detail ? (
             <>
               <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
+                <DialogTitle className="flex items-center gap-1">
                   <span
                     className="size-3 rounded-full"
                     style={{ backgroundColor: COLOR_HEX[detail.color] || COLOR_HEX.emerald }}
@@ -340,7 +340,7 @@ export function ProjectsSection() {
                   {STATUS_META[detail.status]?.label || detail.status} · {detail._count?.tasks || 0} مهمة
                 </DialogDescription>
               </DialogHeader>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-1">
                 {detail.description ? (
                   <div className="rounded-lg bg-muted/40 p-2 text-sm">{detail.description}</div>
                 ) : null}
@@ -351,7 +351,7 @@ export function ProjectsSection() {
                   </div>
                   <Progress value={detail.progress} className="h-2" />
                 </div>
-                <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="grid grid-cols-2 gap-1 text-sm">
                   <div>
                     <div className="text-xs text-muted-foreground">تاريخ البدء</div>
                     <div>{detail.startDate ? formatDate(detail.startDate) : "—"}</div>
@@ -384,7 +384,7 @@ export function ProjectsSection() {
             <DialogTitle>{editing ? "تعديل المشروع" : "إضافة مشروع"}</DialogTitle>
             <DialogDescription>أدخل تفاصيل المشروع.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-2 max-h-[60vh] overflow-y-auto custom-scroll py-1">
+          <div className="grid gap-1 max-h-[60vh] overflow-y-auto custom-scroll py-1">
             <div className="grid gap-1.5">
               <Label htmlFor="p-name">الاسم *</Label>
               <Input
@@ -402,7 +402,7 @@ export function ProjectsSection() {
                 onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
               />
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-1">
               <div className="grid gap-1.5">
                 <Label>الحالة</Label>
                 <Select value={form.status} onValueChange={(v) => setForm((f) => ({ ...f, status: v }))}>
@@ -422,7 +422,7 @@ export function ProjectsSection() {
                   <SelectContent>
                     {Object.entries(COLOR_HEX).map(([k, v]) => (
                       <SelectItem key={k} value={k}>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
                           <span className="size-2.5 rounded-full" style={{ backgroundColor: v }} />
                           {k}
                         </div>
@@ -442,7 +442,7 @@ export function ProjectsSection() {
                 onValueChange={(v) => setForm((f) => ({ ...f, progress: v[0] }))}
               />
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-1">
               <div className="grid gap-1.5">
                 <Label htmlFor="p-start">تاريخ البدء</Label>
                 <Input
@@ -503,8 +503,8 @@ function StatCard({
   const accentClass = accent === "emerald" ? "text-emerald-glow bg-emerald-glow/10" : "text-amber-glow bg-amber-glow/10";
   return (
     <Card>
-      <CardContent className="flex items-center gap-2.5 p-2">
-        <div className={`flex size-9 items-center justify-center rounded-md shrink-0 ${accentClass}`}>
+      <CardContent className="flex items-center gap-1 p-1">
+        <div className={`flex size-7 items-center justify-center rounded-md shrink-0 ${accentClass}`}>
           <Icon className="size-4" />
         </div>
         <div className="min-w-0">

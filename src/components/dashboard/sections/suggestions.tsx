@@ -196,16 +196,16 @@ export function SuggestionsSection() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className="flex h-full flex-col gap-1">
       {/* Header */}
-      <header className="flex flex-wrap items-center justify-between gap-2">
+      <header className="flex flex-wrap items-center justify-between gap-1">
         <div>
-          <h2 className="text-xl font-bold tracking-tight">الاقتراحات</h2>
+          <h2 className="text-lg font-bold tracking-tight">الاقتراحات</h2>
           <p className="text-sm text-muted-foreground">
             أفكار وملاحظات لتحسين عملك اليومي
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Button variant="outline" size="sm" onClick={reload} disabled={loading}>
             <RefreshCw className={loading ? "size-4 animate-spin" : "size-4"} />
             <span className="hidden sm:inline">تحديث</span>
@@ -218,7 +218,7 @@ export function SuggestionsSection() {
       </header>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-1 lg:grid-cols-4">
         <StatCard
           label="الإجمالي"
           value={stats.total}
@@ -262,7 +262,7 @@ export function SuggestionsSection() {
       {/* Body */}
       <ScrollArea className="flex-1 custom-scroll -mx-1 px-1">
         {loading ? (
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="grid gap-1 sm:grid-cols-2">
             {Array.from({ length: 4 }).map((_, i) => (
               <Skeleton key={i} className="h-32 w-full rounded-xl" />
             ))}
@@ -271,7 +271,7 @@ export function SuggestionsSection() {
           <Alert variant="destructive">
             <CircleAlert className="size-4" />
             <AlertTitle>تعذّر تحميل الاقتراحات</AlertTitle>
-            <AlertDescription className="flex items-center gap-2">
+            <AlertDescription className="flex items-center gap-1">
               <span>{error}</span>
               <Button size="sm" variant="outline" onClick={reload}>
                 إعادة المحاولة
@@ -281,7 +281,7 @@ export function SuggestionsSection() {
         ) : filtered.length === 0 ? (
           <EmptyState onAdd={openAdd} hasAny={suggestions.length > 0} />
         ) : (
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="grid gap-1 sm:grid-cols-2">
             {filtered.map((s) => {
               const st = STATUS_META[s.status];
               const isBusy = busyId === s.id;
@@ -300,9 +300,9 @@ export function SuggestionsSection() {
                         : "bg-amber-glow")
                     }
                   />
-                  <CardContent className="p-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2">
+                  <CardContent className="p-1">
+                    <div className="flex items-start justify-between gap-1">
+                      <div className="flex items-center gap-1">
                         <Badge
                           variant="secondary"
                           className="gap-1 bg-muted/60"
@@ -334,12 +334,12 @@ export function SuggestionsSection() {
                       </p>
                     )}
 
-                    <div className="mt-3 flex items-center justify-between gap-2">
+                    <div className="mt-3 flex items-center justify-between gap-1">
                       <span className="text-xs text-muted-foreground">
                         {timeAgo(s.createdAt)}
                       </span>
                       {s.status === "pending" ? (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
                           <Button
                             size="sm"
                             variant="outline"
@@ -391,8 +391,8 @@ export function SuggestionsSection() {
               أضف فكرة أو ملاحظة لمراجعتها لاحقاً
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-2 py-2">
-            <div className="grid gap-2">
+          <div className="grid gap-1 py-1">
+            <div className="grid gap-1">
               <Label htmlFor="title">العنوان *</Label>
               <Input
                 id="title"
@@ -403,7 +403,7 @@ export function SuggestionsSection() {
                 placeholder="مثال: تنظيم جدول المراجعات الأسبوعية"
               />
             </div>
-            <div className="grid gap-2">
+            <div className="grid gap-1">
               <Label htmlFor="category">الفئة</Label>
               <Select
                 value={form.category}
@@ -423,7 +423,7 @@ export function SuggestionsSection() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid gap-2">
+            <div className="grid gap-1">
               <Label htmlFor="content">المحتوى</Label>
               <Textarea
                 id="content"
@@ -491,12 +491,12 @@ function StatCard({
 }) {
   return (
     <Card className="border-border/60">
-      <CardContent className="flex items-center gap-2 p-2">
-        <div className={`flex size-8 items-center justify-center rounded-lg ${cls}`}>
+      <CardContent className="flex items-center gap-1 p-1">
+        <div className={`flex size-6 items-center justify-center rounded-lg ${cls}`}>
           {icon}
         </div>
         <div>
-          <div className="text-xl font-bold leading-none">{value}</div>
+          <div className="text-lg font-bold leading-none">{value}</div>
           <div className="mt-1 text-xs text-muted-foreground">{label}</div>
         </div>
       </CardContent>
@@ -513,7 +513,7 @@ function EmptyState({
 }) {
   return (
     <Card className="border-dashed">
-      <CardContent className="flex flex-col items-center justify-center gap-2 p-10 text-center">
+      <CardContent className="flex flex-col items-center justify-center gap-1 p-10 text-center">
         <div className="flex size-14 items-center justify-center rounded-full bg-emerald-glow/10 text-emerald-glow">
           <Inbox className="size-7" />
         </div>

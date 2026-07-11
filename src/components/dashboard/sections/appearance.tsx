@@ -97,7 +97,7 @@ export function AppearanceSection() {
 
   if (!mounted) {
     return (
-      <div className="flex h-full flex-col gap-2">
+      <div className="flex h-full flex-col gap-1">
         <div>
           <Skeleton className="h-8 w-48" />
           <Skeleton className="mt-2 h-4 w-64" />
@@ -112,11 +112,11 @@ export function AppearanceSection() {
   const previewAccentStyle = { "--primary": currentAccent.color } as React.CSSProperties;
 
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className="flex h-full flex-col gap-1">
       {/* header */}
-      <header className="flex flex-wrap items-center justify-between gap-2">
+      <header className="flex flex-wrap items-center justify-between gap-1">
         <div>
-          <h2 className="text-xl font-bold tracking-tight">المظهر</h2>
+          <h2 className="text-lg font-bold tracking-tight">المظهر</h2>
           <p className="text-sm text-muted-foreground">
             خصّص شكل التطبيق — السمة، اللون المميز، والخط
           </p>
@@ -140,26 +140,26 @@ export function AppearanceSection() {
       </header>
 
       <ScrollArea className="custom-scroll flex-1 min-h-0 -mx-1 px-1">
-        <div className="flex flex-col gap-2 pb-4 max-w-3xl">
+        <div className="flex flex-col gap-1 pb-4 max-w-3xl">
 
           {/* Theme section */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
+              <CardTitle className="flex items-center gap-1 text-base">
                 <Layers className="size-4 text-emerald-glow" />
                 السمة
               </CardTitle>
               <CardDescription className="text-xs">اختر بين الوضع الليلي والنهاري</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-1">
                 <button
                   onClick={() => changeTheme("dark")}
-                  className={`flex flex-col items-start gap-2 rounded-xl border p-2 text-right transition ${renderedTheme === "dark" ? "border-emerald-glow bg-emerald-glow/5 shadow-sm" : "border-border hover:bg-muted"}`}
+                  className={`flex flex-col items-start gap-1 rounded-xl border p-2 text-right transition ${renderedTheme === "dark" ? "border-emerald-glow bg-emerald-glow/5 shadow-sm" : "border-border hover:bg-muted"}`}
                   aria-pressed={renderedTheme === "dark"}
                 >
                   <div className="flex items-center justify-between w-full">
-                    <div className="flex size-8 items-center justify-center rounded-lg bg-slate-900 border border-slate-700">
+                    <div className="flex size-6 items-center justify-center rounded-lg bg-slate-900 border border-slate-700">
                       <Moon className={`size-5 ${renderedTheme === "dark" ? "text-emerald-glow" : "text-slate-400"}`} />
                     </div>
                     {renderedTheme === "dark" ? <Check className="size-5 text-emerald-glow" /> : null}
@@ -171,11 +171,11 @@ export function AppearanceSection() {
                 </button>
                 <button
                   onClick={() => changeTheme("light")}
-                  className={`flex flex-col items-start gap-2 rounded-xl border p-2 text-right transition ${renderedTheme === "light" ? "border-emerald-glow bg-emerald-glow/5 shadow-sm" : "border-border hover:bg-muted"}`}
+                  className={`flex flex-col items-start gap-1 rounded-xl border p-2 text-right transition ${renderedTheme === "light" ? "border-emerald-glow bg-emerald-glow/5 shadow-sm" : "border-border hover:bg-muted"}`}
                   aria-pressed={renderedTheme === "light"}
                 >
                   <div className="flex items-center justify-between w-full">
-                    <div className="flex size-8 items-center justify-center rounded-lg bg-amber-50 border border-amber-200">
+                    <div className="flex size-6 items-center justify-center rounded-lg bg-amber-50 border border-amber-200">
                       <Sun className={`size-5 ${renderedTheme === "light" ? "text-emerald-glow" : "text-amber-500"}`} />
                     </div>
                     {renderedTheme === "light" ? <Check className="size-5 text-emerald-glow" /> : null}
@@ -192,14 +192,14 @@ export function AppearanceSection() {
           {/* Accent color section */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
+              <CardTitle className="flex items-center gap-1 text-base">
                 <Palette className="size-4 text-emerald-glow" />
                 اللون المميز
               </CardTitle>
               <CardDescription className="text-xs">اللون المستخدم في الأزرار والروابط والعناصر المميزة</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+              <div className="grid grid-cols-3 gap-1 sm:grid-cols-6">
                 {ACCENTS.map((a) => (
                   <button
                     key={a.value}
@@ -232,19 +232,19 @@ export function AppearanceSection() {
           {/* Font preview section */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
+              <CardTitle className="flex items-center gap-1 text-base">
                 <Type className="size-4 text-emerald-glow" />
                 معاينة الخط
               </CardTitle>
               <CardDescription className="text-xs">يستخدم التطبيق خط القاهرة العربي</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col gap-2">
+            <CardContent className="flex flex-col gap-1">
               <div className="rounded-lg border bg-muted/40 p-2">
                 <p className="font-arabic text-base leading-relaxed">{PREVIEW_TEXT}</p>
               </div>
               <div className="grid gap-1.5">
                 <Label htmlFor="ap-username">اسم المستخدم</Label>
-                <div className="flex gap-2">
+                <div className="flex gap-1">
                   <Input
                     id="ap-username"
                     value={usernameInput}
@@ -263,7 +263,7 @@ export function AppearanceSection() {
           {/* Live preview card */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
+              <CardTitle className="flex items-center gap-1 text-base">
                 <Eye className="size-4 text-emerald-glow" />
                 معاينة حيّة
               </CardTitle>
@@ -271,10 +271,10 @@ export function AppearanceSection() {
             </CardHeader>
             <CardContent>
               <div
-                className="rounded-xl border bg-card p-2 flex flex-col gap-2"
+                className="rounded-xl border bg-card p-2 flex flex-col gap-1"
                 style={previewAccentStyle}
               >
-                <div className="flex items-start justify-between gap-2">
+                <div className="flex items-start justify-between gap-1">
                   <div className="min-w-0">
                     <div className="text-sm font-semibold">عنوان البطاقة</div>
                     <p className="text-xs text-muted-foreground line-clamp-2">
@@ -284,7 +284,7 @@ export function AppearanceSection() {
                   <Badge style={{ backgroundColor: "var(--primary)", color: "white" }}>جديد</Badge>
                 </div>
                 <Separator />
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap items-center gap-1">
                   <Button size="sm" style={{ backgroundColor: "var(--primary)", color: "white" }}>
                     زر أساسي
                   </Button>

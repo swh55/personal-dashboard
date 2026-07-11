@@ -238,16 +238,16 @@ export function ContactRemindersSection() {
   ];
 
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className="flex h-full flex-col gap-1">
       {/* header */}
-      <header className="flex flex-wrap items-center justify-between gap-2">
+      <header className="flex flex-wrap items-center justify-between gap-1">
         <div>
-          <h2 className="text-xl font-bold tracking-tight">تذكيرات التواصل</h2>
+          <h2 className="text-lg font-bold tracking-tight">تذكيرات التواصل</h2>
           <p className="text-sm text-muted-foreground">
             نظّم تواصلك الدوري مع الأشخاص المهمين
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Button variant="outline" size="sm" onClick={reload} disabled={loading}>
             <RefreshCw className={loading ? "size-4 animate-spin" : "size-4"} />
             <span className="hidden sm:inline">تحديث</span>
@@ -260,17 +260,17 @@ export function ContactRemindersSection() {
       </header>
 
       {/* stats */}
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-1">
         {statCards.map((s) => {
           const I = s.icon;
           return (
             <Card key={s.label} className="border-border/60">
-              <CardContent className="flex items-center gap-2 p-2">
-                <div className={`flex size-9 items-center justify-center rounded-md shrink-0 ${s.cls}`}>
+              <CardContent className="flex items-center gap-1 p-1">
+                <div className={`flex size-7 items-center justify-center rounded-md shrink-0 ${s.cls}`}>
                   <I className="size-4" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-lg font-bold leading-none">{s.value}</div>
+                  <div className="text-base font-bold leading-none">{s.value}</div>
                   <div className="text-[11px] text-muted-foreground truncate">{s.label}</div>
                 </div>
               </CardContent>
@@ -310,13 +310,13 @@ export function ContactRemindersSection() {
 
       <ScrollArea className="custom-scroll flex-1 min-h-0 -mx-1 px-1">
         {loading ? (
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="grid gap-1 sm:grid-cols-2">
             {Array.from({ length: 4 }).map((_, i) => (
               <Skeleton key={i} className="h-32 w-full rounded-xl" />
             ))}
           </div>
         ) : filtered.length > 0 ? (
-          <div className="grid grid-cols-1 gap-2 pb-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-1 pb-4 sm:grid-cols-2">
             {filtered.map((r) => {
               const fm = freqMeta(r.frequency);
               const FI = fm.icon;
@@ -327,9 +327,9 @@ export function ContactRemindersSection() {
                   key={r.id}
                   className={`group transition-shadow hover:shadow-md ${!r.active ? "opacity-60" : ""} ${isOverdue && r.active ? "border-rose-500/40 bg-rose-500/5" : ""}`}
                 >
-                  <CardContent className="flex flex-col gap-2 p-2">
-                    <div className="flex items-start gap-2">
-                      <div className={`flex size-9 items-center justify-center rounded-md shrink-0 ${isOverdue && r.active ? "bg-rose-500/15 text-rose-500" : "bg-emerald-glow/15 text-emerald-glow"}`}>
+                  <CardContent className="flex flex-col gap-1 p-1">
+                    <div className="flex items-start gap-1">
+                      <div className={`flex size-7 items-center justify-center rounded-md shrink-0 ${isOverdue && r.active ? "bg-rose-500/15 text-rose-500" : "bg-emerald-glow/15 text-emerald-glow"}`}>
                         <User className="size-4" />
                       </div>
                       <div className="min-w-0 flex-1">
@@ -419,8 +419,8 @@ export function ContactRemindersSection() {
             })}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
-            <Bell className="size-8 text-muted-foreground/40" />
+          <div className="flex flex-col items-center justify-center gap-1 py-16 text-center">
+            <Bell className="size-6 text-muted-foreground/40" />
             <p className="text-sm font-medium">لا تذكيرات {tab === "due" ? "مستحقة" : "محفوظة"}</p>
             <p className="text-xs text-muted-foreground">أضف شخصاً لتذكيرك بالتواصل معه دورياً</p>
             <Button size="sm" variant="outline" className="mt-1" onClick={openAdd}>
@@ -438,7 +438,7 @@ export function ContactRemindersSection() {
             <DialogTitle>{editing ? "تعديل تذكير" : "إضافة تذكير تواصل"}</DialogTitle>
             <DialogDescription>سيتم تذكيرك بالتواصل مع هذا الشخص دورياً.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-2 py-1">
+          <div className="grid gap-1 py-1">
             <div className="grid gap-1.5">
               <Label htmlFor="cr-name">اسم جهة الاتصال *</Label>
               <Input
@@ -458,7 +458,7 @@ export function ContactRemindersSection() {
                     const FI = fr.icon;
                     return (
                       <SelectItem key={fr.value} value={fr.value}>
-                        <span className="inline-flex items-center gap-2">
+                        <span className="inline-flex items-center gap-1">
                           <FI className="size-3.5" />
                           {fr.label}
                         </span>
@@ -468,7 +468,7 @@ export function ContactRemindersSection() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-1">
               <div className="grid gap-1.5">
                 <Label htmlFor="cr-last">آخر تواصل</Label>
                 <Input

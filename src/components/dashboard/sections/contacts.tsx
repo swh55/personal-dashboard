@@ -251,14 +251,14 @@ export function ContactsSection() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className="flex h-full flex-col gap-1">
       {/* header */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-1">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">جهات الاتصال</h1>
+          <h1 className="text-lg font-bold tracking-tight">جهات الاتصال</h1>
           <p className="text-sm text-muted-foreground">{stats.total} جهة · {stats.favorites} مفضلة</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Button variant="outline" size="sm" onClick={() => reload()}>
             <RefreshCw className="size-4" />
             تحديث
@@ -314,7 +314,7 @@ export function ContactsSection() {
       </div>
 
       {/* stats */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5">
+      <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 md:grid-cols-5">
         <StatPill icon={Users} label="الإجمالي" value={stats.total} accent="emerald" />
         <StatPill icon={Heart} label="المفضلة" value={stats.favorites} accent="amber" />
         {RELATION_TYPES.map((r) => (
@@ -324,12 +324,12 @@ export function ContactsSection() {
 
       {/* filters */}
       <Card>
-        <CardContent className="flex flex-col gap-2 p-2 md:flex-row md:items-center">
+        <CardContent className="flex flex-col gap-1 p-1 md:flex-row md:items-center">
           <div className="relative flex-1">
             <Search className="absolute right-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="بحث بالاسم أو الهاتف أو البريد" className="pr-8" />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <Filter className="size-4 text-muted-foreground" />
             <Select value={relation} onValueChange={setRelation}>
               <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
@@ -339,7 +339,7 @@ export function ContactsSection() {
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <Label htmlFor="fav-only" className="text-sm text-muted-foreground">المفضلة فقط</Label>
             <Switch id="fav-only" checked={favOnly} onCheckedChange={setFavOnly} />
           </div>
@@ -360,15 +360,15 @@ export function ContactsSection() {
 
       <ScrollArea className="custom-scroll flex-1 -mx-1 px-1">
         {loading ? (
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-32 w-full rounded-xl" />)}
           </div>
         ) : filtered.length > 0 ? (
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 pb-4">
+          <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 pb-4">
             {filtered.map((c) => (
               <Card key={c.id} className="group cursor-pointer transition-shadow hover:shadow-md" onClick={() => setDetail(c)}>
-                <CardContent className="flex items-start gap-2 p-2">
-                  <Avatar className="size-9">
+                <CardContent className="flex items-start gap-1 p-1">
+                  <Avatar className="size-7">
                     {c.avatar ? <AvatarImage src={c.avatar} alt={c.name} /> : null}
                     <AvatarFallback className={`text-sm font-bold ${colorForName(c.name)}`}>
                       {c.name.charAt(0)}
@@ -401,8 +401,8 @@ export function ContactsSection() {
             ))}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
-            <Users className="size-8 text-muted-foreground/40" />
+          <div className="flex flex-col items-center justify-center gap-1 py-16 text-center">
+            <Users className="size-6 text-muted-foreground/40" />
             <p className="text-sm font-medium">لا جهات اتصال</p>
             <p className="text-xs text-muted-foreground">ابدأ بإضافة جهة جديدة</p>
             <Button size="sm" variant="outline" className="mt-1" onClick={openAdd}>
@@ -422,22 +422,22 @@ export function ContactsSection() {
                 <DialogTitle>تفاصيل جهة الاتصال</DialogTitle>
                 <DialogDescription>{relationLabel(detail.relation)} {detail.category ? `· ${detail.category}` : ""}</DialogDescription>
               </DialogHeader>
-              <div className="flex items-center gap-2 py-2">
+              <div className="flex items-center gap-1 py-1">
                 <Avatar className="size-16">
                   {detail.avatar ? <AvatarImage src={detail.avatar} alt={detail.name} /> : null}
-                  <AvatarFallback className={`text-xl font-bold ${colorForName(detail.name)}`}>
+                  <AvatarFallback className={`text-lg font-bold ${colorForName(detail.name)}`}>
                     {detail.name.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg font-semibold truncate">{detail.name}</span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-base font-semibold truncate">{detail.name}</span>
                     {detail.favorite ? <Star className="size-4 fill-amber-glow text-amber-glow" /> : null}
                   </div>
                   <div dir="ltr" className="text-sm text-muted-foreground text-right">{detail.phone}</div>
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-1">
                 <Button variant="default" className="bg-emerald-glow text-emerald-glow-foreground hover:bg-emerald-glow/90" onClick={() => callContact(detail)}>
                   <Phone className="size-4" />
                   اتصال
@@ -487,12 +487,12 @@ export function ContactsSection() {
             <DialogTitle>{editing ? "تعديل جهة اتصال" : "إضافة جهة اتصال"}</DialogTitle>
             <DialogDescription>أدخل البيانات المطلوبة.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-2 max-h-[60vh] overflow-y-auto custom-scroll py-1">
+          <div className="grid gap-1 max-h-[60vh] overflow-y-auto custom-scroll py-1">
             <div className="grid gap-1.5">
               <Label htmlFor="n-name">الاسم *</Label>
               <Input id="n-name" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-1">
               <div className="grid gap-1.5">
                 <Label htmlFor="n-phone">الهاتف *</Label>
                 <Input id="n-phone" dir="ltr" value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} className="text-right" />
@@ -502,7 +502,7 @@ export function ContactsSection() {
                 <Input id="n-wa" dir="ltr" value={form.whatsapp} onChange={(e) => setForm((f) => ({ ...f, whatsapp: e.target.value }))} className="text-right" />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-1">
               <div className="grid gap-1.5">
                 <Label htmlFor="n-email">البريد الإلكتروني</Label>
                 <Input id="n-email" dir="ltr" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} className="text-right" />
@@ -529,7 +529,7 @@ export function ContactsSection() {
               <Label htmlFor="n-note">ملاحظة</Label>
               <Textarea id="n-note" rows={2} value={form.note} onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))} />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               <Switch id="n-fav" checked={form.favorite} onCheckedChange={(v) => setForm((f) => ({ ...f, favorite: v }))} />
               <Label htmlFor="n-fav" className="text-sm font-normal cursor-pointer">إضافة للمفضلة</Label>
             </div>
@@ -574,11 +574,11 @@ function StatPill({
   const accentClass = accent === "emerald" ? "text-emerald-glow bg-emerald-glow/10" : "text-amber-glow bg-amber-glow/10";
   return (
     <Card>
-      <CardContent className="flex items-center gap-2 p-2">
-        {Icon ? <div className={`flex size-8 items-center justify-center rounded-md ${accentClass}`}><Icon className="size-4" /></div> : null}
+      <CardContent className="flex items-center gap-1 p-1">
+        {Icon ? <div className={`flex size-6 items-center justify-center rounded-md ${accentClass}`}><Icon className="size-4" /></div> : null}
         <div className="min-w-0">
           <div className="text-xs text-muted-foreground truncate">{label}</div>
-          <div className="text-lg font-bold">{value}</div>
+          <div className="text-base font-bold">{value}</div>
         </div>
       </CardContent>
     </Card>

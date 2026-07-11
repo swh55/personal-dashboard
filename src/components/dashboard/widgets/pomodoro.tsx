@@ -77,14 +77,14 @@ export function PomodoroWidget() {
   const strokeDashoffset = circumference * (1 - progress);
 
   return (
-    <div className="flex h-full flex-col gap-2 p-2">
+    <div className="flex h-full flex-col gap-1 p-2">
       {/* header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold">بومودورو</h1>
+          <h1 className="text-lg font-bold">بومودورو</h1>
           <p className="text-xs text-muted-foreground">{sessionsToday} جلسة اليوم</p>
         </div>
-        <Button variant="ghost" size="sm" className="size-8 p-0" onClick={() => setSettingsOpen(true)}>
+        <Button variant="ghost" size="sm" className="size-6 p-0" onClick={() => setSettingsOpen(true)}>
           <Settings className="size-4" />
         </Button>
       </div>
@@ -99,7 +99,7 @@ export function PomodoroWidget() {
               key={m}
               onClick={() => setMode(m)}
               className={cn(
-                "flex flex-1 items-center justify-center gap-1 rounded-lg py-1.5 text-xs font-medium transition-all",
+                "flex flex-1 items-center justify-center gap-1 rounded-lg py-0.5 text-xs font-medium transition-all",
                 mode === m ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground",
               )}
             >
@@ -129,7 +129,7 @@ export function PomodoroWidget() {
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
             <Icon className={cn("size-5", config.color)} />
-            <div className="text-3xl font-bold tabular-nums">
+            <div className="text-xl font-bold tabular-nums">
               {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
             </div>
             <div className="text-xs text-muted-foreground">{config.label}</div>
@@ -138,17 +138,17 @@ export function PomodoroWidget() {
       </div>
 
       {/* controls */}
-      <div className="flex items-center justify-center gap-2">
+      <div className="flex items-center justify-center gap-1">
         <Button variant="outline" size="sm" className="h-9 w-9 p-0" onClick={reset} aria-label="إعادة">
           <RotateCcw className="size-4" />
         </Button>
         {running ? (
-          <Button size="sm" className="h-10 gap-2 px-6" onClick={pause}>
+          <Button size="sm" className="h-10 gap-1 px-6" onClick={pause}>
             <Pause className="size-4" />
             إيقاف مؤقت
           </Button>
         ) : (
-          <Button size="sm" className="h-10 gap-2 px-6" onClick={start}>
+          <Button size="sm" className="h-10 gap-1 px-6" onClick={start}>
             <Play className="size-4" />
             ابدأ
           </Button>
@@ -161,22 +161,22 @@ export function PomodoroWidget() {
           <DialogHeader>
             <DialogTitle>إعدادات المؤقت</DialogTitle>
           </DialogHeader>
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center justify-between gap-1">
               <Label className="text-sm">تركيز (دقيقة)</Label>
               <Input
                 type="number" className="w-20" value={durForm.focus}
                 onChange={(e) => setDurForm({ ...durForm, focus: e.target.value })}
               />
             </div>
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center justify-between gap-1">
               <Label className="text-sm">استراحة قصيرة</Label>
               <Input
                 type="number" className="w-20" value={durForm.short}
                 onChange={(e) => setDurForm({ ...durForm, short: e.target.value })}
               />
             </div>
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center justify-between gap-1">
               <Label className="text-sm">استراحة طويلة</Label>
               <Input
                 type="number" className="w-20" value={durForm.long}

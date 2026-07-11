@@ -105,9 +105,9 @@ export function SmartNotificationsWidget() {
   const unreadCount = stats.total;
 
   return (
-    <div className="flex h-full flex-col gap-2">
-      <header className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
+    <div className="flex h-full flex-col gap-1">
+      <header className="flex flex-wrap items-center justify-between gap-1">
+        <div className="flex items-center gap-1">
           <div className="relative">
             <div className="flex size-11 items-center justify-center rounded-xl bg-emerald-glow/15 text-emerald-glow">
               <Bell className="size-5" />
@@ -119,7 +119,7 @@ export function SmartNotificationsWidget() {
             )}
           </div>
           <div>
-            <h2 className="text-xl font-bold tracking-tight">الإشعارات</h2>
+            <h2 className="text-lg font-bold tracking-tight">الإشعارات</h2>
             <p className="text-xs text-muted-foreground">
               {stats.total > 0
                 ? `${stats.critical} حرجة · ${stats.warning} تحذير · ${stats.info} معلومة`
@@ -127,7 +127,7 @@ export function SmartNotificationsWidget() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Button
             variant="outline"
             size="sm"
@@ -143,10 +143,10 @@ export function SmartNotificationsWidget() {
       </header>
 
       <Card className="flex min-h-0 flex-1 flex-col border-border/60">
-        <CardContent className="flex min-h-0 flex-1 flex-col p-2">
+        <CardContent className="flex min-h-0 flex-1 flex-col p-1">
           <ScrollArea className="custom-scroll min-h-0 flex-1">
             {loading ? (
-              <div className="flex flex-col gap-2 p-1">
+              <div className="flex flex-col gap-1 p-1">
                 {Array.from({ length: 4 }).map((_, i) => (
                   <Skeleton key={i} className="h-16 w-full rounded-lg" />
                 ))}
@@ -154,7 +154,7 @@ export function SmartNotificationsWidget() {
             ) : error ? (
               <Alert variant="destructive" className="m-1">
                 <AlertTriangle className="size-4" />
-                <AlertDescription className="flex items-center gap-2">
+                <AlertDescription className="flex items-center gap-1">
                   <span className="text-xs">{error}</span>
                   <Button size="sm" variant="outline" onClick={reload}>
                     إعادة
@@ -162,8 +162,8 @@ export function SmartNotificationsWidget() {
                 </AlertDescription>
               </Alert>
             ) : notifications.length === 0 ? (
-              <div className="flex flex-col items-center justify-center gap-2 p-8 text-center">
-                <div className="flex size-9 items-center justify-center rounded-full bg-emerald-glow/10 text-emerald-glow">
+              <div className="flex flex-col items-center justify-center gap-1 p-8 text-center">
+                <div className="flex size-7 items-center justify-center rounded-full bg-emerald-glow/10 text-emerald-glow">
                   <Inbox className="size-6" />
                 </div>
                 <p className="text-sm font-medium">لا إشعارات</p>
@@ -180,13 +180,13 @@ export function SmartNotificationsWidget() {
                     <div
                       key={n.id}
                       className={
-                        "group flex items-start gap-2.5 rounded-lg border border-border/60 border-r-4 bg-card p-2.5 transition-colors hover:bg-muted/30 " +
+                        "group flex items-start gap-1 rounded-lg border border-border/60 border-r-4 bg-card p-2.5 transition-colors hover:bg-muted/30 " +
                         meta.borderCls
                       }
                     >
                       <div
                         className={
-                          "flex size-8 shrink-0 items-center justify-center rounded-lg " +
+                          "flex size-6 shrink-0 items-center justify-center rounded-lg " +
                           meta.iconCls
                         }
                       >

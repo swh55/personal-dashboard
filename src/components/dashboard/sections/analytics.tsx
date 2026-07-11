@@ -157,28 +157,28 @@ export function AnalyticsSection() {
   }, [data]);
 
   return (
-    <div className="flex h-full flex-col gap-2">
-      <header className="flex flex-wrap items-center justify-between gap-2">
+    <div className="flex h-full flex-col gap-1">
+      <header className="flex flex-wrap items-center justify-between gap-1">
         <div>
-          <h2 className="text-xl font-bold tracking-tight">التحليلات</h2>
+          <h2 className="text-lg font-bold tracking-tight">التحليلات</h2>
           <p className="text-sm text-muted-foreground">
             نظرة شاملة على الإنفاق والمهام والسعادة
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <ToggleGroup
             type="single"
             value={String(days)}
             onValueChange={(v) => v && setDays(Number(v))}
             className="rounded-lg border border-border/60 p-0.5"
           >
-            <ToggleGroupItem value="7" className="h-8 px-3 text-xs">
+            <ToggleGroupItem value="7" className="h-8 px-2 text-xs">
               7 أيام
             </ToggleGroupItem>
-            <ToggleGroupItem value="30" className="h-8 px-3 text-xs">
+            <ToggleGroupItem value="30" className="h-8 px-2 text-xs">
               30 يوم
             </ToggleGroupItem>
-            <ToggleGroupItem value="90" className="h-8 px-3 text-xs">
+            <ToggleGroupItem value="90" className="h-8 px-2 text-xs">
               90 يوم
             </ToggleGroupItem>
           </ToggleGroup>
@@ -191,14 +191,14 @@ export function AnalyticsSection() {
 
       <ScrollArea className="flex-1 custom-scroll -mx-1 px-1">
         {loading ? (
-          <div className="grid gap-2">
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+          <div className="grid gap-1">
+            <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-6">
               {Array.from({ length: 6 }).map((_, i) => (
                 <Skeleton key={i} className="h-24 rounded-xl" />
               ))}
             </div>
             <Skeleton className="h-64 w-full rounded-xl" />
-            <div className="grid gap-2 lg:grid-cols-2">
+            <div className="grid gap-1 lg:grid-cols-2">
               <Skeleton className="h-64 rounded-xl" />
               <Skeleton className="h-64 rounded-xl" />
             </div>
@@ -208,7 +208,7 @@ export function AnalyticsSection() {
           <Alert variant="destructive">
             <CircleAlert className="size-4" />
             <AlertTitle>تعذّر تحميل التحليلات</AlertTitle>
-            <AlertDescription className="flex items-center gap-2">
+            <AlertDescription className="flex items-center gap-1">
               <span>{error}</span>
               <Button size="sm" variant="outline" onClick={reload}>
                 إعادة المحاولة
@@ -222,9 +222,9 @@ export function AnalyticsSection() {
             <AlertDescription>لم يتم العثور على بيانات تحليلية.</AlertDescription>
           </Alert>
         ) : (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
             {/* Overview stat cards */}
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+            <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-6">
               <OverviewTile
                 icon={Wallet}
                 label="إجمالي الإنفاق"
@@ -266,7 +266,7 @@ export function AnalyticsSection() {
             {/* Spending trend chart */}
             <Card className="border-border/60">
               <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-2 text-sm">
+                <CardTitle className="flex items-center gap-1 text-sm">
                   <LineIcon className="size-4 text-emerald-glow" />
                   اتجاه الإنفاق — آخر {days} يوماً
                 </CardTitle>
@@ -319,11 +319,11 @@ export function AnalyticsSection() {
               </CardContent>
             </Card>
 
-            <div className="grid gap-2 lg:grid-cols-2">
+            <div className="grid gap-1 lg:grid-cols-2">
               {/* Category breakdown */}
               <Card className="border-border/60">
                 <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center gap-2 text-sm">
+                  <CardTitle className="flex items-center gap-1 text-sm">
                     <PieIcon className="size-4 text-amber-glow" />
                     توزيع الإنفاق حسب الفئة
                   </CardTitle>
@@ -366,13 +366,13 @@ export function AnalyticsSection() {
               {/* Task stats + completion */}
               <Card className="border-border/60">
                 <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center gap-2 text-sm">
+                  <CardTitle className="flex items-center gap-1 text-sm">
                     <ListTodo className="size-4 text-violet-400" />
                     إحصاءات المهام
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <div className="grid grid-cols-4 gap-2 text-center">
+                  <div className="grid grid-cols-4 gap-1 text-center">
                     <StatPill label="الإجمالي" value={data.taskStats.total} />
                     <StatPill label="منجزة" value={data.taskStats.done} tone="emerald" />
                     <StatPill label="قيد التنفيذ" value={data.taskStats.doing} tone="amber" />
@@ -395,7 +395,7 @@ export function AnalyticsSection() {
                       لا توجد مهام مصنّفة
                     </p>
                   ) : (
-                    <div className="mt-2 flex flex-col gap-2">
+                    <div className="mt-2 flex flex-col gap-1">
                       {taskByCatList.map((c) => (
                         <div key={c.category} className="flex flex-col gap-1">
                           <div className="flex items-center justify-between text-xs">
@@ -422,7 +422,7 @@ export function AnalyticsSection() {
             {/* Happiness trend */}
             <Card className="border-border/60">
               <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-2 text-sm">
+                <CardTitle className="flex items-center gap-1 text-sm">
                   <Smile className="size-4 text-amber-glow" />
                   مؤشر السعادة اليومي
                 </CardTitle>
@@ -486,7 +486,7 @@ function OverviewTile({
 }) {
   return (
     <Card className="border-border/60">
-      <CardContent className="flex flex-col gap-1 p-2">
+      <CardContent className="flex flex-col gap-1 p-1">
         <div className="flex items-center justify-between">
           <Icon className={`size-4 ${accent}`} />
         </div>
@@ -516,7 +516,7 @@ function StatPill({
       : "";
   return (
     <div className="rounded-lg border border-border/60 bg-muted/20 p-2">
-      <div className={"text-lg font-bold leading-none " + toneCls}>
+      <div className={"text-base font-bold leading-none " + toneCls}>
         {value.toLocaleString("en-US")}
       </div>
       <div className="mt-1 text-[10px] text-muted-foreground">{label}</div>
@@ -526,8 +526,8 @@ function StatPill({
 
 function EmptyChartState({ message }: { message: string }) {
   return (
-    <div className="flex h-56 flex-col items-center justify-center gap-2 text-center">
-      <BarChart3 className="size-8 text-muted-foreground/40" />
+    <div className="flex h-56 flex-col items-center justify-center gap-1 text-center">
+      <BarChart3 className="size-6 text-muted-foreground/40" />
       <p className="text-xs text-muted-foreground">{message}</p>
     </div>
   );

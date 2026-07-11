@@ -669,3 +669,58 @@ Stage Summary:
 - External API calls no longer intercepted by the local handler
 - Clear error messages for different failure scenarios
 - APK: /home/z/my-project/dashboard.apk (9.3 MB)
+
+---
+Task ID: 1-margins-v2
+Agent: margin-remover-v2
+Task: Remove all remaining margins/padding from section files
+
+Work Log:
+- Audited all 35 files in src/components/dashboard/sections/ and 3 files in src/components/dashboard/widgets/ for remaining spacing patterns after the Card component was tightened to py-0 gap-1 px-2.
+- Applied CardContent-specific padding reductions: any `p-2`, `p-3`, or `p-4` token inside a `<CardContent className="...">` string was changed to `p-1` (using perl with iterative substitution so multiple padding tokens per className are all caught). `p-0` was left untouched as required.
+- Applied CardContent-specific gap reductions: any `gap-2`, `gap-2.5`, or `gap-3` token inside a CardContent className was changed to `gap-1`.
+- Applied global gap reductions across all section/widget files: `gap-2.5` -> `gap-1`, `gap-2` -> `gap-1`, `gap-3` -> `gap-1`. Word-boundary regex ensures `gap-0.5`, `gap-px`, `gap-1`, and `gap-x-*`/`gap-y-*` variants are NOT touched.
+- Applied stat-card inner padding reductions: `p-2 text-center` -> `p-1 text-center` and `p-3 text-center` -> `p-1 text-center`.
+- Applied section wrapper tightening: `flex h-full flex-col gap-N` -> `flex h-full flex-col gap-1` (any numeric gap value collapses to gap-1).
+- Applied padding reductions on small elements/badges/list-items: `py-1.5` -> `py-0.5`, `py-2` -> `py-1`, `px-3` -> `px-2`. Word-boundary regex ensures `py-2.5` and `px-3.5` are NOT touched.
+- Applied icon size reductions: `size-10` -> `size-7`, `size-9` -> `size-7`, `size-8` -> `size-6` (mostly affects stat-card icon wrappers and small icon-only buttons).
+- Applied stat-value text size reductions using a 3-step placeholder technique to prevent chained substitution: original `text-3xl` -> `text-xl`, original `text-xl` -> `text-lg`, original `text-lg` -> `text-base`. Each original token shrinks by exactly one step.
+- Preserved: `p-0`, `p-1`, `gap-1`, `gap-0.5`, `gap-px`, `pt-0`, all `gap-x-*`/`gap-y-*` variants, `px-3.5`, `py-2.5`. Inputs/buttons using shadcn defaults (`h-9 px-4 py-2`) are not affected since those values come from the Button/Input component classes, not the section/widget files.
+
+Stage Summary:
+- 38 files modified (35 in sections/, 3 in widgets/).
+- Verified zero remaining occurrences of: `gap-2` (standalone), `gap-3` (standalone), `gap-2.5`, `size-8`, `size-9`, `size-10`, `text-3xl`, `p-2 text-center`, `p-3 text-center`, `py-1.5`, `py-2` (standalone), `px-3` (standalone, excluding px-3.5).
+- Verified preserved: `p-0` (10+ CardContent instances), `gap-1.5` (multiple instances across files), `gap-0.5` (8 instances across 5 files).
+- `npx eslint src/components/dashboard/sections/ src/components/dashboard/widgets/ --max-warnings=0` exits 0 (zero errors, zero warnings).
+- Dev server log shows clean compile and successful GET / responses (200 OK, ~50ms render).
+- Sample post-change CardContent patterns now look like: `<CardContent className="flex items-center gap-1 p-1">`, `<CardContent className="flex flex-col gap-1 p-1">`, `<CardContent className="p-1 text-center">`, `<CardContent className="p-0">` (preserved).
+
+---
+Task ID: 19
+Agent: main (margins + AI fix + launcher)
+Task: Remove all margins, fix AI assistant, convert to home launcher app
+
+Work Log:
+1. Margins removal:
+   - Updated Card component defaults: py-6→py-0, gap-6→gap-1, px-6→px-2, rounded-xl→rounded-lg
+   - Delegated section file cleanup to subagent: CardContent p-2/p-3→p-1, gap-2→gap-1, size-8→size-6, text-xl→text-lg, etc.
+   - 38 files modified with hundreds of replacements
+
+2. AI assistant fix:
+   - Simplified the fetch interceptor logic: ONLY intercept URLs that start with "/api/" (relative). All other URLs (with protocol like https://) pass through directly to originalFetch.
+   - Removed the complex origin-checking logic that was causing issues.
+   - Verified: with a fake API key, the AI handler now reaches Z.AI API and returns 401 (correct behavior — means the request went through).
+   - Added allowNavigation to capacitor.config.ts for api.z.ai, open-meteo.com, openstreetmap.org, unpkg.com
+
+3. Home launcher:
+   - Added CATEGORY_HOME + CATEGORY_DEFAULT intent filter to AndroidManifest.xml
+   - Added launcher-specific activity attributes: stateNotNeeded, taskAffinity="", windowSoftInputMode="adjustResize"
+   - Added a "تطبيقات الهاتف" button in the top bar (LayoutGrid icon) that calls AppDrawer.openAppDrawer() to show all installed apps
+   - The app now appears in the Android "Home" selector — user can set it as the default launcher
+
+Stage Summary:
+- APK: /home/z/my-project/dashboard.apk (9.3 MB)
+- Card components have minimal padding (py-0, gap-1, px-2)
+- AI assistant makes real API calls to Z.AI (verified with 401 response on fake key)
+- App is now an Android Home Launcher (CATEGORY_HOME intent filter)
+- Top bar has a "تطبيقات الهاتف" button to open the app drawer

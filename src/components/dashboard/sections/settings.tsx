@@ -343,7 +343,7 @@ export function SettingsSection() {
 
   if (!mounted) {
     return (
-      <div className="flex h-full flex-col gap-2">
+      <div className="flex h-full flex-col gap-1">
         <div>
           <Skeleton className="h-8 w-48" />
           <Skeleton className="mt-2 h-4 w-64" />
@@ -356,30 +356,30 @@ export function SettingsSection() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className="flex h-full flex-col gap-1">
       {/* header */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-1">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">الإعدادات</h1>
+          <h1 className="text-lg font-bold tracking-tight">الإعدادات</h1>
           <p className="text-sm text-muted-foreground">الملف الشخصي، الأمان، المظهر، والبيانات</p>
         </div>
       </div>
 
       <ScrollArea className="custom-scroll flex-1 min-h-0 -mx-1 px-1">
-        <div className="flex flex-col gap-2 pb-4 max-w-3xl">
+        <div className="flex flex-col gap-1 pb-4 max-w-3xl">
 
           {/* User profile */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
+              <CardTitle className="flex items-center gap-1 text-base">
                 <User className="size-4 text-emerald-glow" />
                 الملف الشخصي
               </CardTitle>
               <CardDescription className="text-xs">معلومات المستخدم الأساسية</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col gap-2">
-              <div className="flex items-center gap-2">
-                <div className="flex size-14 items-center justify-center rounded-full bg-gradient-to-br from-emerald-glow to-amber-glow text-background font-bold text-xl shrink-0">
+            <CardContent className="flex flex-col gap-1">
+              <div className="flex items-center gap-1">
+                <div className="flex size-14 items-center justify-center rounded-full bg-gradient-to-br from-emerald-glow to-amber-glow text-background font-bold text-lg shrink-0">
                   {(usernameInput || "ع").charAt(0)}
                 </div>
                 <div className="flex-1 grid gap-1.5">
@@ -403,15 +403,15 @@ export function SettingsSection() {
           {/* Security */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
+              <CardTitle className="flex items-center gap-1 text-base">
                 <Shield className="size-4 text-emerald-glow" />
                 الأمان
               </CardTitle>
               <CardDescription className="text-xs">قفل التطبيق برمز PIN</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col gap-2">
+            <CardContent className="flex flex-col gap-1">
               <div className="flex items-center justify-between rounded-lg border p-2">
-                <div className="flex items-start gap-2">
+                <div className="flex items-start gap-1">
                   <Lock className="size-5 text-muted-foreground mt-0.5" />
                   <div>
                     <div className="text-sm font-medium">قفل PIN</div>
@@ -428,7 +428,7 @@ export function SettingsSection() {
                   <Label htmlFor="pin" className="text-sm">
                     رمز PIN (4 أرقام)
                   </Label>
-                  <div className="mt-2 flex items-center gap-2">
+                  <div className="mt-2 flex items-center gap-1">
                     <Input
                       id="pin"
                       inputMode="numeric"
@@ -455,19 +455,19 @@ export function SettingsSection() {
           {/* Appearance */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
+              <CardTitle className="flex items-center gap-1 text-base">
                 <Palette className="size-4 text-emerald-glow" />
                 المظهر
               </CardTitle>
               <CardDescription className="text-xs">السمة واللون المميز</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col gap-2">
-              <div className="grid gap-2">
+            <CardContent className="flex flex-col gap-1">
+              <div className="grid gap-1">
                 <Label>السمة</Label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-1">
                   <button
                     onClick={() => changeTheme("dark")}
-                    className={`flex items-center gap-2 rounded-lg border p-2 text-right transition ${renderedTheme === "dark" ? "border-emerald-glow bg-emerald-glow/5" : "border-border hover:bg-muted"}`}
+                    className={`flex items-center gap-1 rounded-lg border p-2 text-right transition ${renderedTheme === "dark" ? "border-emerald-glow bg-emerald-glow/5" : "border-border hover:bg-muted"}`}
                   >
                     <Moon className={`size-5 ${renderedTheme === "dark" ? "text-emerald-glow" : "text-muted-foreground"}`} />
                     <div className="flex-1">
@@ -478,7 +478,7 @@ export function SettingsSection() {
                   </button>
                   <button
                     onClick={() => changeTheme("light")}
-                    className={`flex items-center gap-2 rounded-lg border p-2 text-right transition ${renderedTheme === "light" ? "border-emerald-glow bg-emerald-glow/5" : "border-border hover:bg-muted"}`}
+                    className={`flex items-center gap-1 rounded-lg border p-2 text-right transition ${renderedTheme === "light" ? "border-emerald-glow bg-emerald-glow/5" : "border-border hover:bg-muted"}`}
                   >
                     <Sun className={`size-5 ${renderedTheme === "light" ? "text-emerald-glow" : "text-muted-foreground"}`} />
                     <div className="flex-1">
@@ -492,14 +492,14 @@ export function SettingsSection() {
 
               <Separator />
 
-              <div className="grid gap-2">
+              <div className="grid gap-1">
                 <Label>اللون المميز</Label>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1">
                   {ACCENTS.map((a) => (
                     <button
                       key={a.value}
                       onClick={() => changeAccent(a.value)}
-                      className={`relative flex items-center gap-2 rounded-lg border p-2 pr-3 transition ${settings.accent === a.value ? "border-foreground/40 bg-muted" : "border-border hover:bg-muted"}`}
+                      className={`relative flex items-center gap-1 rounded-lg border p-2 pr-3 transition ${settings.accent === a.value ? "border-foreground/40 bg-muted" : "border-border hover:bg-muted"}`}
                       aria-label={a.label}
                     >
                       <span
@@ -518,7 +518,7 @@ export function SettingsSection() {
           {/* Location */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
+              <CardTitle className="flex items-center gap-1 text-base">
                 <MapPin className="size-4 text-emerald-glow" />
                 الموقع
               </CardTitle>
@@ -526,7 +526,7 @@ export function SettingsSection() {
                 المدينة والإحداثيات والمنطقة الزمنية — تُستخدم للطقس والتقويم
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col gap-2">
+            <CardContent className="flex flex-col gap-1">
               <div className="grid gap-1.5">
                 <Label htmlFor="city">المدينة</Label>
                 <Input
@@ -536,7 +536,7 @@ export function SettingsSection() {
                   placeholder="حلب"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-1">
                 <div className="grid gap-1.5">
                   <Label htmlFor="lat">خط العرض (Latitude)</Label>
                   <Input
@@ -571,7 +571,7 @@ export function SettingsSection() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center justify-between gap-1">
                 <Button
                   variant="outline"
                   size="sm"
@@ -600,7 +600,7 @@ export function SettingsSection() {
           {/* Exchange Rate */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
+              <CardTitle className="flex items-center gap-1 text-base">
                 <DollarSign className="size-4 text-emerald-glow" />
                 سعر الصرف
               </CardTitle>
@@ -608,10 +608,10 @@ export function SettingsSection() {
                 سعر صرف الدولار مقابل الليرة السورية — يُستخدم في القسم المالي
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col gap-2">
+            <CardContent className="flex flex-col gap-1">
               <div className="grid gap-1.5">
                 <Label htmlFor="rate">1 دولار = ? ليرة سورية</Label>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                   <Input
                     id="rate"
                     inputMode="numeric"
@@ -635,7 +635,7 @@ export function SettingsSection() {
           {/* AI API */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
+              <CardTitle className="flex items-center gap-1 text-base">
                 <Sparkles className="size-4 text-emerald-glow" />
                 إعدادات الذكاء الاصطناعي
               </CardTitle>
@@ -643,7 +643,7 @@ export function SettingsSection() {
                 مفتاح API للمساعد الذكي — يُستخدم في المساعد والاقتراحات الذكية
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col gap-2">
+            <CardContent className="flex flex-col gap-1">
               <div className="grid gap-1.5">
                 <Label htmlFor="ai-key">مفتاح API</Label>
                 <div className="relative">
@@ -711,15 +711,15 @@ export function SettingsSection() {
           {/* Data */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
+              <CardTitle className="flex items-center gap-1 text-base">
                 <Database className="size-4 text-emerald-glow" />
                 البيانات
               </CardTitle>
               <CardDescription className="text-xs">النسخ الاحتياطي وإدارة السجل</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col gap-2">
-              <div className="flex items-center justify-between gap-2 rounded-lg border p-2">
-                <div className="flex items-start gap-2 min-w-0">
+            <CardContent className="flex flex-col gap-1">
+              <div className="flex items-center justify-between gap-1 rounded-lg border p-2">
+                <div className="flex items-start gap-1 min-w-0">
                   <Download className="size-5 text-muted-foreground mt-0.5 shrink-0" />
                   <div className="min-w-0">
                     <div className="text-sm font-medium">تصدير نسخة احتياطية</div>
@@ -733,8 +733,8 @@ export function SettingsSection() {
                 </Button>
               </div>
               <Separator />
-              <div className="flex items-center justify-between gap-2 rounded-lg border border-destructive/30 p-2">
-                <div className="flex items-start gap-2 min-w-0">
+              <div className="flex items-center justify-between gap-1 rounded-lg border border-destructive/30 p-2">
+                <div className="flex items-start gap-1 min-w-0">
                   <Trash2 className="size-5 text-destructive mt-0.5 shrink-0" />
                   <div className="min-w-0">
                     <div className="text-sm font-medium">مسح سجل النشاط</div>
@@ -753,12 +753,12 @@ export function SettingsSection() {
           {/* About */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
+              <CardTitle className="flex items-center gap-1 text-base">
                 <Info className="size-4 text-emerald-glow" />
                 حول التطبيق
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col gap-2">
+            <CardContent className="flex flex-col gap-1">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">الاسم</span>
                 <span className="font-medium">لوحة التحكم الشخصية</span>

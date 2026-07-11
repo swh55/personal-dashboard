@@ -130,11 +130,11 @@ export function OverviewSection() {
   ];
 
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className="flex h-full flex-col gap-1">
       {/* header */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-1">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">نظرة عامة</h1>
+          <h1 className="text-lg font-bold tracking-tight">نظرة عامة</h1>
           <p className="text-sm text-muted-foreground">ملخص يومك ونشاطك</p>
         </div>
         <Button variant="outline" size="sm" onClick={() => setPanel("device")}>
@@ -148,7 +148,7 @@ export function OverviewSection() {
       </div>
 
       <ScrollArea className="custom-scroll flex-1 -mx-1 px-1">
-        <div className="flex flex-col gap-2 pb-4">
+        <div className="flex flex-col gap-1 pb-4">
           {error ? (
             <Alert variant="destructive">
               <CircleAlert />
@@ -169,29 +169,29 @@ export function OverviewSection() {
 
           {/* hero greeting + weather + holiday */}
           <Card className="overflow-hidden border-none bg-gradient-to-l from-emerald-glow/15 via-emerald-glow/5 to-transparent">
-            <CardContent className="flex flex-col gap-2 p-3 md:flex-row md:items-center md:justify-between">
+            <CardContent className="flex flex-col gap-1 p-1 md:flex-row md:items-center md:justify-between">
               <div className="space-y-1.5">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="flex items-center gap-1 text-sm text-muted-foreground">
                   <Sparkles className="size-4 text-emerald-glow" />
                   {dateLabel}
                 </div>
-                <h2 className="text-xl font-bold">
+                <h2 className="text-lg font-bold">
                   {greeting}، {USER_PROFILE.name} 👋
                 </h2>
                 {data?.todayHoliday ? (
-                  <div className="flex items-center gap-2 text-sm text-amber-glow">
+                  <div className="flex items-center gap-1 text-sm text-amber-glow">
                     <PartyPopper className="size-4" />
                     عطلة اليوم: {data.todayHoliday.name}
                   </div>
                 ) : null}
               </div>
 
-              <div className="flex items-center gap-2 rounded-xl bg-background/60 p-2 backdrop-blur">
+              <div className="flex items-center gap-1 rounded-xl bg-background/60 p-2 backdrop-blur">
                 {weather ? (
                   <>
-                    <WeatherIcon name={weather.current.weatherIcon} className="size-8 text-amber-glow" />
+                    <WeatherIcon name={weather.current.weatherIcon} className="size-6 text-amber-glow" />
                     <div className="space-y-0.5">
-                      <div className="text-xl font-bold">{weather.current.temperature}°</div>
+                      <div className="text-lg font-bold">{weather.current.temperature}°</div>
                       <div className="text-xs text-muted-foreground">
                         {weather.current.weatherDescription} · {weather.city}
                       </div>
@@ -199,7 +199,7 @@ export function OverviewSection() {
                   </>
                 ) : (
                   <>
-                    <Skeleton className="size-8 rounded-full" />
+                    <Skeleton className="size-6 rounded-full" />
                     <div className="space-y-1">
                       <Skeleton className="h-6 w-12" />
                       <Skeleton className="h-3 w-24" />
@@ -211,7 +211,7 @@ export function OverviewSection() {
           </Card>
 
           {/* stat cards row */}
-          <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-1 lg:grid-cols-4">
             <StatCard
               title="مهام معلقة"
               value={loading ? null : data?.taskStats.pending ?? 0}
@@ -244,12 +244,12 @@ export function OverviewSection() {
           </div>
 
           {/* main grid */}
-          <div className="grid grid-cols-1 gap-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-1 lg:grid-cols-3">
             {/* today events */}
             <Card className="lg:col-span-2">
               <CardHeader className="border-b">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2 text-base">
+                  <CardTitle className="flex items-center gap-1 text-base">
                     <CalendarDays className="size-4 text-emerald-glow" />
                     أحداث اليوم
                   </CardTitle>
@@ -269,7 +269,7 @@ export function OverviewSection() {
                 ) : data && data.todayEvents.length > 0 ? (
                   <ul className="divide-y">
                     {data.todayEvents.map((ev) => (
-                      <li key={ev.id} className="flex items-center gap-2 px-2 py-1.5">
+                      <li key={ev.id} className="flex items-center gap-1 px-2 py-0.5">
                         <span className="text-xs font-mono text-muted-foreground min-w-[3.5rem]">
                           {ev.allDay ? "طوال اليوم" : formatTime(ev.startDate)}
                         </span>
@@ -297,7 +297,7 @@ export function OverviewSection() {
             <Card>
               <CardHeader className="border-b">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2 text-base">
+                  <CardTitle className="flex items-center gap-1 text-base">
                     <Bell className="size-4 text-amber-glow" />
                     تنبيهات ذكية
                   </CardTitle>
@@ -317,10 +317,10 @@ export function OverviewSection() {
                 ) : recentNotifs.length > 0 ? (
                   <ul className="divide-y max-h-72 overflow-y-auto custom-scroll">
                     {recentNotifs.map((n) => (
-                      <li key={n.id} className="flex items-start gap-2 px-2 py-1.5">
+                      <li key={n.id} className="flex items-start gap-1 px-2 py-0.5">
                         <NotifIcon severity={n.severity} />
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center justify-between gap-1">
                             <span className="text-sm font-medium truncate">{n.title}</span>
                             <span className="text-[10px] text-muted-foreground shrink-0">{timeAgo(n.createdAt)}</span>
                           </div>
@@ -337,11 +337,11 @@ export function OverviewSection() {
           </div>
 
           {/* secondary grid */}
-          <div className="grid grid-cols-1 gap-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-1 lg:grid-cols-3">
             {/* occasions */}
             <Card>
               <CardHeader className="border-b">
-                <CardTitle className="flex items-center gap-2 text-base">
+                <CardTitle className="flex items-center gap-1 text-base">
                   <PartyPopper className="size-4 text-amber-glow" />
                   مناسبات قادمة
                 </CardTitle>
@@ -356,7 +356,7 @@ export function OverviewSection() {
                 ) : nextOccasions.length > 0 ? (
                   <ul className="divide-y">
                     {nextOccasions.map((o) => (
-                      <li key={o.id} className="flex items-center justify-between gap-2 px-2 py-1.5">
+                      <li key={o.id} className="flex items-center justify-between gap-1 px-2 py-0.5">
                         <div className="min-w-0">
                           <div className="text-sm font-medium truncate">{o.title}</div>
                           <div className="text-xs text-muted-foreground">{formatDate(o.date, { month: "long", day: "numeric" })}</div>
@@ -375,7 +375,7 @@ export function OverviewSection() {
             <Card>
               <CardHeader className="border-b">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2 text-base">
+                  <CardTitle className="flex items-center gap-1 text-base">
                     <PhoneCall className="size-4 text-emerald-glow" />
                     آخر المكالمات
                   </CardTitle>
@@ -395,7 +395,7 @@ export function OverviewSection() {
                 ) : data && data.recentCalls.length > 0 ? (
                   <ul className="divide-y">
                     {data.recentCalls.map((c) => (
-                      <li key={c.id} className="flex items-center gap-2 px-2 py-1.5">
+                      <li key={c.id} className="flex items-center gap-1 px-2 py-0.5">
                         <span className={`text-xs ${c.direction === "missed" ? "text-destructive" : "text-muted-foreground"}`}>
                           <Phone className={`size-4 inline ${c.direction === "incoming" ? "rotate-180" : ""}`} />
                         </span>
@@ -416,12 +416,12 @@ export function OverviewSection() {
             {/* quick actions */}
             <Card>
               <CardHeader className="border-b">
-                <CardTitle className="flex items-center gap-2 text-base">
+                <CardTitle className="flex items-center gap-1 text-base">
                   <Sparkles className="size-4 text-emerald-glow" />
                   إجراءات سريعة
                 </CardTitle>
               </CardHeader>
-              <CardContent className="grid grid-cols-2 gap-2 p-2">
+              <CardContent className="grid grid-cols-2 gap-1 p-1">
                 {quickActions.map((qa) => (
                   <Button
                     key={qa.id}
@@ -464,8 +464,8 @@ function StatCard({
       className="cursor-pointer transition-shadow hover:shadow-md"
       onClick={onClick}
     >
-      <CardContent className="flex items-center gap-2 p-2">
-        <div className={`flex size-8 items-center justify-center rounded-lg ${accentClass}`}>
+      <CardContent className="flex items-center gap-1 p-1">
+        <div className={`flex size-6 items-center justify-center rounded-lg ${accentClass}`}>
           <Icon className="size-5" />
         </div>
         <div className="min-w-0">
@@ -473,7 +473,7 @@ function StatCard({
           {value === null ? (
             <Skeleton className="mt-1 h-6 w-16" />
           ) : (
-            <div className="text-xl font-bold truncate">
+            <div className="text-lg font-bold truncate">
               {valueIsCurrency ? formatCurrency(value) : formatNumber(value)}
             </div>
           )}
@@ -503,8 +503,8 @@ function EmptyState({
   onAction?: () => void;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-2 px-6 py-10 text-center">
-      <Icon className="size-8 text-muted-foreground/40" />
+    <div className="flex flex-col items-center justify-center gap-1 px-6 py-10 text-center">
+      <Icon className="size-6 text-muted-foreground/40" />
       <div>
         <p className="text-sm font-medium">{title}</p>
         <p className="text-xs text-muted-foreground">{desc}</p>

@@ -232,14 +232,14 @@ export function MeetingsSection() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className="flex h-full flex-col gap-1">
       {/* header */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-1">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">الاجتماعات</h1>
+          <h1 className="text-lg font-bold tracking-tight">الاجتماعات</h1>
           <p className="text-sm text-muted-foreground">{stats.total} اجتماع · {stats.upcoming} قادم</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Button variant="outline" size="sm" onClick={() => reload()}>
             <RefreshCw className="size-4" />
             تحديث
@@ -252,7 +252,7 @@ export function MeetingsSection() {
       </div>
 
       {/* stats */}
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-1 md:grid-cols-4">
         <StatCard icon={CalendarDays} label="الإجمالي" value={stats.total} accent="emerald" />
         <StatCard icon={Clock} label="قادم" value={stats.upcoming} accent="amber" />
         <StatCard icon={CheckCircle2} label="مكتمل" value={stats.completed} accent="emerald" />
@@ -261,7 +261,7 @@ export function MeetingsSection() {
 
       {/* filter */}
       <Card>
-        <CardContent className="flex items-center gap-2 p-2">
+        <CardContent className="flex items-center gap-1 p-1">
           <Filter className="size-4 text-muted-foreground" />
           <Select value={filter} onValueChange={setFilter}>
             <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
@@ -289,11 +289,11 @@ export function MeetingsSection() {
 
       <ScrollArea className="custom-scroll flex-1 -mx-1 px-1">
         {loading ? (
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-1 md:grid-cols-2 xl:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-44 rounded-xl" />)}
           </div>
         ) : filtered.length > 0 ? (
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3 pb-4">
+          <div className="grid grid-cols-1 gap-1 md:grid-cols-2 xl:grid-cols-3 pb-4">
             {filtered.map((m) => {
               const meta = STATUS_META[m.status] || STATUS_META.scheduled;
               const isUpcoming = m.status === "scheduled" && new Date(m.startDate) > new Date();
@@ -303,8 +303,8 @@ export function MeetingsSection() {
                   className="group cursor-pointer transition-shadow hover:shadow-md"
                   onClick={() => openDetail(m)}
                 >
-                  <CardContent className="flex flex-col gap-2 p-2">
-                    <div className="flex items-start gap-2">
+                  <CardContent className="flex flex-col gap-1 p-1">
+                    <div className="flex items-start gap-1">
                       <div className="min-w-0 flex-1">
                         <div className="text-sm font-semibold truncate">{m.title}</div>
                         {m.agenda ? (
@@ -316,7 +316,7 @@ export function MeetingsSection() {
                         {meta.label}
                       </Badge>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground flex-wrap">
                       <span className="flex items-center gap-1">
                         <CalendarClock className={`size-3 ${isUpcoming ? "text-emerald-glow" : ""}`} />
                         {formatDate(m.startDate, { day: "numeric", month: "short" })} · {formatTime(m.startDate)}
@@ -380,8 +380,8 @@ export function MeetingsSection() {
             })}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
-            <CalendarClock className="size-8 text-muted-foreground/40" />
+          <div className="flex flex-col items-center justify-center gap-1 py-16 text-center">
+            <CalendarClock className="size-6 text-muted-foreground/40" />
             <p className="text-sm font-medium">لا اجتماعات</p>
             <p className="text-xs text-muted-foreground">ابدأ بجدولة اجتماع جديد</p>
             <Button size="sm" variant="outline" className="mt-1" onClick={openAdd}>
@@ -398,7 +398,7 @@ export function MeetingsSection() {
           {detail ? (
             <>
               <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
+                <DialogTitle className="flex items-center gap-1">
                   {detail.title}
                   <Badge className={`text-[10px] gap-1 ${STATUS_META[detail.status]?.badge}`} variant="secondary">
                     {STATUS_META[detail.status]?.label}
@@ -406,14 +406,14 @@ export function MeetingsSection() {
                 </DialogTitle>
                 <DialogDescription>{formatDateTime(detail.startDate)}</DialogDescription>
               </DialogHeader>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-1">
                 {detail.agenda ? (
                   <div>
                     <div className="text-xs text-muted-foreground mb-1">جدول الأعمال</div>
                     <div className="rounded-lg bg-muted/40 p-2 text-sm whitespace-pre-wrap">{detail.agenda}</div>
                   </div>
                 ) : null}
-                <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="grid grid-cols-2 gap-1 text-sm">
                   <div>
                     <div className="text-xs text-muted-foreground">الوقت</div>
                     <div>{formatTime(detail.startDate)}{detail.endDate ? ` - ${formatTime(detail.endDate)}` : ""}</div>
@@ -481,7 +481,7 @@ export function MeetingsSection() {
             <DialogTitle>{editing ? "تعديل الاجتماع" : "إضافة اجتماع"}</DialogTitle>
             <DialogDescription>أدخل تفاصيل الاجتماع.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-2 max-h-[60vh] overflow-y-auto custom-scroll py-1">
+          <div className="grid gap-1 max-h-[60vh] overflow-y-auto custom-scroll py-1">
             <div className="grid gap-1.5">
               <Label htmlFor="m-title">العنوان *</Label>
               <Input
@@ -499,7 +499,7 @@ export function MeetingsSection() {
                 onChange={(e) => setForm((f) => ({ ...f, agenda: e.target.value }))}
               />
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-1">
               <div className="grid gap-1.5">
                 <Label htmlFor="m-loc">الموقع</Label>
                 <Input
@@ -530,7 +530,7 @@ export function MeetingsSection() {
                 placeholder="مثال: أحمد، سامي، خالد"
               />
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-1">
               <div className="grid gap-1.5">
                 <Label htmlFor="m-start">البداية *</Label>
                 <Input
@@ -607,8 +607,8 @@ function StatCard({
         : "text-rose-500 bg-rose-500/10";
   return (
     <Card>
-      <CardContent className="flex items-center gap-2.5 p-2">
-        <div className={`flex size-9 items-center justify-center rounded-md shrink-0 ${accentClass}`}>
+      <CardContent className="flex items-center gap-1 p-1">
+        <div className={`flex size-7 items-center justify-center rounded-md shrink-0 ${accentClass}`}>
           <Icon className="size-4" />
         </div>
         <div className="min-w-0">

@@ -195,12 +195,12 @@ export function DebtsSection() {
     const accentBg = accent === "emerald" ? "bg-emerald-glow/10 text-emerald-glow" : "bg-rose-500/10 text-rose-500";
     return (
       <Card key={d.id} className="group">
-        <CardContent className="flex items-start gap-2 p-2">
-          <div className={`flex size-8 items-center justify-center rounded-md shrink-0 ${accentBg}`}>
+        <CardContent className="flex items-start gap-1 p-1">
+          <div className={`flex size-6 items-center justify-center rounded-md shrink-0 ${accentBg}`}>
             {accent === "emerald" ? <ArrowUpRight className="size-5" /> : <ArrowDownRight className="size-5" />}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1 flex-wrap">
               <span className="text-sm font-semibold">{d.personName}</span>
               <Badge variant="outline" className="text-[10px]">{isUSD ? "دولار" : "ليرة"}</Badge>
               {d.dueDate ? (
@@ -216,7 +216,7 @@ export function DebtsSection() {
             {d.description ? (
               <div className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{d.description}</div>
             ) : null}
-            <div className="flex items-center gap-2 mt-1">
+            <div className="flex items-center gap-1 mt-1">
               <span className={`text-sm font-bold ${accent === "emerald" ? "text-emerald-glow" : "text-rose-500"}`}>
                 {formatCurrency(d.amount, d.currency)}
               </span>
@@ -242,14 +242,14 @@ export function DebtsSection() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className="flex h-full flex-col gap-1">
       {/* header */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-1">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">الديون</h1>
+          <h1 className="text-lg font-bold tracking-tight">الديون</h1>
           <p className="text-sm text-muted-foreground">{stats.count} دين نشط</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Button variant="outline" size="sm" onClick={() => reload()}>
             <RefreshCw className="size-4" />
             تحديث
@@ -262,7 +262,7 @@ export function DebtsSection() {
       </div>
 
       {/* stats */}
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-1 sm:grid-cols-3">
         <StatCard
           icon={ArrowUpRight}
           label="إجمالي الديون لي"
@@ -285,7 +285,7 @@ export function DebtsSection() {
 
       {/* filter */}
       <Card>
-        <CardContent className="flex items-center gap-2 p-2">
+        <CardContent className="flex items-center gap-1 p-1">
           <Filter className="size-4 text-muted-foreground" />
           <Select value={filter} onValueChange={(v) => setFilter(v as ViewFilter)}>
             <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
@@ -314,27 +314,27 @@ export function DebtsSection() {
 
       <ScrollArea className="custom-scroll flex-1 -mx-1 px-1">
         {loading ? (
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-1 md:grid-cols-2">
             {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
           </div>
         ) : debts.length > 0 ? (
-          <div className="grid grid-cols-1 gap-2 pb-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-1 pb-4 md:grid-cols-2">
             {/* owed to me */}
             {(filter === "all" || filter === "owed") && (
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2 text-sm font-semibold text-emerald-glow">
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-1 text-sm font-semibold text-emerald-glow">
                   <ArrowUpRight className="size-4" />
                   ديون لي
                   <Badge variant="secondary" className="text-[10px]">{owedToMe.length}</Badge>
                 </div>
                 {owedToMe.length > 0 ? (
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-1">
                     {owedToMe.map((d) => renderDebtCard(d, "emerald"))}
                   </div>
                 ) : (
                   <Card>
                     <CardContent className="flex flex-col items-center justify-center gap-1 py-8 text-center">
-                      <ArrowUpRight className="size-8 text-muted-foreground/40" />
+                      <ArrowUpRight className="size-6 text-muted-foreground/40" />
                       <p className="text-xs text-muted-foreground">لا ديون لك حالياً</p>
                     </CardContent>
                   </Card>
@@ -344,20 +344,20 @@ export function DebtsSection() {
 
             {/* i owe */}
             {(filter === "all" || filter === "owe") && (
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2 text-sm font-semibold text-rose-500">
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-1 text-sm font-semibold text-rose-500">
                   <ArrowDownRight className="size-4" />
                   ديون عليّ
                   <Badge variant="secondary" className="text-[10px]">{iOwe.length}</Badge>
                 </div>
                 {iOwe.length > 0 ? (
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-1">
                     {iOwe.map((d) => renderDebtCard(d, "rose"))}
                   </div>
                 ) : (
                   <Card>
                     <CardContent className="flex flex-col items-center justify-center gap-1 py-8 text-center">
-                      <ArrowDownRight className="size-8 text-muted-foreground/40" />
+                      <ArrowDownRight className="size-6 text-muted-foreground/40" />
                       <p className="text-xs text-muted-foreground">لا ديون عليك حالياً</p>
                     </CardContent>
                   </Card>
@@ -366,8 +366,8 @@ export function DebtsSection() {
             )}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
-            <HandCoins className="size-8 text-muted-foreground/40" />
+          <div className="flex flex-col items-center justify-center gap-1 py-16 text-center">
+            <HandCoins className="size-6 text-muted-foreground/40" />
             <p className="text-sm font-medium">لا ديون مسجّلة</p>
             <p className="text-xs text-muted-foreground">أضف ديناً جديداً لمتابعة مستحقاتك</p>
             <Button size="sm" variant="outline" className="mt-1" onClick={() => openAdd()}>
@@ -385,7 +385,7 @@ export function DebtsSection() {
             <DialogTitle>{editing ? "تعديل الدين" : "إضافة دين"}</DialogTitle>
             <DialogDescription>أدخل تفاصيل الدين.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-2 max-h-[60vh] overflow-y-auto custom-scroll py-1">
+          <div className="grid gap-1 max-h-[60vh] overflow-y-auto custom-scroll py-1">
             <div className="grid gap-1.5">
               <Label htmlFor="d-person">الاسم *</Label>
               <Input
@@ -395,7 +395,7 @@ export function DebtsSection() {
                 placeholder="اسم الشخص"
               />
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-1">
               <div className="grid gap-1.5">
                 <Label htmlFor="d-amount">المبلغ *</Label>
                 <Input
@@ -493,8 +493,8 @@ function StatCard({
         : "text-rose-500 bg-rose-500/10";
   return (
     <Card>
-      <CardContent className="flex items-center gap-2 p-2">
-        <div className={`flex size-9 items-center justify-center rounded-md shrink-0 ${accentClass}`}>
+      <CardContent className="flex items-center gap-1 p-1">
+        <div className={`flex size-7 items-center justify-center rounded-md shrink-0 ${accentClass}`}>
           <Icon className="size-4" />
         </div>
         <div className="min-w-0">

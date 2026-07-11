@@ -133,10 +133,10 @@ export function AIAssistantWidget() {
     messages.length > 0 && messages[messages.length - 1].error === true;
 
   return (
-    <div className="flex h-full flex-col gap-2">
-      <header className="flex flex-wrap items-center justify-between gap-2">
+    <div className="flex h-full flex-col gap-1">
+      <header className="flex flex-wrap items-center justify-between gap-1">
         <div>
-          <h2 className="flex items-center gap-2 text-xl font-bold tracking-tight">
+          <h2 className="flex items-center gap-1 text-lg font-bold tracking-tight">
             <Sparkles className="size-6 text-emerald-glow" />
             المساعد الذكي
           </h2>
@@ -144,8 +144,8 @@ export function AIAssistantWidget() {
             اسأل عن جدولك ومهامك ومصروفاتك
           </p>
         </div>
-        <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/20 px-3 py-1.5">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 rounded-lg border border-border/60 bg-muted/20 px-2 py-0.5">
+          <div className="flex items-center gap-1">
             <Database className="size-4 text-emerald-glow" />
             <Label htmlFor="include-data" className="cursor-pointer text-xs">
               تضمين بياناتي
@@ -161,9 +161,9 @@ export function AIAssistantWidget() {
 
       {/* Chat window */}
       <Card className="flex min-h-0 flex-1 flex-col border-border/60">
-        <CardContent className="flex min-h-0 flex-1 flex-col gap-2 p-2">
+        <CardContent className="flex min-h-0 flex-1 flex-col gap-1 p-1">
           <ScrollArea className="custom-scroll min-h-0 flex-1">
-            <div ref={scrollRef} className="flex flex-col gap-2 p-1">
+            <div ref={scrollRef} className="flex flex-col gap-1 p-1">
               {messages.map((m) => (
                 <MessageBubble key={m.id} msg={m} />
               ))}
@@ -181,12 +181,12 @@ export function AIAssistantWidget() {
 
           {/* Suggested prompts */}
           {messages.length <= 1 && (
-            <div className="flex flex-wrap gap-2 pt-1">
+            <div className="flex flex-wrap gap-1 pt-1">
               {SUGGESTED_PROMPTS.map((p) => (
                 <button
                   key={p}
                   onClick={() => send(p)}
-                  className="flex items-center gap-1.5 rounded-full border border-emerald-glow/30 bg-emerald-glow/5 px-3 py-1.5 text-xs text-emerald-glow transition-colors hover:bg-emerald-glow/10"
+                  className="flex items-center gap-1.5 rounded-full border border-emerald-glow/30 bg-emerald-glow/5 px-2 py-0.5 text-xs text-emerald-glow transition-colors hover:bg-emerald-glow/10"
                 >
                   <Lightbulb className="size-3" />
                   {p}
@@ -196,7 +196,7 @@ export function AIAssistantWidget() {
           )}
 
           {/* Input */}
-          <div className="flex items-end gap-2 pt-1">
+          <div className="flex items-end gap-1 pt-1">
             <Textarea
               ref={textareaRef}
               value={input}
@@ -231,10 +231,10 @@ export function AIAssistantWidget() {
 function MessageBubble({ msg }: { msg: ChatMessage }) {
   const isUser = msg.role === "user";
   return (
-    <div className={"flex gap-2 " + (isUser ? "flex-row-reverse" : "flex-row")}>
+    <div className={"flex gap-1 " + (isUser ? "flex-row-reverse" : "flex-row")}>
       <Avatar
         className={
-          "size-8 shrink-0 " +
+          "size-6 shrink-0 " +
           (isUser
             ? "bg-muted text-foreground"
             : msg.error
@@ -248,7 +248,7 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
       </Avatar>
       <div
         className={
-          "max-w-[80%] rounded-2xl px-3.5 py-1.5 text-sm leading-relaxed " +
+          "max-w-[80%] rounded-2xl px-2.5 py-0.5 text-sm leading-relaxed " +
           (isUser
             ? "rounded-tr-sm bg-emerald-glow/15 text-foreground"
             : msg.error
@@ -264,8 +264,8 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
 
 function TypingIndicator() {
   return (
-    <div className="flex gap-2">
-      <Avatar className="size-8 shrink-0 bg-gradient-to-br from-emerald-glow to-amber-glow text-background">
+    <div className="flex gap-1">
+      <Avatar className="size-6 shrink-0 bg-gradient-to-br from-emerald-glow to-amber-glow text-background">
         <AvatarFallback className="bg-transparent">
           <Sparkles className="size-4" />
         </AvatarFallback>

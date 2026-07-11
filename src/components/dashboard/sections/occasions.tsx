@@ -189,16 +189,16 @@ export function OccasionsSection() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className="flex h-full flex-col gap-1">
       {/* header */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-1">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">المناسبات</h1>
+          <h1 className="text-lg font-bold tracking-tight">المناسبات</h1>
           <p className="text-sm text-muted-foreground">
             {stats.total} مناسبة · {stats.upcoming} قادمة
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Button variant="outline" size="sm" onClick={() => reload()}>
             <RefreshCw className="size-4" />
             تحديث
@@ -216,14 +216,14 @@ export function OccasionsSection() {
           <CardContent className="p-0">
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-l from-emerald-glow/15 via-transparent to-amber-glow/15 pointer-events-none" />
-              <div className="relative flex items-center gap-2 p-3">
-                <div className="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-glow to-amber-glow text-background text-xl shrink-0">
+              <div className="relative flex items-center gap-1 p-3">
+                <div className="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-glow to-amber-glow text-background text-lg shrink-0">
                   {typeMeta(nextOne.o.type).emoji}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-xs text-muted-foreground">المناسبة القادمة</div>
-                  <div className="text-lg font-bold truncate">{nextOne.o.title}</div>
-                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
+                  <div className="text-base font-bold truncate">{nextOne.o.title}</div>
+                  <div className="mt-1 flex flex-wrap items-center gap-1 text-xs">
                     <span className="inline-flex items-center gap-1 text-muted-foreground">
                       <CalendarDays className="size-3" />
                       {formatDate(nextOne.next.date, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
@@ -259,41 +259,41 @@ export function OccasionsSection() {
 
       {/* stats */}
       <div className="grid grid-cols-3 gap-1.5">
-        <Card><CardContent className="p-2 text-center"><div className="text-xl font-bold text-emerald-glow">{stats.total}</div><div className="text-xs text-muted-foreground">الإجمالي</div></CardContent></Card>
-        <Card><CardContent className="p-2 text-center"><div className="text-xl font-bold text-amber-glow">{stats.upcoming}</div><div className="text-xs text-muted-foreground">قادمة</div></CardContent></Card>
-        <Card><CardContent className="p-2 text-center"><div className="text-xl font-bold text-rose-500">{stats.today}</div><div className="text-xs text-muted-foreground">اليوم</div></CardContent></Card>
+        <Card><CardContent className="p-1 text-center"><div className="text-lg font-bold text-emerald-glow">{stats.total}</div><div className="text-xs text-muted-foreground">الإجمالي</div></CardContent></Card>
+        <Card><CardContent className="p-1 text-center"><div className="text-lg font-bold text-amber-glow">{stats.upcoming}</div><div className="text-xs text-muted-foreground">قادمة</div></CardContent></Card>
+        <Card><CardContent className="p-1 text-center"><div className="text-lg font-bold text-rose-500">{stats.today}</div><div className="text-xs text-muted-foreground">اليوم</div></CardContent></Card>
       </div>
 
       <ScrollArea className="custom-scroll flex-1 -mx-1 px-1">
-        <div className="flex flex-col gap-2 pb-4">
+        <div className="flex flex-col gap-1 pb-4">
           {loading ? (
-            <div className="grid gap-2">
+            <div className="grid gap-1">
               {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-xl" />)}
             </div>
           ) : sorted.length > 0 ? (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-1">
               {grouped.map(([key, group]) => (
-                <div key={key} className="flex flex-col gap-2">
-                  <div className="flex items-center gap-2">
+                <div key={key} className="flex flex-col gap-1">
+                  <div className="flex items-center gap-1">
                     <h3 className="text-sm font-semibold text-muted-foreground">{group.label}</h3>
                     <Badge variant="secondary" className="text-[10px]">{group.items.length}</Badge>
                   </div>
-                  <div className="grid gap-2">
+                  <div className="grid gap-1">
                     {group.items.map(({ o, next }) => {
                       const tm = typeMeta(o.type);
                       const Icon = tm.icon;
                       return (
                         <Card key={o.id} className="group relative overflow-hidden">
-                          <CardContent className="flex items-center gap-2 p-2">
-                            <div className={`flex size-8 items-center justify-center rounded-xl border ${tm.color}`}>
+                          <CardContent className="flex items-center gap-1 p-1">
+                            <div className={`flex size-6 items-center justify-center rounded-xl border ${tm.color}`}>
                               <Icon className="size-5" />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1">
                                 <span className="font-medium truncate">{o.title}</span>
                                 {o.recurring ? <Badge variant="outline" className="text-[10px] shrink-0">سنوي</Badge> : null}
                               </div>
-                              <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+                              <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
                                 <CalendarDays className="size-3" />
                                 {formatDate(next.date, { day: "numeric", month: "long" })}
                                 {next.isToday ? <span className="text-emerald-glow font-medium">اليوم!</span> : next.diffDays > 0 ? <span>بعد {next.diffDays} يوم</span> : <span className="text-muted-foreground">مرت</span>}
@@ -301,10 +301,10 @@ export function OccasionsSection() {
                               {o.note ? <div className="mt-0.5 text-xs text-muted-foreground truncate">{o.note}</div> : null}
                             </div>
                             <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                              <Button size="icon" variant="ghost" className="size-8" onClick={() => openEdit(o)}>
+                              <Button size="icon" variant="ghost" className="size-6" onClick={() => openEdit(o)}>
                                 <Pencil className="size-4" />
                               </Button>
-                              <Button size="icon" variant="ghost" className="size-8 text-destructive" onClick={() => setDeleteId(o.id)}>
+                              <Button size="icon" variant="ghost" className="size-6 text-destructive" onClick={() => setDeleteId(o.id)}>
                                 <Trash2 className="size-4" />
                               </Button>
                             </div>
@@ -318,8 +318,8 @@ export function OccasionsSection() {
             </div>
           ) : (
             <Card>
-              <CardContent className="flex flex-col items-center justify-center gap-2 px-6 py-10 text-center">
-                <Gift className="size-8 text-muted-foreground/40" />
+              <CardContent className="flex flex-col items-center justify-center gap-1 px-6 py-10 text-center">
+                <Gift className="size-6 text-muted-foreground/40" />
                 <div>
                   <p className="text-sm font-medium">لا مناسبات</p>
                   <p className="text-xs text-muted-foreground">أضف عيد ميلاد أو ذكرى لتذكيرك بها</p>
@@ -340,7 +340,7 @@ export function OccasionsSection() {
           <DialogHeader>
             <DialogTitle>{editing ? "تعديل مناسبة" : "مناسبة جديدة"}</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-1">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="title">العنوان</Label>
               <Input id="title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="مثال: عيد ميلاد سوسو" required />
@@ -360,7 +360,7 @@ export function OccasionsSection() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center justify-between gap-1">
               <Label htmlFor="recurring">متكرر سنوياً</Label>
               <Switch id="recurring" checked={form.recurring} onCheckedChange={(v) => setForm({ ...form, recurring: v })} />
             </div>

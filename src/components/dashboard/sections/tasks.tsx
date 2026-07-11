@@ -236,14 +236,14 @@ export function TasksSection() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className="flex h-full flex-col gap-1">
       {/* header */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-1">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">المهام</h1>
+          <h1 className="text-lg font-bold tracking-tight">المهام</h1>
           <p className="text-sm text-muted-foreground">{stats.total} مهمة · {stats.overdue} متأخرة · {stats.high} ذات أولوية عالية</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Button variant="outline" size="sm" onClick={() => reload()}>
             <RefreshCw className="size-4" />
             تحديث
@@ -256,7 +256,7 @@ export function TasksSection() {
       </div>
 
       {/* stats bar */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-6">
         <StatBox label="الإجمالي" value={stats.total} icon={ListTodo} accent="emerald" />
         <StatBox label="مطلوب" value={stats.todo} icon={ListTodo} accent="amber" />
         <StatBox label="قيد التنفيذ" value={stats.doing} icon={Loader2} accent="emerald" />
@@ -267,8 +267,8 @@ export function TasksSection() {
 
       {/* filters */}
       <Card>
-        <CardContent className="flex flex-col gap-2 p-2 md:flex-row md:items-center">
-          <div className="flex items-center gap-2 flex-1">
+        <CardContent className="flex flex-col gap-1 p-1 md:flex-row md:items-center">
+          <div className="flex items-center gap-1 flex-1">
             <Filter className="size-4 text-muted-foreground" />
             <span className="text-sm text-muted-foreground">تصفية:</span>
           </div>
@@ -302,12 +302,12 @@ export function TasksSection() {
 
       {/* kanban columns */}
       <ScrollArea className="custom-scroll flex-1 -mx-1 px-1">
-        <div className="grid grid-cols-1 gap-2 pb-4 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-1 pb-4 md:grid-cols-3">
           {columns.map((col) => (
             <Card key={col.value} className="flex flex-col overflow-hidden">
               <CardHeader className="border-b py-3">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2 text-sm">
+                  <CardTitle className="flex items-center gap-1 text-sm">
                     <div className={`flex size-6 items-center justify-center rounded-md ${col.accent}`}>
                       <col.icon className="size-3.5" />
                     </div>
@@ -316,7 +316,7 @@ export function TasksSection() {
                   <Badge variant="secondary">{col.items.length}</Badge>
                 </div>
               </CardHeader>
-              <CardContent className="p-2 space-y-2 min-h-[8rem]">
+              <CardContent className="p-1 space-y-2 min-h-[8rem]">
                 {loading ? (
                   [0, 1].map((i) => <Skeleton key={i} className="h-24 w-full rounded-lg" />)
                 ) : col.items.length > 0 ? (
@@ -329,7 +329,7 @@ export function TasksSection() {
                         className="group rounded-lg border bg-card p-2 cursor-pointer hover:shadow-sm transition-shadow"
                         onClick={() => openEdit(t)}
                       >
-                        <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-start justify-between gap-1">
                           <span className="text-sm font-medium leading-snug flex-1">{t.title}</span>
                           <Badge variant="secondary" className={`shrink-0 text-[10px] ${priorityBadgeClass(t.priority)}`}>
                             {priorityLabel(t.priority)}
@@ -391,7 +391,7 @@ export function TasksSection() {
             <DialogTitle>{editing ? "تعديل مهمة" : "إضافة مهمة جديدة"}</DialogTitle>
             <DialogDescription>أدخل تفاصيل المهمة.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-2 max-h-[60vh] overflow-y-auto custom-scroll py-1">
+          <div className="grid gap-1 max-h-[60vh] overflow-y-auto custom-scroll py-1">
             <div className="grid gap-1.5">
               <Label htmlFor="t-title">العنوان *</Label>
               <Input id="t-title" value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="ماذا تريد أن تنجز؟" />
@@ -400,7 +400,7 @@ export function TasksSection() {
               <Label htmlFor="t-desc">الوصف</Label>
               <Textarea id="t-desc" rows={2} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-1">
               <div className="grid gap-1.5">
                 <Label>الحالة</Label>
                 <Select value={form.status} onValueChange={(v) => setForm((f) => ({ ...f, status: v }))}>
@@ -420,7 +420,7 @@ export function TasksSection() {
                 </Select>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-1">
               <div className="grid gap-1.5">
                 <Label>التصنيف</Label>
                 <Select value={form.category} onValueChange={(v) => setForm((f) => ({ ...f, category: v }))}>
@@ -484,13 +484,13 @@ function StatBox({
     : "text-rose-500 bg-rose-500/10";
   return (
     <Card>
-      <CardContent className="flex items-center gap-2 p-2">
-        <div className={`flex size-8 items-center justify-center rounded-md ${accentClass}`}>
+      <CardContent className="flex items-center gap-1 p-1">
+        <div className={`flex size-6 items-center justify-center rounded-md ${accentClass}`}>
           <Icon className="size-4" />
         </div>
         <div className="min-w-0">
           <div className="text-xs text-muted-foreground truncate">{label}</div>
-          <div className="text-lg font-bold">{value}</div>
+          <div className="text-base font-bold">{value}</div>
         </div>
       </CardContent>
     </Card>

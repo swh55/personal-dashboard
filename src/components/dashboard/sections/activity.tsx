@@ -139,14 +139,14 @@ export function ActivitySection() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className="flex h-full flex-col gap-1">
       {/* header */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-1">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">سجل النشاط</h1>
+          <h1 className="text-lg font-bold tracking-tight">سجل النشاط</h1>
           <p className="text-sm text-muted-foreground">{stats.total} نشاط · آخر 200 سجل</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Button variant="outline" size="sm" onClick={() => reload()}>
             <RefreshCw className="size-4" />
             تحديث
@@ -159,7 +159,7 @@ export function ActivitySection() {
       </div>
 
       {/* stats */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-6">
+      <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 md:grid-cols-6">
         <StatCard label="إجمالي" value={stats.total} accent="emerald" />
         {Object.entries(ACTION_META).slice(0, 5).map(([key, m]) => (
           <StatCard
@@ -173,8 +173,8 @@ export function ActivitySection() {
 
       {/* filters */}
       <Card>
-        <CardContent className="flex flex-col gap-2 p-2 md:flex-row md:items-center">
-          <div className="flex items-center gap-2 flex-1">
+        <CardContent className="flex flex-col gap-1 p-1 md:flex-row md:items-center">
+          <div className="flex items-center gap-1 flex-1">
             <Search className="size-4 text-muted-foreground shrink-0" />
             <Input
               value={search}
@@ -183,7 +183,7 @@ export function ActivitySection() {
               className="border-0 shadow-none focus-visible:ring-0 p-0 h-7"
             />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <Filter className="size-4 text-muted-foreground" />
             <Select value={entityFilter} onValueChange={setEntityFilter}>
               <SelectTrigger className="w-44 h-8"><SelectValue /></SelectTrigger>
@@ -211,7 +211,7 @@ export function ActivitySection() {
 
       <ScrollArea className="custom-scroll flex-1 min-h-0 -mx-1 px-1">
         {loading ? (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
             {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-12 w-full rounded-lg" />)}
           </div>
         ) : filtered.length > 0 ? (
@@ -222,9 +222,9 @@ export function ActivitySection() {
               return (
                 <div
                   key={l.id}
-                  className="flex items-center gap-2 rounded-lg border p-2.5 transition-colors hover:bg-muted/40"
+                  className="flex items-center gap-1 rounded-lg border p-2.5 transition-colors hover:bg-muted/40"
                 >
-                  <div className={`flex size-8 items-center justify-center rounded-md shrink-0 border ${m.color}`}>
+                  <div className={`flex size-6 items-center justify-center rounded-md shrink-0 border ${m.color}`}>
                     <MIcon className="size-4" />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -242,8 +242,8 @@ export function ActivitySection() {
             })}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
-            <History className="size-8 text-muted-foreground/40" />
+          <div className="flex flex-col items-center justify-center gap-1 py-16 text-center">
+            <History className="size-6 text-muted-foreground/40" />
             <p className="text-sm font-medium">لا سجلات</p>
             <p className="text-xs text-muted-foreground">
               {search || entityFilter !== "all" ? "لا نتائج مطابقة" : "ستظهر هنا كل الأنشطة في النظام"}
@@ -295,7 +295,7 @@ function StatCard({
   };
   return (
     <Card>
-      <CardContent className="flex items-center gap-2 p-2">
+      <CardContent className="flex items-center gap-1 p-1">
         <div className={`flex size-7 items-center justify-center rounded-md shrink-0 ${accentClass[accent]}`}>
           <span className="text-xs font-bold">{value}</span>
         </div>

@@ -225,14 +225,14 @@ export function CallPadSection() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className="flex h-full flex-col gap-1">
       {/* header */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-1">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">لوحة الاتصال</h1>
+          <h1 className="text-lg font-bold tracking-tight">لوحة الاتصال</h1>
           <p className="text-sm text-muted-foreground">اتصال سريع وإدارة المكالمات</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Button variant="outline" size="sm" onClick={() => { reloadContacts(); reloadLogs(); }}>
             <RefreshCw className="size-4" />
             تحديث
@@ -302,19 +302,19 @@ export function CallPadSection() {
         </div>
       </div>
 
-      <div className="grid flex-1 grid-cols-1 gap-2 overflow-hidden lg:grid-cols-3">
+      <div className="grid flex-1 grid-cols-1 gap-1 overflow-hidden lg:grid-cols-3">
         {/* dialpad */}
         <Card className="flex flex-col overflow-hidden">
           <CardHeader className="border-b">
-            <CardTitle className="flex items-center gap-2 text-base">
+            <CardTitle className="flex items-center gap-1 text-base">
               <Phone className="size-4 text-emerald-glow" />
               لوحة الأرقام
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-1 flex-col gap-2 p-2">
+          <CardContent className="flex flex-1 flex-col gap-1 p-1">
             {/* display */}
-            <div className="min-h-[3.5rem] rounded-lg border bg-muted/30 px-3 py-2 text-center">
-              <div dir="ltr" className="text-xl font-mono font-semibold tracking-wider break-all min-h-[2rem]">
+            <div className="min-h-[3.5rem] rounded-lg border bg-muted/30 px-2 py-1 text-center">
+              <div dir="ltr" className="text-lg font-mono font-semibold tracking-wider break-all min-h-[2rem]">
                 {dialed || <span className="text-muted-foreground/50 text-base">اكتب رقماً...</span>}
               </div>
               {dialed ? (
@@ -328,7 +328,7 @@ export function CallPadSection() {
             </div>
 
             {/* action row */}
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-1">
               <Button
                 variant="default"
                 className="bg-emerald-glow text-emerald-glow-foreground hover:bg-emerald-glow/90"
@@ -357,12 +357,12 @@ export function CallPadSection() {
             </div>
 
             {/* keypad */}
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-1">
               {KEYS.map((k) => (
                 <Button
                   key={k}
                   variant="secondary"
-                  className="h-14 text-xl font-mono font-semibold"
+                  className="h-14 text-lg font-mono font-semibold"
                   onClick={() => pressKey(k)}
                 >
                   {k}
@@ -386,7 +386,7 @@ export function CallPadSection() {
         {/* contacts */}
         <Card className="flex flex-col overflow-hidden">
           <CardHeader className="border-b">
-            <CardTitle className="flex items-center gap-2 text-base">
+            <CardTitle className="flex items-center gap-1 text-base">
               <Phone className="size-4 text-amber-glow" />
               جهات الاتصال
             </CardTitle>
@@ -415,8 +415,8 @@ export function CallPadSection() {
               ) : filteredContacts.length > 0 ? (
                 <ul className="divide-y">
                   {filteredContacts.map((c) => (
-                    <li key={c.id} className="flex items-center gap-2 px-3 py-2 hover:bg-accent/40 transition-colors">
-                      <Avatar className="size-9">
+                    <li key={c.id} className="flex items-center gap-1 px-2 py-1 hover:bg-accent/40 transition-colors">
+                      <Avatar className="size-7">
                         <AvatarFallback className="bg-emerald-glow/15 text-emerald-glow text-xs font-bold">
                           {c.name.charAt(0)}
                         </AvatarFallback>
@@ -429,10 +429,10 @@ export function CallPadSection() {
                         <div dir="ltr" className="text-xs text-muted-foreground text-right truncate">{c.phone}</div>
                       </div>
                       <div className="flex shrink-0 gap-1">
-                        <Button size="icon" variant="ghost" className="size-8 text-emerald-glow" onClick={() => makeCall(c.phone, c.name)} aria-label="اتصال">
+                        <Button size="icon" variant="ghost" className="size-6 text-emerald-glow" onClick={() => makeCall(c.phone, c.name)} aria-label="اتصال">
                           <Phone className="size-4" />
                         </Button>
-                        <Button size="icon" variant="ghost" className="size-8" onClick={() => openWhatsApp(c.whatsapp || c.phone, c.name)} aria-label="واتساب">
+                        <Button size="icon" variant="ghost" className="size-6" onClick={() => openWhatsApp(c.whatsapp || c.phone, c.name)} aria-label="واتساب">
                           <MessageCircle className="size-4" />
                         </Button>
                       </div>
@@ -440,8 +440,8 @@ export function CallPadSection() {
                   ))}
                 </ul>
               ) : (
-                <div className="flex flex-col items-center justify-center gap-2 py-10 text-center">
-                  <Phone className="size-8 text-muted-foreground/40" />
+                <div className="flex flex-col items-center justify-center gap-1 py-10 text-center">
+                  <Phone className="size-6 text-muted-foreground/40" />
                   <p className="text-sm font-medium">لا جهات اتصال</p>
                   <Button size="sm" variant="outline" onClick={() => setAddOpen(true)}>
                     <UserPlus className="size-4" />
@@ -456,7 +456,7 @@ export function CallPadSection() {
         {/* call logs */}
         <Card className="flex flex-col overflow-hidden lg:row-span-1">
           <CardHeader className="border-b">
-            <CardTitle className="flex items-center gap-2 text-base">
+            <CardTitle className="flex items-center gap-1 text-base">
               <PhoneCall className="size-4 text-emerald-glow" />
               آخر المكالمات
             </CardTitle>
@@ -478,7 +478,7 @@ export function CallPadSection() {
                   {mergedLogs.map((l) => {
                     const isPhoneLog = l.id.startsWith("phone-");
                     return (
-                      <li key={l.id} className="flex items-center gap-2 px-3 py-2 hover:bg-accent/40 transition-colors">
+                      <li key={l.id} className="flex items-center gap-1 px-2 py-1 hover:bg-accent/40 transition-colors">
                         <DirectionIcon direction={l.direction} type={l.type} />
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5">
@@ -487,7 +487,7 @@ export function CallPadSection() {
                               <Badge variant="outline" className="shrink-0 text-[9px] px-1 py-0">هاتف</Badge>
                             ) : null}
                           </div>
-                          <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center justify-between gap-1">
                             <span dir="ltr" className="text-xs text-muted-foreground text-right truncate">{l.phone}</span>
                             <span className="text-[10px] text-muted-foreground shrink-0">{timeAgo(l.createdAt)}</span>
                           </div>
@@ -495,7 +495,7 @@ export function CallPadSection() {
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="size-8 text-emerald-glow shrink-0"
+                          className="size-6 text-emerald-glow shrink-0"
                           onClick={() => { setDialed(l.phone); makeCall(l.phone, l.name); }}
                           aria-label="إعادة الاتصال"
                         >
@@ -506,8 +506,8 @@ export function CallPadSection() {
                   })}
                 </ul>
               ) : (
-                <div className="flex flex-col items-center justify-center gap-2 py-10 text-center">
-                  <PhoneCall className="size-8 text-muted-foreground/40" />
+                <div className="flex flex-col items-center justify-center gap-1 py-10 text-center">
+                  <PhoneCall className="size-6 text-muted-foreground/40" />
                   <p className="text-sm font-medium">لا سجل مكالمات</p>
                 </div>
               )}
@@ -523,7 +523,7 @@ export function CallPadSection() {
             <DialogTitle>إضافة جهة اتصال سريعة</DialogTitle>
             <DialogDescription>أدخل الاسم ورقم الهاتف. يمكنك تعديل التفاصيل لاحقاً.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-2 py-1">
+          <div className="grid gap-1 py-1">
             <div className="grid gap-1.5">
               <Label htmlFor="c-name">الاسم *</Label>
               <Input id="c-name" value={newContact.name} onChange={(e) => setNewContact((c) => ({ ...c, name: e.target.value }))} placeholder="الاسم الكامل" />

@@ -210,14 +210,14 @@ export function DiarySection() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className="flex h-full flex-col gap-1">
       {/* header */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-1">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">المذكرات اليومية</h1>
+          <h1 className="text-lg font-bold tracking-tight">المذكرات اليومية</h1>
           <p className="text-sm text-muted-foreground">{stats.total} مذكرة · سجّل أفكارك ومشاعرك</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Button variant="outline" size="sm" onClick={() => reload()}>
             <RefreshCw className="size-4" />
             تحديث
@@ -231,10 +231,10 @@ export function DiarySection() {
 
       {/* mood filter chips */}
       <Card>
-        <CardContent className="p-2 flex flex-wrap items-center gap-1.5">
+        <CardContent className="p-1 flex flex-wrap items-center gap-1.5">
           <button
             onClick={() => setMoodFilter("all")}
-            className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs transition ${moodFilter === "all" ? "border-emerald-glow bg-emerald-glow/10 text-emerald-glow" : "border-border hover:bg-muted"}`}
+            className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs transition ${moodFilter === "all" ? "border-emerald-glow bg-emerald-glow/10 text-emerald-glow" : "border-border hover:bg-muted"}`}
           >
             الكل
             <Badge variant="secondary" className="text-[10px] h-4 px-1">{stats.total}</Badge>
@@ -243,7 +243,7 @@ export function DiarySection() {
             <button
               key={m.value}
               onClick={() => setMoodFilter(moodFilter === m.value ? "all" : m.value)}
-              className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs transition ${moodFilter === m.value ? m.color + " border" : "border-border hover:bg-muted"}`}
+              className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs transition ${moodFilter === m.value ? m.color + " border" : "border-border hover:bg-muted"}`}
             >
               <span className="ml-0.5">{m.emoji}</span>
               {m.label}
@@ -255,7 +255,7 @@ export function DiarySection() {
 
       {/* search */}
       <Card>
-        <CardContent className="p-2">
+        <CardContent className="p-1">
           <div className="relative">
             <Search className="absolute right-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -281,11 +281,11 @@ export function DiarySection() {
 
       <ScrollArea className="custom-scroll flex-1 min-h-0 -mx-1 px-1">
         {loading ? (
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-44 w-full rounded-xl" />)}
           </div>
         ) : filtered.length > 0 ? (
-          <div className="grid grid-cols-1 gap-2 pb-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-1 pb-4 sm:grid-cols-2 lg:grid-cols-3">
             {filtered.map((e) => {
               const m = moodMeta(e.mood);
               const w = weatherMeta(e.weather);
@@ -296,10 +296,10 @@ export function DiarySection() {
                   className="group cursor-pointer transition-shadow hover:shadow-md"
                   onClick={() => openView(e)}
                 >
-                  <CardContent className="flex flex-col gap-2 p-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-xl shrink-0">{m.emoji}</span>
+                  <CardContent className="flex flex-col gap-1 p-1">
+                    <div className="flex items-start justify-between gap-1">
+                      <div className="flex items-center gap-1 min-w-0">
+                        <span className="text-lg shrink-0">{m.emoji}</span>
                         <h3 className="text-sm font-semibold truncate flex-1">{e.title || "بدون عنوان"}</h3>
                       </div>
                       {w ? (
@@ -322,8 +322,8 @@ export function DiarySection() {
             })}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
-            <BookOpen className="size-8 text-muted-foreground/40" />
+          <div className="flex flex-col items-center justify-center gap-1 py-16 text-center">
+            <BookOpen className="size-6 text-muted-foreground/40" />
             <p className="text-sm font-medium">لا مذكرات</p>
             <p className="text-xs text-muted-foreground">
               {search || moodFilter !== "all" ? "لا نتائج مطابقة" : "ابدأ بكتابة أول مذكرة"}
@@ -343,7 +343,7 @@ export function DiarySection() {
             <DialogTitle>{editing ? "تعديل المذكرة" : "إضافة مذكرة"}</DialogTitle>
             <DialogDescription>سجّل يومك ومشاعرك.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-2 max-h-[60vh] overflow-y-auto custom-scroll py-1">
+          <div className="grid gap-1 max-h-[60vh] overflow-y-auto custom-scroll py-1">
             <div className="grid gap-1.5">
               <Label htmlFor="d-title">العنوان</Label>
               <Input id="d-title" value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="عنوان مختصر" />
@@ -352,7 +352,7 @@ export function DiarySection() {
               <Label htmlFor="d-content">المحتوى *</Label>
               <Textarea id="d-content" rows={6} value={form.content} onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))} placeholder="اكتب هنا..." />
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-1">
               <div className="grid gap-1.5">
                 <Label>المزاج</Label>
                 <Select value={form.mood} onValueChange={(v) => setForm((f) => ({ ...f, mood: v }))}>
@@ -397,8 +397,8 @@ export function DiarySection() {
       <Dialog open={viewOpen} onOpenChange={setViewOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <span className="text-xl">{editing ? moodMeta(editing.mood).emoji : ""}</span>
+            <DialogTitle className="flex items-center gap-1">
+              <span className="text-lg">{editing ? moodMeta(editing.mood).emoji : ""}</span>
               {editing?.title || "بدون عنوان"}
             </DialogTitle>
             <DialogDescription>

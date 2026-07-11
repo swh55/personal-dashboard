@@ -249,11 +249,11 @@ export function AutomationSection() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className="flex h-full flex-col gap-1">
       {/* Header */}
-      <header className="flex flex-wrap items-center justify-between gap-2">
+      <header className="flex flex-wrap items-center justify-between gap-1">
         <div>
-          <h2 className="flex items-center gap-2 text-xl font-bold tracking-tight">
+          <h2 className="flex items-center gap-1 text-lg font-bold tracking-tight">
             <Workflow className="size-6 text-emerald-glow" />
             الأتمتة
           </h2>
@@ -261,7 +261,7 @@ export function AutomationSection() {
             قواعد تلقائية تنفّذ إجراءات عند تحقق شروط معيّنة
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Button variant="outline" size="sm" onClick={reload} disabled={loading}>
             <RefreshCw className={loading ? "size-4 animate-spin" : "size-4"} />
             <span className="hidden sm:inline">تحديث</span>
@@ -298,7 +298,7 @@ export function AutomationSection() {
       {/* Body */}
       <ScrollArea className="flex-1 custom-scroll -mx-1 px-1">
         {loading ? (
-          <div className="grid gap-2">
+          <div className="grid gap-1">
             {Array.from({ length: 3 }).map((_, i) => (
               <Skeleton key={i} className="h-32 w-full rounded-xl" />
             ))}
@@ -307,7 +307,7 @@ export function AutomationSection() {
           <Alert variant="destructive">
             <CircleAlert className="size-4" />
             <AlertTitle>تعذّر تحميل قواعد الأتمتة</AlertTitle>
-            <AlertDescription className="flex items-center gap-2">
+            <AlertDescription className="flex items-center gap-1">
               <span>{error}</span>
               <Button size="sm" variant="outline" onClick={reload}>
                 إعادة المحاولة
@@ -316,7 +316,7 @@ export function AutomationSection() {
           </Alert>
         ) : rules.length === 0 ? (
           <Card className="border-dashed">
-            <CardContent className="flex flex-col items-center justify-center gap-2 p-10 text-center">
+            <CardContent className="flex flex-col items-center justify-center gap-1 p-10 text-center">
               <div className="flex size-14 items-center justify-center rounded-full bg-emerald-glow/10 text-emerald-glow">
                 <Inbox className="size-7" />
               </div>
@@ -333,7 +333,7 @@ export function AutomationSection() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-2">
+          <div className="grid gap-1">
             {rules.map((r) => {
               const tm = triggerMeta(r.trigger);
               const am = actionMeta(r.action);
@@ -351,11 +351,11 @@ export function AutomationSection() {
                       : "opacity-70 hover:opacity-100")
                   }
                 >
-                  <CardContent className="p-2">
-                    <div className="flex items-start gap-2">
+                  <CardContent className="p-1">
+                    <div className="flex items-start gap-1">
                       <div
                         className={
-                          "flex size-8 shrink-0 items-center justify-center rounded-lg " +
+                          "flex size-6 shrink-0 items-center justify-center rounded-lg " +
                           (r.active
                             ? "bg-emerald-glow/15 text-emerald-glow"
                             : "bg-muted text-muted-foreground")
@@ -368,7 +368,7 @@ export function AutomationSection() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-start justify-between gap-1">
                           <h3 className="font-semibold leading-tight">
                             {r.name}
                           </h3>
@@ -458,8 +458,8 @@ export function AutomationSection() {
               حدّد المحفّز والإجراء والإعدادات
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-2 py-2">
-            <div className="grid gap-2">
+          <div className="grid gap-1 py-1">
+            <div className="grid gap-1">
               <Label htmlFor="name">اسم القاعدة *</Label>
               <Input
                 id="name"
@@ -470,8 +470,8 @@ export function AutomationSection() {
                 placeholder="مثال: تنبيه عند تجاوز ميزانية الطعام"
               />
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="grid gap-2">
+            <div className="grid grid-cols-2 gap-1">
+              <div className="grid gap-1">
                 <Label htmlFor="trigger">المحفّز</Label>
                 <Select
                   value={form.trigger}
@@ -487,7 +487,7 @@ export function AutomationSection() {
                       const Icon = t.icon;
                       return (
                         <SelectItem key={t.value} value={t.value}>
-                          <span className="flex items-center gap-2">
+                          <span className="flex items-center gap-1">
                             <Icon className="size-4" />
                             {t.label}
                           </span>
@@ -497,7 +497,7 @@ export function AutomationSection() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid gap-2">
+              <div className="grid gap-1">
                 <Label htmlFor="action">الإجراء</Label>
                 <Select
                   value={form.action}
@@ -513,7 +513,7 @@ export function AutomationSection() {
                       const Icon = a.icon;
                       return (
                         <SelectItem key={a.value} value={a.value}>
-                          <span className="flex items-center gap-2">
+                          <span className="flex items-center gap-1">
                             <Icon className="size-4" />
                             {a.label}
                           </span>
@@ -524,7 +524,7 @@ export function AutomationSection() {
                 </Select>
               </div>
             </div>
-            <div className="grid gap-2">
+            <div className="grid gap-1">
               <Label htmlFor="config">الإعدادات (JSON اختياري)</Label>
               <Textarea
                 id="config"
@@ -542,7 +542,7 @@ export function AutomationSection() {
               </p>
             </div>
             <div className="flex items-center justify-between rounded-lg border border-border/60 p-2">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 <Power className="size-4 text-muted-foreground" />
                 <div>
                   <Label className="cursor-pointer">قاعدة نشطة</Label>
@@ -614,12 +614,12 @@ function StatCard({
 }) {
   return (
     <Card className="border-border/60">
-      <CardContent className="flex items-center gap-2 p-2">
-        <div className={`flex size-8 items-center justify-center rounded-lg ${cls}`}>
+      <CardContent className="flex items-center gap-1 p-1">
+        <div className={`flex size-6 items-center justify-center rounded-lg ${cls}`}>
           {icon}
         </div>
         <div>
-          <div className="text-xl font-bold leading-none">{value}</div>
+          <div className="text-lg font-bold leading-none">{value}</div>
           <div className="mt-1 text-xs text-muted-foreground">{label}</div>
         </div>
       </CardContent>

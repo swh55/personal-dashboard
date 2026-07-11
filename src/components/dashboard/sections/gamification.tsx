@@ -96,10 +96,10 @@ export function GamificationSection() {
   const levelPct = levelProgress; // pointsInLevel is out of 100
 
   return (
-    <div className="flex h-full flex-col gap-2">
-      <header className="flex flex-wrap items-center justify-between gap-2">
+    <div className="flex h-full flex-col gap-1">
+      <header className="flex flex-wrap items-center justify-between gap-1">
         <div>
-          <h2 className="text-xl font-bold tracking-tight">التحفيز والإنجاز</h2>
+          <h2 className="text-lg font-bold tracking-tight">التحفيز والإنجاز</h2>
           <p className="text-sm text-muted-foreground">
             تابع نقاطك ومستواك وإنجازاتك في رحلة التنظيم
           </p>
@@ -112,9 +112,9 @@ export function GamificationSection() {
 
       <ScrollArea className="flex-1 custom-scroll -mx-1 px-1">
         {loading ? (
-          <div className="grid gap-2">
+          <div className="grid gap-1">
             <Skeleton className="h-44 w-full rounded-2xl" />
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+            <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-6">
               {Array.from({ length: 6 }).map((_, i) => (
                 <Skeleton key={i} className="h-24 rounded-xl" />
               ))}
@@ -126,7 +126,7 @@ export function GamificationSection() {
           <Alert variant="destructive">
             <CircleAlert className="size-4" />
             <AlertTitle>تعذّر تحميل بيانات التحفيز</AlertTitle>
-            <AlertDescription className="flex items-center gap-2">
+            <AlertDescription className="flex items-center gap-1">
               <span>{error}</span>
               <Button size="sm" variant="outline" onClick={reload}>
                 إعادة المحاولة
@@ -140,28 +140,28 @@ export function GamificationSection() {
             <AlertDescription>لم يتم العثور على بيانات تحفيزية.</AlertDescription>
           </Alert>
         ) : (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
             {/* Hero level card */}
             <Card className="relative overflow-hidden border-emerald-glow/30 bg-gradient-to-br from-emerald-glow/10 via-transparent to-amber-glow/10">
               <div className="pointer-events-none absolute -left-12 -top-12 size-48 rounded-full bg-emerald-glow/10 blur-3xl" />
               <div className="pointer-events-none absolute -right-12 -bottom-12 size-48 rounded-full bg-amber-glow/10 blur-3xl" />
-              <CardContent className="relative p-3">
-                <div className="flex flex-wrap items-center justify-between gap-3">
+              <CardContent className="relative p-1">
+                <div className="flex flex-wrap items-center justify-between gap-1">
                   {/* Level badge */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
                     <div className="relative">
                       <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-emerald-glow to-amber-glow blur-md opacity-60" />
                       <div className="relative flex size-20 flex-col items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-glow to-amber-glow text-background">
                         <span className="text-[10px] font-medium opacity-80">مستوى</span>
-                        <span className="text-xl font-bold leading-none">{data.level}</span>
+                        <span className="text-lg font-bold leading-none">{data.level}</span>
                       </div>
                     </div>
                     <div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
                         <Sparkles className="size-4 text-emerald-glow" />
                         <span className="text-sm text-muted-foreground">نقاطك الحالية</span>
                       </div>
-                      <p className="text-xl font-bold tracking-tight">
+                      <p className="text-lg font-bold tracking-tight">
                         {data.points.toLocaleString("en-US")}
                       </p>
                       <p className="mt-1 text-xs text-muted-foreground">
@@ -199,15 +199,15 @@ export function GamificationSection() {
             </Card>
 
             {/* Stats row */}
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+            <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-6">
               {STAT_TILES.map((t) => {
                 const value = (data.stats as unknown as Record<string, number>)[t.key];
                 const Icon = t.icon;
                 return (
                   <Card key={t.key} className="border-border/60">
-                    <CardContent className="flex flex-col items-center gap-1 p-2 text-center">
+                    <CardContent className="flex flex-col items-center gap-1 p-1 text-center">
                       <Icon className={`size-5 ${t.color}`} />
-                      <span className="text-xl font-bold leading-none">
+                      <span className="text-lg font-bold leading-none">
                         {value.toLocaleString("en-US")}
                       </span>
                       <span className="text-[11px] text-muted-foreground">{t.label}</span>
@@ -219,9 +219,9 @@ export function GamificationSection() {
 
             {/* Achievements grid */}
             <Card className="border-border/60">
-              <CardContent className="p-3">
+              <CardContent className="p-1">
                 <div className="mb-2 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
                     <Trophy className="size-5 text-amber-glow" />
                     <h3 className="font-semibold">الإنجازات</h3>
                   </div>
@@ -229,7 +229,7 @@ export function GamificationSection() {
                     {data.achievements.filter((a) => a.unlocked).length} / {data.achievements.length} مفتوحة
                   </Badge>
                 </div>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-4">
                   {data.achievements.map((a) => {
                     const max = ACHIEVEMENT_MAX[a.id] ?? a.max ?? 0;
                     const pct = max > 0 ? Math.min(100, Math.round((a.progress / max) * 100)) : 0;
@@ -237,7 +237,7 @@ export function GamificationSection() {
                       <div
                         key={a.id}
                         className={
-                          "relative flex flex-col gap-2 rounded-xl border p-2 transition-colors " +
+                          "relative flex flex-col gap-1 rounded-xl border p-2 transition-colors " +
                           (a.unlocked
                             ? "border-amber-glow/40 bg-amber-glow/5"
                             : "border-border/60 bg-muted/30")
@@ -246,7 +246,7 @@ export function GamificationSection() {
                         <div className="flex items-start justify-between">
                           <div
                             className={
-                              "flex size-11 items-center justify-center rounded-xl text-xl " +
+                              "flex size-11 items-center justify-center rounded-xl text-lg " +
                               (a.unlocked ? "bg-amber-glow/15" : "bg-muted/60 grayscale")
                             }
                           >
@@ -298,14 +298,14 @@ export function GamificationSection() {
 
             {/* Habit streaks leaderboard */}
             <Card className="border-border/60">
-              <CardContent className="p-3">
-                <div className="mb-2 flex items-center gap-2">
+              <CardContent className="p-1">
+                <div className="mb-2 flex items-center gap-1">
                   <Flame className="size-5 text-rose-400" />
                   <h3 className="font-semibold">لوحة الصدارة — السلاسل اليومية</h3>
                 </div>
                 {data.habitStreaks.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center gap-2 py-6 text-center">
-                    <div className="flex size-9 items-center justify-center rounded-full bg-muted/40 text-muted-foreground">
+                  <div className="flex flex-col items-center justify-center gap-1 py-6 text-center">
+                    <div className="flex size-7 items-center justify-center rounded-full bg-muted/40 text-muted-foreground">
                       <Flame className="size-5" />
                     </div>
                     <p className="text-sm font-medium">لا توجد سلاسل عادات بعد</p>
@@ -314,7 +314,7 @@ export function GamificationSection() {
                     </p>
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-1">
                     {data.habitStreaks.map((s, i) => {
                       const medal =
                         i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : null;
@@ -322,10 +322,10 @@ export function GamificationSection() {
                       return (
                         <div
                           key={s.habitId}
-                          className="flex items-center justify-between gap-2 rounded-xl border border-border/60 bg-muted/20 px-2 py-3"
+                          className="flex items-center justify-between gap-1 rounded-xl border border-border/60 bg-muted/20 px-2 py-3"
                         >
-                          <div className="flex items-center gap-2">
-                            <span className="flex size-8 items-center justify-center text-base font-bold">
+                          <div className="flex items-center gap-1">
+                            <span className="flex size-6 items-center justify-center text-base font-bold">
                               {medal || (
                                 <span className="text-muted-foreground">{i + 1}</span>
                               )}
@@ -337,9 +337,9 @@ export function GamificationSection() {
                               </p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1">
                             {isHot && (
-                              <span className="text-lg" title="سلسلة نشطة">
+                              <span className="text-base" title="سلسلة نشطة">
                                 🔥
                               </span>
                             )}

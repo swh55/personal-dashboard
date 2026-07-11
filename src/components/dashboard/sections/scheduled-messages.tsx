@@ -249,16 +249,16 @@ export function ScheduledMessagesSection() {
   ];
 
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className="flex h-full flex-col gap-1">
       {/* header */}
-      <header className="flex flex-wrap items-center justify-between gap-2">
+      <header className="flex flex-wrap items-center justify-between gap-1">
         <div>
-          <h2 className="text-xl font-bold tracking-tight">الرسائل المجدولة</h2>
+          <h2 className="text-lg font-bold tracking-tight">الرسائل المجدولة</h2>
           <p className="text-sm text-muted-foreground">
             جدولة رسائل الواتساب وSMS والتيليغرام والبريد لإرسالها لاحقاً
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Button variant="outline" size="sm" onClick={reload} disabled={loading}>
             <RefreshCw className={loading ? "size-4 animate-spin" : "size-4"} />
             <span className="hidden sm:inline">تحديث</span>
@@ -271,17 +271,17 @@ export function ScheduledMessagesSection() {
       </header>
 
       {/* stats */}
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-1">
         {statCards.map((s) => {
           const I = s.icon;
           return (
             <Card key={s.label} className="border-border/60">
-              <CardContent className="flex items-center gap-2 p-2">
-                <div className={`flex size-9 items-center justify-center rounded-md shrink-0 ${s.cls}`}>
+              <CardContent className="flex items-center gap-1 p-1">
+                <div className={`flex size-7 items-center justify-center rounded-md shrink-0 ${s.cls}`}>
                   <I className="size-4" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-lg font-bold leading-none">{s.value}</div>
+                  <div className="text-base font-bold leading-none">{s.value}</div>
                   <div className="text-[11px] text-muted-foreground truncate">{s.label}</div>
                 </div>
               </CardContent>
@@ -321,13 +321,13 @@ export function ScheduledMessagesSection() {
 
       <ScrollArea className="custom-scroll flex-1 min-h-0 -mx-1 px-1">
         {loading ? (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
             {Array.from({ length: 5 }).map((_, i) => (
               <Skeleton key={i} className="h-24 w-full rounded-xl" />
             ))}
           </div>
         ) : filtered.length > 0 ? (
-          <div className="grid grid-cols-1 gap-2 pb-4 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-1 pb-4 lg:grid-cols-2">
             {filtered.map((m) => {
               const meta = channelMeta(m.channel);
               const I = meta.icon;
@@ -338,13 +338,13 @@ export function ScheduledMessagesSection() {
                   key={m.id}
                   className={`group transition-shadow hover:shadow-md ${m.sent ? "opacity-70" : ""}`}
                 >
-                  <CardContent className="flex flex-col gap-2 p-2">
-                    <div className="flex items-start gap-2">
-                      <div className={`flex size-9 items-center justify-center rounded-md shrink-0 ${meta.badge}`}>
+                  <CardContent className="flex flex-col gap-1 p-1">
+                    <div className="flex items-start gap-1">
+                      <div className={`flex size-7 items-center justify-center rounded-md shrink-0 ${meta.badge}`}>
                         <I className="size-4" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
                           <span className="text-sm font-semibold truncate" dir="auto">{m.recipient}</span>
                           <Badge variant="outline" className={`h-5 gap-1 text-[10px] ${meta.badge}`}>
                             {meta.label}
@@ -402,8 +402,8 @@ export function ScheduledMessagesSection() {
             })}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
-            <Inbox className="size-8 text-muted-foreground/40" />
+          <div className="flex flex-col items-center justify-center gap-1 py-16 text-center">
+            <Inbox className="size-6 text-muted-foreground/40" />
             <p className="text-sm font-medium">لا رسائل {tab === "pending" ? "بانتظار الإرسال" : tab === "sent" ? "مُرسَلة" : "مجدولة"}</p>
             <p className="text-xs text-muted-foreground">جدول رسالة لإرسالها في وقت محدد</p>
             <Button size="sm" variant="outline" className="mt-1" onClick={openAdd}>
@@ -421,7 +421,7 @@ export function ScheduledMessagesSection() {
             <DialogTitle>{editing ? "تعديل رسالة مجدولة" : "جدولة رسالة"}</DialogTitle>
             <DialogDescription>حدّد المستلم والقناة والوقت لإرسال الرسالة.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-2 py-1">
+          <div className="grid gap-1 py-1">
             <div className="grid gap-1.5">
               <Label htmlFor="sm-recipient">المستلم *</Label>
               <Input
@@ -441,7 +441,7 @@ export function ScheduledMessagesSection() {
                 const I = c.icon;
                 return (
                   <SelectItem key={c.value} value={c.value}>
-                    <span className="inline-flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1">
                       <I className="size-3.5" />
                       {c.label}
                     </span>

@@ -267,16 +267,16 @@ export function HomeManagementSection() {
   const topWaiting = React.useMemo(() => waitingList.slice(0, 3), [waitingList]);
 
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className="flex h-full flex-col gap-1">
       {/* header */}
-      <header className="flex flex-wrap items-center justify-between gap-2">
+      <header className="flex flex-wrap items-center justify-between gap-1">
         <div>
-          <h2 className="text-xl font-bold tracking-tight">إدارة المنزل</h2>
+          <h2 className="text-lg font-bold tracking-tight">إدارة المنزل</h2>
           <p className="text-sm text-muted-foreground">
             مخزون المطبخ وقائمة الانتظار — كل ما يخص البيت في مكان واحد
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Button variant="outline" size="sm" onClick={reload} disabled={loading}>
             <RefreshCw className={loading ? "size-4 animate-spin" : "size-4"} />
             <span className="hidden sm:inline">تحديث</span>
@@ -289,17 +289,17 @@ export function HomeManagementSection() {
       </header>
 
       {/* stats */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-1 sm:grid-cols-4">
         {statCards.map((s) => {
           const I = s.icon;
           return (
             <Card key={s.label} className="border-border/60">
-              <CardContent className="flex items-center gap-2 p-2">
-                <div className={`flex size-9 items-center justify-center rounded-md shrink-0 ${s.cls}`}>
+              <CardContent className="flex items-center gap-1 p-1">
+                <div className={`flex size-7 items-center justify-center rounded-md shrink-0 ${s.cls}`}>
                   <I className="size-4" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-lg font-bold leading-none">{s.value}</div>
+                  <div className="text-base font-bold leading-none">{s.value}</div>
                   <div className="text-[11px] text-muted-foreground truncate">{s.label}</div>
                 </div>
               </CardContent>
@@ -321,9 +321,9 @@ export function HomeManagementSection() {
 
       <ScrollArea className="custom-scroll flex-1 min-h-0 -mx-1 px-1">
         {loading ? (
-          <div className="flex flex-col gap-2 pb-4">
+          <div className="flex flex-col gap-1 pb-4">
             <Skeleton className="h-12 w-full rounded-xl" />
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-4">
               {Array.from({ length: 6 }).map((_, i) => (
                 <Skeleton key={i} className="h-28 w-full rounded-xl" />
               ))}
@@ -331,12 +331,12 @@ export function HomeManagementSection() {
             <Skeleton className="h-32 w-full rounded-xl" />
           </div>
         ) : (
-          <div className="flex flex-col gap-2 pb-4">
+          <div className="flex flex-col gap-1 pb-4">
 
             {/* Pantry section */}
             <div>
-              <div className="flex items-center justify-between gap-2 mb-2">
-                <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between gap-1 mb-2">
+                <div className="flex items-center gap-1">
                   <ShoppingCart className="size-4 text-emerald-glow" />
                   <h3 className="text-sm font-semibold">مخزون المطبخ</h3>
                   <Badge variant="secondary" className="text-[10px]">{pantry.length}</Badge>
@@ -345,7 +345,7 @@ export function HomeManagementSection() {
 
               {/* filter card */}
               <Card className="border-border/60 mb-2">
-                <CardContent className="flex flex-wrap items-center gap-2 p-2">
+                <CardContent className="flex flex-wrap items-center gap-1 p-1">
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <Package className="size-3.5" />
                     تصفية:
@@ -360,7 +360,7 @@ export function HomeManagementSection() {
                     </SelectContent>
                   </Select>
                   <Separator orientation="vertical" className="h-5" />
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
                     <Switch checked={lowOnly} onCheckedChange={setLowOnly} aria-label="المخزون المنخفض فقط" />
                     <Label className="text-xs cursor-pointer" onClick={() => setLowOnly((v) => !v)}>
                       المخزون المنخفض فقط
@@ -370,7 +370,7 @@ export function HomeManagementSection() {
               </Card>
 
               {filteredPantry.length > 0 ? (
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {filteredPantry.map((it) => {
                     const cat = categoryMeta(it.category);
                     const isLow = it.quantity <= it.lowStock;
@@ -379,8 +379,8 @@ export function HomeManagementSection() {
                         key={it.id}
                         className={`group transition-shadow hover:shadow-md ${isLow ? "border-rose-500/40 bg-rose-500/5" : ""}`}
                       >
-                        <CardContent className="flex flex-col gap-2 p-2">
-                          <div className="flex items-start gap-2">
+                        <CardContent className="flex flex-col gap-1 p-1">
+                          <div className="flex items-start gap-1">
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 <span className="text-sm font-semibold truncate" dir="auto">{it.name}</span>
@@ -405,8 +405,8 @@ export function HomeManagementSection() {
                             </div>
                           </div>
                           <Separator />
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-2">
+                          <div className="flex items-center justify-between gap-1">
+                            <div className="flex items-center gap-1">
                               <Button
                                 size="icon"
                                 variant="outline"
@@ -418,7 +418,7 @@ export function HomeManagementSection() {
                                 <Minus className="size-3" />
                               </Button>
                               <div className="min-w-[60px] text-center">
-                                <div className="text-lg font-bold leading-none" dir="ltr">{it.quantity}</div>
+                                <div className="text-base font-bold leading-none" dir="ltr">{it.quantity}</div>
                                 <div className="text-[10px] text-muted-foreground">{unitLabel(it.unit)}</div>
                               </div>
                               <Button
@@ -442,8 +442,8 @@ export function HomeManagementSection() {
                   })}
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center gap-2 py-10 text-center rounded-xl border border-dashed">
-                  <Package className="size-8 text-muted-foreground/40" />
+                <div className="flex flex-col items-center justify-center gap-1 py-10 text-center rounded-xl border border-dashed">
+                  <Package className="size-6 text-muted-foreground/40" />
                   <p className="text-sm font-medium">لا عناصر {lowOnly ? "منخفضة" : "في المخزون"}</p>
                   <p className="text-xs text-muted-foreground">
                     {lowOnly ? "لا يوجد مخزون منخفض حالياً" : "أضف عناصر مخزونك لتتبعها"}
@@ -458,8 +458,8 @@ export function HomeManagementSection() {
 
             {/* Waiting list preview */}
             <div>
-              <div className="flex items-center justify-between gap-2 mb-2">
-                <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between gap-1 mb-2">
+                <div className="flex items-center gap-1">
                   <ListChecks className="size-4 text-emerald-glow" />
                   <h3 className="text-sm font-semibold">قائمة الانتظار</h3>
                   <Badge variant="secondary" className="text-[10px]">{waitingList.length}</Badge>
@@ -477,7 +477,7 @@ export function HomeManagementSection() {
                         <button
                           key={w.id}
                           onClick={() => setPanel("waitinglist")}
-                          className="flex items-center gap-2 p-2 text-right hover:bg-muted/50 transition"
+                          className="flex items-center gap-1 p-2 text-right hover:bg-muted/50 transition"
                         >
                           <div className="flex items-center gap-0.5 shrink-0">
                             {priorityStars(w.priority, w.priority >= 4 ? "text-rose-500" : "text-amber-500")}
@@ -505,8 +505,8 @@ export function HomeManagementSection() {
                       ))}
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
-                      <ListChecks className="size-8 text-muted-foreground/40" />
+                    <div className="flex flex-col items-center justify-center gap-1 py-8 text-center">
+                      <ListChecks className="size-6 text-muted-foreground/40" />
                       <p className="text-sm font-medium">قائمة الانتظار فارغة</p>
                       <Button size="sm" variant="outline" className="mt-1" onClick={() => setPanel("waitinglist")}>
                         <ArrowLeft className="size-4" />
@@ -529,7 +529,7 @@ export function HomeManagementSection() {
             <DialogTitle>{editing ? "تعديل عنصر المخزون" : "إضافة عنصر للمخزون"}</DialogTitle>
             <DialogDescription>سجّل اسم العنصر والكمية والفئة وحدّ المخزون المنخفض.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-2 py-1">
+          <div className="grid gap-1 py-1">
             <div className="grid gap-1.5">
               <Label htmlFor="hm-name">الاسم *</Label>
               <Input
@@ -540,7 +540,7 @@ export function HomeManagementSection() {
                 dir="auto"
               />
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-1">
               <div className="grid gap-1.5">
                 <Label htmlFor="hm-qty">الكمية</Label>
                 <Input
@@ -564,7 +564,7 @@ export function HomeManagementSection() {
                 </Select>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-1">
               <div className="grid gap-1.5">
                 <Label htmlFor="hm-low">حدّ المخزون المنخفض</Label>
                 <Input

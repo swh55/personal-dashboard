@@ -254,16 +254,16 @@ export function ExpensesSection() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className="flex h-full flex-col gap-1">
       {/* header */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-1">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">المصروفات</h1>
+          <h1 className="text-lg font-bold tracking-tight">المصروفات</h1>
           <p className="text-sm text-muted-foreground">
             {viewStats.count} مصروف · لهذا {dateRange === "week" ? "الأسبوع" : dateRange === "month" ? "الشهر" : "الكل"}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Button variant="outline" size="sm" onClick={() => reload()}>
             <RefreshCw className="size-4" />
             تحديث
@@ -276,7 +276,7 @@ export function ExpensesSection() {
       </div>
 
       {/* stats cards */}
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-1 md:grid-cols-4">
         <StatCard
           icon={Banknote}
           label="مصروفات بالليرة"
@@ -306,8 +306,8 @@ export function ExpensesSection() {
 
       {/* filters */}
       <Card>
-        <CardContent className="flex flex-col gap-2 p-2 md:flex-row md:items-center md:flex-wrap">
-          <div className="flex items-center gap-2">
+        <CardContent className="flex flex-col gap-1 p-1 md:flex-row md:items-center md:flex-wrap">
+          <div className="flex items-center gap-1">
             <Filter className="size-4 text-muted-foreground" />
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
               <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
@@ -319,7 +319,7 @@ export function ExpensesSection() {
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <Select value={dateRange} onValueChange={(v) => setDateRange(v as DateRange)}>
               <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -329,7 +329,7 @@ export function ExpensesSection() {
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-center gap-2 mr-auto">
+          <div className="flex items-center gap-1 mr-auto">
             <Label htmlFor="convert-all" className="text-sm text-muted-foreground">عرض القيمة بالليرة</Label>
             <Switch id="convert-all" checked={convertAll} onCheckedChange={setConvertAll} />
           </div>
@@ -347,29 +347,29 @@ export function ExpensesSection() {
         </Alert>
       ) : null}
 
-      <div className="grid flex-1 min-h-0 gap-2 lg:grid-cols-[1fr_300px]">
+      <div className="grid flex-1 min-h-0 gap-1 lg:grid-cols-[1fr_300px]">
         {/* expense list */}
         <ScrollArea className="custom-scroll -mx-1 px-1 min-h-0">
           {loading ? (
-            <div className="grid grid-cols-1 gap-2">
+            <div className="grid grid-cols-1 gap-1">
               {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-xl" />)}
             </div>
           ) : filtered.length > 0 ? (
-            <div className="flex flex-col gap-2 pb-4">
+            <div className="flex flex-col gap-1 pb-4">
               {filtered.map((e) => {
                 const isUSD = e.currency === "usd";
                 const sypEq = toSYP(e.amount, e.currency);
                 return (
                   <Card key={e.id} className="group transition-shadow hover:shadow-md">
-                    <CardContent className="flex items-center gap-2 p-2">
+                    <CardContent className="flex items-center gap-1 p-1">
                       <div
-                        className="flex size-8 items-center justify-center rounded-md text-white shrink-0"
+                        className="flex size-6 items-center justify-center rounded-md text-white shrink-0"
                         style={{ backgroundColor: CATEGORY_COLORS[e.category] || "#64748b" }}
                       >
                         <Receipt className="size-5" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
+                        <div className="flex items-center gap-1 flex-wrap">
                           <Badge variant="secondary" className="text-[10px]">{categoryLabel(e.category)}</Badge>
                           <Badge variant="outline" className="text-[10px]">{isUSD ? "دولار" : "ليرة"}</Badge>
                           <span className="text-xs text-muted-foreground">{formatDate(e.date, { day: "numeric", month: "short" })}</span>
@@ -388,10 +388,10 @@ export function ExpensesSection() {
                         ) : null}
                       </div>
                       <div className="flex flex-col gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                        <Button variant="ghost" size="icon" className="size-8" onClick={() => openEdit(e)}>
+                        <Button variant="ghost" size="icon" className="size-6" onClick={() => openEdit(e)}>
                           <Pencil className="size-3.5" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="size-8 text-destructive" onClick={() => setDeleteId(e.id)}>
+                        <Button variant="ghost" size="icon" className="size-6 text-destructive" onClick={() => setDeleteId(e.id)}>
                           <Trash2 className="size-3.5" />
                         </Button>
                       </div>
@@ -401,8 +401,8 @@ export function ExpensesSection() {
               })}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
-              <Receipt className="size-8 text-muted-foreground/40" />
+            <div className="flex flex-col items-center justify-center gap-1 py-16 text-center">
+              <Receipt className="size-6 text-muted-foreground/40" />
               <p className="text-sm font-medium">لا مصروفات</p>
               <p className="text-xs text-muted-foreground">لم تُسجَّل مصروفات ضمن الفلتر الحالي</p>
               <Button size="sm" variant="outline" className="mt-1" onClick={openAdd}>
@@ -416,7 +416,7 @@ export function ExpensesSection() {
         {/* pie chart */}
         <Card className="hidden lg:flex flex-col">
           <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-sm">
+            <CardTitle className="flex items-center gap-1 text-sm">
               <PieIcon className="size-4 text-emerald-glow" />
               توزيع حسب التصنيف
             </CardTitle>
@@ -478,8 +478,8 @@ export function ExpensesSection() {
             <DialogTitle>{editing ? "تعديل المصروف" : "إضافة مصروف"}</DialogTitle>
             <DialogDescription>سجّل تفاصيل المصروف.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-2 max-h-[60vh] overflow-y-auto custom-scroll py-1">
-            <div className="grid grid-cols-2 gap-2">
+          <div className="grid gap-1 max-h-[60vh] overflow-y-auto custom-scroll py-1">
+            <div className="grid grid-cols-2 gap-1">
               <div className="grid gap-1.5">
                 <Label htmlFor="e-amount">المبلغ *</Label>
                 <Input
@@ -575,8 +575,8 @@ function StatCard({
   const accentClass = accent === "emerald" ? "text-emerald-glow bg-emerald-glow/10" : "text-amber-glow bg-amber-glow/10";
   return (
     <Card>
-      <CardContent className="flex items-center gap-2 p-2">
-        <div className={`flex size-9 items-center justify-center rounded-md shrink-0 ${accentClass}`}>
+      <CardContent className="flex items-center gap-1 p-1">
+        <div className={`flex size-7 items-center justify-center rounded-md shrink-0 ${accentClass}`}>
           <Icon className="size-4" />
         </div>
         <div className="min-w-0">

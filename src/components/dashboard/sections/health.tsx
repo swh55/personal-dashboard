@@ -301,14 +301,14 @@ export function HealthSection() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className="flex h-full flex-col gap-1">
       {/* header */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-1">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">الصحة</h1>
+          <h1 className="text-lg font-bold tracking-tight">الصحة</h1>
           <p className="text-sm text-muted-foreground">الأدوية، النوم، والمتابعة الصحية</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Button variant="outline" size="sm" onClick={() => reload()}>
             <RefreshCw className="size-4" />
             تحديث
@@ -325,7 +325,7 @@ export function HealthSection() {
       </div>
 
       {/* stats */}
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+      <div className="grid grid-cols-2 gap-1 md:grid-cols-3">
         <StatCard icon={Pill} label="أدوية نشطة" value={`${stats.medicationsActive}`} sub={`${medications.length} إجمالي`} accent="emerald" />
         <StatCard icon={Moon} label="متوسط النوم" value={`${stats.avgSleepHours} س`} sub={minutesToHours(stats.avgSleepMinutes)} accent="amber" />
         <StatCard icon={Star} label="متوسط الجودة" value={`${stats.avgQuality} / 4`} sub={`${stats.sleepLogsCount} سجل`} accent="emerald" />
@@ -342,11 +342,11 @@ export function HealthSection() {
         </Alert>
       ) : null}
 
-      <div className="grid flex-1 min-h-0 gap-2 lg:grid-cols-[1fr_1fr]">
+      <div className="grid flex-1 min-h-0 gap-1 lg:grid-cols-[1fr_1fr]">
         {/* medications */}
         <Card className="flex flex-col min-h-0">
           <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-sm">
+            <CardTitle className="flex items-center gap-1 text-sm">
               <Pill className="size-4 text-emerald-glow" />
               الأدوية
             </CardTitle>
@@ -354,23 +354,23 @@ export function HealthSection() {
           <CardContent className="flex-1 min-h-0">
             <ScrollArea className="custom-scroll h-full max-h-[60vh] -mx-1 px-1">
               {loading ? (
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-1">
                   {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-xl" />)}
                 </div>
               ) : medications.length > 0 ? (
-                <div className="flex flex-col gap-2 pb-2">
+                <div className="flex flex-col gap-1 pb-2">
                   {medications.map((m) => (
                     <div
                       key={m.id}
                       className={`group rounded-xl border p-2 transition-shadow hover:shadow-md ${m.active ? "border-emerald-glow/30 bg-emerald-glow/5" : "border-border opacity-70"}`}
                     >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <div className={`flex size-9 items-center justify-center rounded-md shrink-0 ${m.active ? "bg-emerald-glow/15 text-emerald-glow" : "bg-muted text-muted-foreground"}`}>
+                      <div className="flex items-start justify-between gap-1">
+                        <div className="flex items-center gap-1 min-w-0">
+                          <div className={`flex size-7 items-center justify-center rounded-md shrink-0 ${m.active ? "bg-emerald-glow/15 text-emerald-glow" : "bg-muted text-muted-foreground"}`}>
                             <Pill className="size-4" />
                           </div>
                           <div className="min-w-0">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1">
                               <span className="text-sm font-semibold truncate">{m.name}</span>
                               <Badge variant="outline" className="text-[10px]">{FREQUENCY_OPTIONS.find((f) => f.value === m.frequency)?.label || m.frequency}</Badge>
                             </div>
@@ -387,7 +387,7 @@ export function HealthSection() {
                           </Button>
                         </div>
                       </div>
-                      <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                      <div className="mt-2 flex flex-wrap items-center gap-1 text-[11px] text-muted-foreground">
                         <span className="inline-flex items-center gap-1">
                           <Activity className="size-3" />
                           {formatDate(m.startDate, { day: "numeric", month: "short", year: "numeric" })}
@@ -422,7 +422,7 @@ export function HealthSection() {
         {/* sleep */}
         <Card className="flex flex-col min-h-0">
           <CardHeader className="pb-2 flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-sm">
+            <CardTitle className="flex items-center gap-1 text-sm">
               <Moon className="size-4 text-amber-glow" />
               سجل النوم
             </CardTitle>
@@ -431,7 +431,7 @@ export function HealthSection() {
               جديد
             </Button>
           </CardHeader>
-          <CardContent className="flex-1 min-h-0 flex flex-col gap-2">
+          <CardContent className="flex-1 min-h-0 flex flex-col gap-1">
             {/* chart */}
             <div className="h-32 shrink-0">
               {loading ? (
@@ -471,7 +471,7 @@ export function HealthSection() {
                     return (
                       <div
                         key={s.id}
-                        className="group flex items-center gap-2 rounded-lg border p-2 transition-shadow hover:shadow-sm"
+                        className="group flex items-center gap-1 rounded-lg border p-2 transition-shadow hover:shadow-sm"
                       >
                         <div className="flex flex-col items-center justify-center min-w-[44px] shrink-0">
                           <span className="text-[10px] text-muted-foreground">{new Date(s.date).toLocaleDateString("ar-SY", { weekday: "short" })}</span>
@@ -488,7 +488,7 @@ export function HealthSection() {
                               {minutesToHours(s.duration)}
                             </span>
                           </div>
-                          <div className="mt-0.5 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                          <div className="mt-0.5 flex flex-wrap items-center gap-1 text-[11px] text-muted-foreground">
                             {s.bedtime ? (
                               <span className="inline-flex items-center gap-1">
                                 <BedDouble className="size-3" />
@@ -537,12 +537,12 @@ export function HealthSection() {
             <DialogTitle>{editingMed ? "تعديل دواء" : "إضافة دواء"}</DialogTitle>
             <DialogDescription>أدخل تفاصيل الدواء والمتابعة.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-2 max-h-[60vh] overflow-y-auto custom-scroll py-1">
+          <div className="grid gap-1 max-h-[60vh] overflow-y-auto custom-scroll py-1">
             <div className="grid gap-1.5">
               <Label htmlFor="m-name">اسم الدواء *</Label>
               <Input id="m-name" value={medForm.name} onChange={(e) => setMedForm((f) => ({ ...f, name: e.target.value }))} placeholder="مثال: باراسيتامول" />
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-1">
               <div className="grid gap-1.5">
                 <Label htmlFor="m-dose">الجرعة</Label>
                 <Input id="m-dose" value={medForm.dosage} onChange={(e) => setMedForm((f) => ({ ...f, dosage: e.target.value }))} placeholder="500mg" />
@@ -557,7 +557,7 @@ export function HealthSection() {
                 </Select>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-1">
               <div className="grid gap-1.5">
                 <Label htmlFor="m-start">تاريخ البدء</Label>
                 <Input id="m-start" type="date" value={medForm.startDate} onChange={(e) => setMedForm((f) => ({ ...f, startDate: e.target.value }))} />
@@ -588,12 +588,12 @@ export function HealthSection() {
             <DialogTitle>إضافة سجل نوم</DialogTitle>
             <DialogDescription>سجّل ساعات نومك وجودتها.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-2 py-1">
+          <div className="grid gap-1 py-1">
             <div className="grid gap-1.5">
               <Label htmlFor="s-date">التاريخ</Label>
               <Input id="s-date" type="date" value={sleepForm.date} onChange={(e) => setSleepForm((f) => ({ ...f, date: e.target.value }))} />
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-1">
               <div className="grid gap-1.5">
                 <Label htmlFor="s-bed">وقت النوم</Label>
                 <Input
@@ -687,8 +687,8 @@ function StatCard({
   const accentClass = accent === "emerald" ? "text-emerald-glow bg-emerald-glow/10" : "text-amber-glow bg-amber-glow/10";
   return (
     <Card>
-      <CardContent className="flex items-center gap-2 p-2">
-        <div className={`flex size-9 items-center justify-center rounded-md shrink-0 ${accentClass}`}>
+      <CardContent className="flex items-center gap-1 p-1">
+        <div className={`flex size-7 items-center justify-center rounded-md shrink-0 ${accentClass}`}>
           <Icon className="size-4" />
         </div>
         <div className="min-w-0">
@@ -713,8 +713,8 @@ function EmptyState({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
-      <Icon className="size-8 text-muted-foreground/40" />
+    <div className="flex flex-col items-center justify-center gap-1 py-12 text-center">
+      <Icon className="size-6 text-muted-foreground/40" />
       <p className="text-sm font-medium">{title}</p>
       <p className="text-xs text-muted-foreground">{desc}</p>
       {action}

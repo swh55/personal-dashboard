@@ -2724,34 +2724,14 @@ export function installFetchInterceptor(): void {
     else if (input instanceof URL) urlStr = input.toString();
     else urlStr = input as string;
 
-    // ONLY intercept RELATIVE /api/* requests (our own app's API).
-    // External URLs (https://api.z.ai, https://api.open-meteo.com, etc.)
-    // must pass through to the real fetch — otherwise the AI chat and
-    // weather handlers can't make real network calls.
-    const isRelative = urlStr.startsWith("/") || urlStr.startsWith("./");
-    if (isRelative && urlStr.startsWith("/api/")) {
+    // SIMPLE RULE: Only intercept if the URL is RELATIVE (starts with /)
+    // AND starts with /api/. Everything else (full URLs with protocol)
+    // goes to the original fetch.
+    if (urlStr.startsWith("/api/")) {
       return localApiHandler(urlStr, init);
     }
 
-    // Also catch the case where the URL is relative but parsed as a URL object
-    // (e.g. new URL("/api/...", window.location.origin))
-    if (!isRelative) {
-      try {
-        const u = new URL(urlStr, window.location.origin);
-        // Only intercept if it's OUR origin (relative URL resolved to localhost)
-        const isOurOrigin =
-          u.origin === window.location.origin ||
-          u.host === window.location.host;
-        if (isOurOrigin && u.pathname.startsWith("/api/")) {
-          return localApiHandler(urlStr, init);
-        }
-      } catch {
-        // not a URL — fall through
-      }
-    }
-
-    // Fall back to the original fetch for everything else
-    // (external APIs, assets, RSC, fonts, etc.)
+    // All other requests (external APIs, assets, etc.) use original fetch
     return originalFetch!(input as RequestInfo, init);
   }) as typeof window.fetch;
 

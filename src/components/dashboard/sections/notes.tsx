@@ -161,14 +161,14 @@ export function NotesSection() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className="flex h-full flex-col gap-1">
       {/* header */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-1">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">الملاحظات</h1>
+          <h1 className="text-lg font-bold tracking-tight">الملاحظات</h1>
           <p className="text-sm text-muted-foreground">{stats.total} ملاحظة · {stats.pinned} مثبتة</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Button variant="outline" size="sm" onClick={() => reload()}>
             <RefreshCw className="size-4" />
             تحديث
@@ -182,7 +182,7 @@ export function NotesSection() {
 
       {/* search */}
       <Card>
-        <CardContent className="p-2">
+        <CardContent className="p-1">
           <div className="relative">
             <Search className="absolute right-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="بحث في العنوان أو المحتوى" className="pr-8" />
@@ -204,11 +204,11 @@ export function NotesSection() {
       {/* masonry-style grid using CSS columns */}
       <ScrollArea className="custom-scroll flex-1 -mx-1 px-1">
         {loading ? (
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-40 w-full rounded-xl" />)}
           </div>
         ) : sorted.length > 0 ? (
-          <div className="columns-1 gap-2 sm:columns-2 lg:columns-3 xl:columns-4 pb-4 [column-fill:_balance]">
+          <div className="columns-1 gap-1 sm:columns-2 lg:columns-3 xl:columns-4 pb-4 [column-fill:_balance]">
             {sorted.map((n) => {
               const c = colorClasses(n.color);
               return (
@@ -216,7 +216,7 @@ export function NotesSection() {
                   key={n.id}
                   className={`group mb-3 break-inside-avoid rounded-xl border p-2 shadow-sm transition-shadow hover:shadow-md ${c.bg} ${c.border}`}
                 >
-                  <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start justify-between gap-1">
                     <h3 className="text-sm font-semibold leading-snug flex-1">{n.title}</h3>
                     <div className="flex shrink-0 gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
                       <Button size="icon" variant="ghost" className="size-7" onClick={() => togglePin(n)} aria-label={n.pinned ? "إلغاء التثبيت" : "تثبيت"}>
@@ -246,8 +246,8 @@ export function NotesSection() {
             })}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
-            <StickyNote className="size-8 text-muted-foreground/40" />
+          <div className="flex flex-col items-center justify-center gap-1 py-16 text-center">
+            <StickyNote className="size-6 text-muted-foreground/40" />
             <p className="text-sm font-medium">لا ملاحظات</p>
             <p className="text-xs text-muted-foreground">ابدأ بكتابة أول ملاحظة</p>
             <Button size="sm" variant="outline" className="mt-1" onClick={openAdd}>
@@ -265,7 +265,7 @@ export function NotesSection() {
             <DialogTitle>{editing ? "تعديل ملاحظة" : "إضافة ملاحظة"}</DialogTitle>
             <DialogDescription>اكتب أفكارك وملاحظاتك بسرعة.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-2 py-1">
+          <div className="grid gap-1 py-1">
             <div className="grid gap-1.5">
               <Label htmlFor="n-title">العنوان *</Label>
               <Input id="n-title" value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="عنوان قصير" />
@@ -283,12 +283,12 @@ export function NotesSection() {
                     type="button"
                     aria-label={c.label}
                     onClick={() => setForm((f) => ({ ...f, color: c.value }))}
-                    className={`size-8 rounded-full border-2 ${c.bg} ${c.border} transition ${form.color === c.value ? "ring-2 ring-ring ring-offset-1" : ""}`}
+                    className={`size-6 rounded-full border-2 ${c.bg} ${c.border} transition ${form.color === c.value ? "ring-2 ring-ring ring-offset-1" : ""}`}
                   />
                 ))}
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               <input
                 id="n-pinned"
                 type="checkbox"

@@ -185,16 +185,16 @@ export function RecycleBinSection() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className="flex h-full flex-col gap-1">
       {/* header */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-1">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">سلة المحذوفات</h1>
+          <h1 className="text-lg font-bold tracking-tight">سلة المحذوفات</h1>
           <p className="text-sm text-muted-foreground">
             {total > 0 ? `${total} عنصر محذوف — يمكن استرجاعه` : "السلة فارغة"}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Button variant="outline" size="sm" onClick={() => reload()}>
             <RefreshCw className="size-4" />
             تحديث
@@ -233,18 +233,18 @@ export function RecycleBinSection() {
 
       {loading ? (
         <ScrollArea className="custom-scroll flex-1 min-h-0">
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
             {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-xl" />)}
           </div>
         </ScrollArea>
       ) : total === 0 ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-2 py-16 text-center">
-          <Inbox className="size-9 text-muted-foreground/40" />
+        <div className="flex flex-1 flex-col items-center justify-center gap-1 py-16 text-center">
+          <Inbox className="size-7 text-muted-foreground/40" />
           <p className="text-sm font-medium">السلة فارغة</p>
           <p className="text-xs text-muted-foreground">لا توجد عناصر محذوفة لعرضها</p>
         </div>
       ) : (
-        <Tabs defaultValue={activeTypes[0] || "contacts"} className="flex-1 min-h-0 flex flex-col gap-2">
+        <Tabs defaultValue={activeTypes[0] || "contacts"} className="flex-1 min-h-0 flex flex-col gap-1">
           <ScrollArea className="custom-scroll w-full overflow-x-auto">
             <TabsList className="h-9">
               {TYPE_ORDER.map((t) => {
@@ -269,13 +269,13 @@ export function RecycleBinSection() {
             return (
               <TabsContent key={t} value={t} className="flex-1 min-h-0 mt-0">
                 <ScrollArea className="custom-scroll h-full max-h-[calc(100vh-280px)] -mx-1 px-1">
-                  <div className="flex flex-col gap-2 pb-4">
+                  <div className="flex flex-col gap-1 pb-4">
                     {items.map((i) => {
                       const deletedAt = i.deletedAt || i.updatedAt || i.createdAt;
                       return (
                         <Card key={i.id} className="transition-shadow hover:shadow-md">
-                          <CardContent className="flex items-center gap-2 p-2">
-                            <div className="flex size-9 items-center justify-center rounded-md bg-muted text-muted-foreground shrink-0">
+                          <CardContent className="flex items-center gap-1 p-1">
+                            <div className="flex size-7 items-center justify-center rounded-md bg-muted text-muted-foreground shrink-0">
                               <MIcon className="size-4" />
                             </div>
                             <div className="min-w-0 flex-1">
@@ -300,7 +300,7 @@ export function RecycleBinSection() {
                               <Button
                                 size="icon"
                                 variant="ghost"
-                                className="size-8 text-destructive"
+                                className="size-6 text-destructive"
                                 onClick={() => setPurgeTarget({ type: t, id: i.id })}
                                 aria-label="حذف نهائي"
                               >

@@ -372,6 +372,18 @@ export function SingleScreenShell({
           <Button variant="ghost" size="sm" className="size-8 p-0" onClick={() => useFloatingPanelStore.getState().setPanel("smartnotifs")} aria-label="الإشعارات">
             <BellRing className="size-4" />
           </Button>
+          {/* Home button — opens the Android app drawer (list of all apps) */}
+          {isNative() && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="size-8 p-0"
+              onClick={() => AppDrawer.openAppDrawer().catch(() => {})}
+              aria-label="تطبيقات الهاتف"
+            >
+              <LayoutGrid className="size-4" />
+            </Button>
+          )}
         </div>
       </header>
 
