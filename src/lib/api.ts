@@ -2,8 +2,40 @@
 
 import * as React from "react";
 
+/**
+ * If the local-mode interceptor is being installed (APK mode), wait for it
+ * to be ready before any fetch fires. This prevents race conditions where
+ * useApi fetches /api/notes before the interceptor has replaced fetch().
+ */
+async function waitForLocalMode(): Promise<void> {
+  if (typeof window === "undefined") return;
+  const w = window as any;
+  // If local mode is not pending, no need to wait (normal dev/server mode)
+  if (!w.__localModePending && !w.__localModeReady) {
+    // Check if we should be in local mode (APK build or Capacitor native)
+    const isApkMode = process.env.NEXT_PUBLIC_APK_MODE === "true";
+    const isCapacitorNative =
+      w.capacitor?.isNative === true || w.capacitor?.platform === "android";
+    const isForced =
+      typeof localStorage !== "undefined" &&
+      localStorage.getItem("force-local-mode") === "true";
+    if (isApkMode || isCapacitorNative || isForced) {
+      // Mark as pending so the initializer knows to set ready
+      w.__localModePending = true;
+    } else {
+      return; // Not in local mode, proceed immediately
+    }
+  }
+  // Wait up to 3 seconds for the interceptor to be ready
+  const deadline = Date.now() + 3000;
+  while (!w.__localModeReady && Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, 20));
+  }
+}
+
 /** Generic fetcher for SWR-like usage. */
 export async function fetcher<T = any>(url: string): Promise<T> {
+  await waitForLocalMode();
   const res = await fetch(url);
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: "Network error" }));

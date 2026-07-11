@@ -2469,9 +2469,17 @@ let installed = false;
 
 function shouldIntercept(): boolean {
   if (typeof window === "undefined") return false;
-  const isNative = (window as any).capacitor?.isNative === true;
-  const forceLocal = window.localStorage.getItem("force-local-mode") === "true";
-  return isNative || forceLocal;
+  // APK build: NEXT_PUBLIC_APK_MODE is baked into the bundle as "true"
+  const isApkMode = process.env.NEXT_PUBLIC_APK_MODE === "true";
+  // Capacitor native shell (Android/iOS)
+  const isNative =
+    (window as any).capacitor?.isNative === true ||
+    (window as any).capacitor?.platform === "android";
+  // Manual override for browser testing
+  const forceLocal =
+    typeof window.localStorage !== "undefined" &&
+    window.localStorage.getItem("force-local-mode") === "true";
+  return isApkMode || isNative || forceLocal;
 }
 
 /** Install the fetch interceptor. Safe to call multiple times. */
@@ -2508,6 +2516,9 @@ export function installFetchInterceptor(): void {
     // Fall back to the original fetch for everything else (assets, RSC, etc.)
     return originalFetch!(input as RequestInfo, init);
   }) as typeof window.fetch;
+
+  // Signal to useApi that the interceptor is ready
+  (window as any).__localModeReady = true;
 }
 
 /** Remove the interceptor and restore the original fetch (mainly for tests). */

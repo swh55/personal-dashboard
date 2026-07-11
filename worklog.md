@@ -389,3 +389,27 @@ Stage Summary:
 - Seed data pre-populated on first launch (12 contacts, 12 tasks, 8 events, 14 expenses, etc.)
 - Custom app icon with emerald→amber gradient
 - Arabic RTL layout preserved
+
+---
+Task ID: 13
+Agent: main (fix APK fetch interceptor)
+Task: Fix "Unexpected token '<'" errors in APK — fetch interceptor not activating in time
+
+Work Log:
+- Root cause: The fetch interceptor was being installed in a `useEffect` (async dynamic import), but useApi hooks in sections started fetching /api/* BEFORE the interceptor was ready. The WebView served the 404.html (an HTML page) instead of JSON, causing "Unexpected token '<'" parse errors.
+- Fix 1: Rewrote `local-mode-initializer.tsx` to use **static imports** and **module-level activation** instead of useEffect + dynamic import. The interceptor now installs synchronously when the module loads, BEFORE any React component renders.
+- Fix 2: Updated `fetch-interceptor.ts` `shouldIntercept()` to also check `process.env.NEXT_PUBLIC_APK_MODE === "true"` (baked into the build), not just `window.capacitor?.isNative` (which may not be available immediately in the WebView).
+- Fix 3: Added `window.__localModeReady = true` at the end of `installFetchInterceptor()` to signal readiness.
+- Fix 4: Added `waitForLocalMode()` guard in `lib/api.ts` `fetcher()` — if local mode is pending, it waits up to 3 seconds for `__localModeReady` before fetching. This is a safety net in case module load order is unexpected.
+- Reinstalled Android SDK (was cleaned from /home/z/android-sdk during session restart) + JDK 21.
+- Rebuilt static export with `NEXT_PUBLIC_APK_MODE=true`.
+- Synced to Android: `bunx cap sync android`.
+- Rebuilt APK: `./gradlew assembleDebug` — BUILD SUCCESSFUL.
+- Verified: APK contains `__localModeReady`, `localApiHandler`, `force-local-mode`, `module-level` strings — confirming the interceptor logic is baked in.
+- Tested in browser with `force-local-mode=true`: all sections load data correctly, no "Unexpected token" errors.
+
+Stage Summary:
+- Fixed APK: /home/z/my-project/dashboard.apk (4.8 MB)
+- The fetch interceptor now activates synchronously at module load time (before any React render)
+- useApi waits for interceptor readiness as a safety net
+- All 36 sections should now load data correctly in the APK
