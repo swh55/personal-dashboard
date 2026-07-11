@@ -645,3 +645,27 @@ Stage Summary:
 - Settings: city, exchange rate, AI API key
 - Pomodoro runs in background (global store + ticker)
 - Maps: interactive Leaflet with draggable marker
+
+---
+Task ID: 18
+Agent: main (fix AI fetch interceptor)
+Task: Fix AI assistant failing to respond despite API key being set
+
+Work Log:
+- Root cause: The fetch interceptor was intercepting ALL requests where the path started with "/api/", including EXTERNAL API calls like "https://api.z.ai/api/paas/v4/chat/completions". The path "/api/paas/v4/chat/completions" matched "/api/" prefix, so the interceptor routed it to the local handler (which returned a mock response saying "no API key").
+- Fix 1: Updated the fetch interceptor to ONLY intercept RELATIVE URLs that start with "/api/" (our app's own API). External URLs (https://...) pass through to the real fetch.
+- Fix 2: Added getOriginalFetch() exported function that returns the un-intercepted fetch. Used this in aiChatRoute and weatherRoute for external API calls.
+- Fix 3: Improved error messages in aiChatRoute:
+  - 401/403 → "مفتاح API غير صحيح أو غير مصرّح به"
+  - 429 → "تم تجاوز حد الطلبات"
+  - 404 → "لم يتم العثور على النموذج"
+  - Network error → "تعذر الاتصال... تحقق من اتصالك بالإنترنت"
+  - No key → "لم يتم ضبط مفتاح API بعد"
+- Verified in browser: with force-local-mode, saving a fake API key → AI chat returns "مفتاح API غير صحيح" (401) instead of the old "no API key" mock.
+- Rebuilt APK with the fix.
+
+Stage Summary:
+- AI assistant now makes REAL API calls to the configured endpoint
+- External API calls no longer intercepted by the local handler
+- Clear error messages for different failure scenarios
+- APK: /home/z/my-project/dashboard.apk (9.3 MB)

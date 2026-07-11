@@ -2318,7 +2318,8 @@ async function weatherRoute(_req: ParsedRequest): Promise<Response> {
       `&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,pressure_msl` +
       `&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset` +
       `&timezone=${encodeURIComponent(timezone)}&forecast_days=5`;
-    const res = await fetch(url);
+    const realFetch = getOriginalFetch();
+    const res = await realFetch(url);
     if (res.ok) {
       const data = await res.json();
       const weatherDescriptions: Record<number, { ar: string; icon: string }> = {
@@ -2416,7 +2417,8 @@ async function aiChatRoute(req: ParsedRequest): Promise<Response> {
     try {
       const systemPrompt =
         "أنت مساعد شخصي ذكي لرجل أعمال سوري اسمه عبد الله، يعيش في حلب. أجب بالعربية الفصحى المبسطة، كن مختصراً ومفيداً، واستخدم الرموز التعبيرية باعتدال.";
-      const res = await fetch(`${baseUrl}/chat/completions`, {
+      const realFetch = getOriginalFetch();
+      const res = await realFetch(`${baseUrl}/chat/completions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -2438,23 +2440,35 @@ async function aiChatRoute(req: ParsedRequest): Promise<Response> {
           return json({ success: true, response: reply });
         }
       }
-      // If the call failed, fall through to the mock response below.
-      console.warn("[local] AI API call failed:", res.status);
-    } catch (err) {
+      // API call failed — return a helpful error message
+      const errBody = await res.text().catch(() => "");
+      console.warn("[local] AI API call failed:", res.status, errBody);
+      let errMsg = `فشل الاتصال بخدمة الذكاء الاصطناعي (HTTP ${res.status})`;
+      if (res.status === 401 || res.status === 403) {
+        errMsg = "مفتاح API غير صحيح أو غير مصرّح به. يرجى التحقق من المفتاح في الإعدادات.";
+      } else if (res.status === 429) {
+        errMsg = "تم تجاوز حد الطلبات. يرجى المحاولة لاحقاً.";
+      } else if (res.status === 404) {
+        errMsg = `لم يتم العثور على النموذج "${model}". تحقق من اسم النموذج في الإعدادات.`;
+      }
+      return json({ success: false, error: errMsg, response: errMsg });
+    } catch (err: any) {
       console.warn("[local] AI API call error:", err);
+      const errMsg = `تعذر الاتصال بخدمة الذكاء الاصطناعي: ${err.message || "خطأ في الشبكة"}. تحقق من اتصالك بالإنترنت.`;
+      return json({ success: false, error: errMsg, response: errMsg });
     }
   }
 
-  // No API key (or API call failed) → mock response.
+  // No API key set → tell the user to configure it
   const ctxHint = context?.includeData
-    ? " لاحظت أنك طلبت تضمين بياناتك، لكن لا يمكنني الوصول إلى بياناتك محلياً دون مفتاح API."
+    ? " لاحظت أنك طلبت تضمين بياناتك، لكن يتطلب ذلك مفتاح API."
     : "";
   return json({
     success: true,
     response:
       `مرحباً! استلمت رسالتك: "${message}".` +
       ctxHint +
-      " في النسخة المحلية (بدون مفتاح API) أقدم ردوداً عامة. للحصول على ردود ذكية متكاملة، يرجى ضبط مفتاح API في الإعدادات.",
+      " ⚠️ لم يتم ضبط مفتاح API بعد. للحصول على ردود ذكية متكاملة، يرجى الذهاب إلى الإعدادات → إعدادات الذكاء الاصطناعي وإدخال مفتاح API الخاص بك.",
   });
 }
 
@@ -2668,6 +2682,15 @@ export async function localApiHandler(
 let originalFetch: typeof window.fetch | null = null;
 let installed = false;
 
+/**
+ * Get the original (un-intercepted) fetch function.
+ * Use this for external API calls (e.g. AI chat, weather) that must NOT
+ * be routed through the local interceptor.
+ */
+export function getOriginalFetch(): typeof window.fetch {
+  return originalFetch || window.fetch.bind(window);
+}
+
 function shouldIntercept(): boolean {
   if (typeof window === "undefined") return false;
   // APK build: NEXT_PUBLIC_APK_MODE is baked into the bundle as "true"
@@ -2701,20 +2724,34 @@ export function installFetchInterceptor(): void {
     else if (input instanceof URL) urlStr = input.toString();
     else urlStr = input as string;
 
-    // Strip protocol+host so relative /api/* paths are matched correctly.
-    let path: string;
-    try {
-      const u = new URL(urlStr, window.location.origin);
-      path = u.pathname;
-    } catch {
-      path = urlStr;
-    }
-
-    if (path.startsWith("/api/")) {
+    // ONLY intercept RELATIVE /api/* requests (our own app's API).
+    // External URLs (https://api.z.ai, https://api.open-meteo.com, etc.)
+    // must pass through to the real fetch — otherwise the AI chat and
+    // weather handlers can't make real network calls.
+    const isRelative = urlStr.startsWith("/") || urlStr.startsWith("./");
+    if (isRelative && urlStr.startsWith("/api/")) {
       return localApiHandler(urlStr, init);
     }
 
-    // Fall back to the original fetch for everything else (assets, RSC, etc.)
+    // Also catch the case where the URL is relative but parsed as a URL object
+    // (e.g. new URL("/api/...", window.location.origin))
+    if (!isRelative) {
+      try {
+        const u = new URL(urlStr, window.location.origin);
+        // Only intercept if it's OUR origin (relative URL resolved to localhost)
+        const isOurOrigin =
+          u.origin === window.location.origin ||
+          u.host === window.location.host;
+        if (isOurOrigin && u.pathname.startsWith("/api/")) {
+          return localApiHandler(urlStr, init);
+        }
+      } catch {
+        // not a URL — fall through
+      }
+    }
+
+    // Fall back to the original fetch for everything else
+    // (external APIs, assets, RSC, fonts, etc.)
     return originalFetch!(input as RequestInfo, init);
   }) as typeof window.fetch;
 
