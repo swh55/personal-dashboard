@@ -40,7 +40,8 @@ export type PanelId =
   | "shopping"
   | "ai"
   | "pomodoro"
-  | "notifications";
+  | "notifications"
+  | "device";
 
 interface FloatingPanelState {
   activePanel: PanelId;

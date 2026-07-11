@@ -43,6 +43,8 @@ import { SmartNotificationsWidget } from "@/components/dashboard/widgets/smart-n
 import { PinLockScreen } from "@/components/dashboard/pin-lock";
 import { useAppSettings } from "@/hooks/use-app-settings";
 import { SectionErrorBoundary } from "@/components/dashboard/section-error-boundary";
+import { DeviceSection } from "@/components/dashboard/sections/device";
+import { PermissionsManager } from "@/components/dashboard/permissions-manager";
 
 export default function Home() {
   const { activePanel } = useFloatingPanelStore();
@@ -88,6 +90,7 @@ export default function Home() {
       case "notifications": return <SmartNotificationsWidget />;
       case "settings": return <SettingsSection />;
       case "suggestions": return <SuggestionsSection />;
+      case "device": return <DeviceSection />;
       default: return <OverviewSection />;
     }
   };

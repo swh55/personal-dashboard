@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { useApi, toast } from "@/lib/api";
 import { RELATION_TYPES } from "@/lib/constants";
+import { getDeviceContacts, isNative, makePhoneCall } from "@/lib/native/bridge";
+import { db } from "@/lib/local/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -261,6 +263,49 @@ export function ContactsSection() {
             <RefreshCw className="size-4" />
             تحديث
           </Button>
+          {isNative() && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                toast.info("جارٍ مزامنة جهات الاتصال من الجهاز...");
+                const deviceContacts = await getDeviceContacts();
+                if (deviceContacts.length === 0) {
+                  toast.error("تعذر الوصول لجهات الاتصال — تحقق من الصلاحيات");
+                  return;
+                }
+                let imported = 0;
+                const existing = db.getCollection("contacts");
+                for (const dc of deviceContacts) {
+                  const phone = dc.phoneNumbers[0] || "";
+                  if (!phone) continue;
+                  const exists = existing.some(
+                    (c: any) => c.phone === phone || c.name === dc.displayName
+                  );
+                  if (exists) continue;
+                  db.insert("contacts", {
+                    name: dc.displayName,
+                    phone,
+                    whatsapp: phone,
+                    email: dc.emails[0] || null,
+                    relation: "other",
+                    category: "مستورد من الجهاز",
+                    note: "مستورد من جهات اتصال الجهاز",
+                    favorite: false,
+                    avatar: null,
+                    deletedAt: null,
+                  });
+                  imported++;
+                }
+                db.logActivity("sync", "contacts", `مزامنة من الجهاز: استيراد ${imported}`);
+                toast.success(`تم استيراد ${imported} جهة اتصال`);
+                reload();
+              }}
+            >
+              <Users className="size-4" />
+              مزامنة من الجهاز
+            </Button>
+          )}
           <Button size="sm" onClick={openAdd}>
             <UserPlus className="size-4" />
             جهة جديدة

@@ -234,6 +234,47 @@ function crudHandler(cfg: CrudConfig) {
 // Endpoint handlers
 // ----------------------------------------------------------------------------
 
+// ---- /api/calllogs ---------------------------------------------------------
+async function calllogsRoute(req: ParsedRequest): Promise<Response> {
+  if (req.method === "GET") {
+    const logs = db
+      .getCollection("callLogs")
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 50);
+    // Enrich with contact info (like Prisma's `include: { contact: true }`)
+    const contacts = db.getCollection("contacts");
+    const data = logs.map((l) => ({
+      ...l,
+      contact: l.contactId ? contacts.find((c) => c.id === l.contactId) || null : null,
+    }));
+    return ok(data);
+  }
+  if (req.method === "POST") {
+    const { contactId, name, phone, type, direction, note } = req.body || {};
+    if (!name || !phone) return fail("الاسم والهاتف مطلوبان", 400);
+    const log = db.insert("callLogs", {
+      contactId: contactId || null,
+      name,
+      phone,
+      type: type || "call",
+      direction: direction || "outgoing",
+      note: note || null,
+    });
+    db.logActivity("create", "calllog", `تم تسجيل مكالمة: ${name}`);
+    return ok(log, 201);
+  }
+  if (req.method === "DELETE") {
+    const id = req.search.get("id");
+    if (!id) {
+      db.setCollection("callLogs", []);
+      return ok(null);
+    }
+    db.remove("callLogs", id);
+    return ok(null);
+  }
+  return fail("Method not allowed", 405);
+}
+
 // ---- /api/contacts ----------------------------------------------------------
 // Special: GET enriches each contact with `_count.calls` like Prisma's
 // `include: { _count: { select: { calls: true } } }`.
@@ -2399,6 +2440,7 @@ interface RouteEntry {
 }
 
 const ROUTES: RouteEntry[] = [
+  { path: "/api/calllogs", handler: calllogsRoute },
   { path: "/api/contacts", handler: contactsRoute },
   { path: "/api/notes", handler: notesHandler },
   { path: "/api/tasks", handler: tasksRoute },

@@ -433,3 +433,59 @@ Stage Summary:
 - APK: /home/z/my-project/dashboard.apk (4.8 MB)
 - Grid3x3 → LayoutGrid (fixes module factory error)
 - Drawer ScrollArea now properly constrained (all 36 sections including Settings/Appearance are reachable)
+
+---
+Task ID: 15
+Agent: main (Android native integration)
+Task: Integrate app with Android system — fix calllogs route, add contacts sync, sensors, storage, permissions
+
+Work Log:
+- Fixed missing /api/calllogs route in fetch interceptor — added calllogsRoute handler (GET/POST/DELETE) and registered in ROUTES array
+- Installed 13 Capacitor plugins: filesystem, device, geolocation, camera, haptics, local-notifications, network, share, app, preferences, toast, motion, contacts
+- Updated AndroidManifest.xml with 25+ permissions: CALL_PHONE, READ_PHONE_STATE, READ_CALL_LOG, WRITE_CALL_LOG, READ_CONTACTS, WRITE_CONTACTS, SEND_SMS, READ_SMS, RECEIVE_SMS, CAMERA, ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION, READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE, MANAGE_EXTERNAL_STORAGE, RECORD_AUDIO, BODY_SENSORS, VIBRATE, POST_NOTIFICATIONS, READ_CALENDAR, WRITE_CALENDAR, etc.
+- Created native bridge service (src/lib/native/bridge.ts, ~700 lines) wrapping all Capacitor plugins:
+  - Phone calls (makePhoneCall via tel: URI)
+  - SMS (sendSMS via sms: URI)
+  - WhatsApp (openWhatsApp via wa.me URL)
+  - Email (sendEmail via mailto: URI)
+  - Contacts sync (getDeviceContacts from device)
+  - Geolocation (getCurrentLocation with GPS)
+  - Camera (takePhoto, pickImage)
+  - Haptics (hapticLight/Medium/Heavy/Success/Warning/Error)
+  - Local notifications (scheduleNotification, cancelNotification)
+  - Network status (getNetworkStatus, onNetworkChange)
+  - Filesystem (writeFile, readFile, listFiles, deleteFile, exportBackup)
+  - Device info (getDeviceInfo — model, OS, battery, language, app version)
+  - Motion sensors (startAccelerometer, stopAccelerometer)
+  - Native toast (showToast)
+  - Share (share via Android share sheet)
+  - App lifecycle (onAppStateChange, getAppInfo)
+  - Preferences (setPref, getPref, removePref)
+  - Permissions manager (requestAllPermissions, checkAllPermissions)
+- Created PermissionsManager component — shows permission status card in overview, dialog to request all permissions (camera, location, contacts, notifications)
+- Created new Device section (src/components/dashboard/sections/device.tsx) with:
+  - Device info (manufacturer, model, OS version, language, app version)
+  - Battery status (level + charging state)
+  - Network status (connected, connection type)
+  - GPS location (latitude, longitude, accuracy, altitude)
+  - Motion sensor (accelerometer X/Y/Z live data)
+  - Haptics test (5 vibration patterns)
+  - Camera (take photo + pick from gallery)
+  - Backup & storage (export/import JSON backup, file list, delete files)
+  - Share app button
+- Added "device" panel ID to store and shell navigation
+- Integrated native bridge into callpad section:
+  - makePhoneCall() for real phone calls
+  - sendSMS() for real SMS
+  - "مزامنة من الجهاز" button to import device contacts
+- Integrated contacts sync into contacts section ("مزامنة من الجهاز" button)
+- Rebuilt static export + synced to Android + rebuilt APK: BUILD SUCCESSFUL
+- Final APK: 11 MB (up from 4.8 MB due to Capacitor plugins), contains all 25+ permissions and native bridge
+
+Stage Summary:
+- APK: /home/z/my-project/dashboard.apk (11 MB)
+- All Android permissions granted in manifest
+- Native bridge wraps 13 Capacitor plugins for full system integration
+- Real phone calls, SMS, contacts sync, GPS, camera, sensors, haptics, notifications, file storage, share
+- New Device section accessible from bottom drawer
+- calllogs route fixed in fetch interceptor

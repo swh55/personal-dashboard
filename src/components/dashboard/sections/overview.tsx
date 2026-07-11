@@ -28,6 +28,7 @@ import {
   Info,
   CircleAlert,
   RefreshCw,
+  Smartphone,
 } from "lucide-react";
 import { useApi, toast, formatDate, formatTime, timeAgo } from "@/lib/api";
 import {
@@ -36,6 +37,7 @@ import {
   formatNumber,
 } from "@/lib/constants";
 import { useFloatingPanelStore } from "@/store/use-floating-panel";
+import { PermissionsManager } from "@/components/dashboard/permissions-manager";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -135,6 +137,10 @@ export function OverviewSection() {
           <h1 className="text-2xl font-bold tracking-tight">نظرة عامة</h1>
           <p className="text-sm text-muted-foreground">ملخص يومك ونشاطك</p>
         </div>
+        <Button variant="outline" size="sm" onClick={() => setPanel("device")}>
+          <Smartphone className="size-4" />
+          <span className="hidden sm:inline">الجهاز</span>
+        </Button>
         <Button variant="outline" size="sm" onClick={() => reload()}>
           <RefreshCw className="size-4" />
           تحديث
@@ -157,6 +163,9 @@ export function OverviewSection() {
               </AlertDescription>
             </Alert>
           ) : null}
+
+          {/* Permissions manager (native only) */}
+          <PermissionsManager />
 
           {/* hero greeting + weather + holiday */}
           <Card className="overflow-hidden border-none bg-gradient-to-l from-emerald-glow/15 via-emerald-glow/5 to-transparent">

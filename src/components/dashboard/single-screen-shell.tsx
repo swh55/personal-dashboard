@@ -39,6 +39,7 @@ import {
   Settings,
   Palette,
   LayoutGrid,
+  Smartphone,
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -131,6 +132,7 @@ const NAV_SECTIONS: NavSection[] = [
       { id: "activity", label: "النشاط", icon: Activity },
       { id: "settings", label: "الإعدادات", icon: Settings },
       { id: "appearance", label: "المظهر", icon: Palette },
+      { id: "device", label: "الجهاز", icon: Smartphone },
     ],
   },
 ];
