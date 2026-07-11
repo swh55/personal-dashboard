@@ -38,7 +38,7 @@ import {
   Activity,
   Settings,
   Palette,
-  Grid3x3,
+  LayoutGrid,
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -154,7 +154,7 @@ function DrawerContent({ onSelect }: { onSelect: () => void }) {
   const { activePanel, setPanel } = useFloatingPanelStore();
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col overflow-hidden">
       <SheetHeader className="border-b border-border/60 pb-3">
         <SheetTitle className="text-lg font-bold">جميع الأقسام</SheetTitle>
         <SheetDescription className="text-xs">
@@ -162,7 +162,7 @@ function DrawerContent({ onSelect }: { onSelect: () => void }) {
         </SheetDescription>
       </SheetHeader>
 
-      <ScrollArea className="custom-scroll flex-1">
+      <ScrollArea className="custom-scroll min-h-0 flex-1">
         <div className="flex flex-col gap-5 p-4 pb-8">
           {NAV_SECTIONS.map((section) => (
             <div key={section.title} className="flex flex-col gap-2">
@@ -262,7 +262,7 @@ function BottomNavBar({ onMore }: { onMore: () => void }) {
           className="flex flex-1 flex-col items-center gap-1 py-2.5 text-muted-foreground transition-colors hover:text-foreground"
         >
           <div className="flex size-9 items-center justify-center rounded-xl bg-accent/40">
-            <Grid3x3 className="size-5" />
+            <LayoutGrid className="size-5" />
           </div>
           <span className="text-[10px] font-medium leading-none">المزيد</span>
         </button>
@@ -373,7 +373,7 @@ export function SingleScreenShell({
       <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
         <SheetContent
           side="bottom"
-          className="h-[80vh] max-h-[80vh] gap-0 p-0"
+          className="h-[85vh] max-h-[85vh] gap-0 overflow-hidden p-0"
         >
           <DrawerContent onSelect={() => setDrawerOpen(false)} />
         </SheetContent>

@@ -413,3 +413,23 @@ Stage Summary:
 - The fetch interceptor now activates synchronously at module load time (before any React render)
 - useApi waits for interceptor readiness as a safety net
 - All 36 sections should now load data correctly in the APK
+
+---
+Task ID: 14
+Agent: main (fix Grid3x3 error + drawer scroll)
+Task: Fix "Grid3x3 module factory not available" error and drawer not showing all tabs (Settings, Appearance)
+
+Work Log:
+- Issue 1: Runtime error "Module Grid3x3... module factory is not available" — HMR issue with Turbopack and lucide-react icon imports. Fixed by replacing `Grid3x3` with `LayoutGrid` (more stable icon name). Also required full dev server restart + clearing `.next` cache to resolve HMR state.
+- Issue 2: "More" button drawer not showing all tabs (Settings, Appearance were cut off at bottom) — Root cause: ScrollArea inside the drawer's flex container was not height-constrained. The viewport extended to 863px while the sheet was only 461px tall, so buttons below the fold were rendered but not scrollable into view.
+- Fix: Added `overflow-hidden` to the flex container div in DrawerContent, and `min-h-0` to the ScrollArea (critical for flex children to allow shrinking below content size). Also increased sheet height from 80vh to 85vh and added `overflow-hidden` to SheetContent.
+- Verified in browser: drawer opens with all 36 sections, scroll works, Settings and Appearance are reachable by scrolling, clicking them navigates correctly.
+- Rebuilt static export with NEXT_PUBLIC_APK_MODE=true.
+- Synced to Android and rebuilt APK: BUILD SUCCESSFUL.
+- Verified APK: contains LayoutGrid (1 occurrence), zero Grid3x3, and overflow-hidden/min-h-0 fix (3 occurrences).
+
+Stage Summary:
+- Fixed both issues in website and APK
+- APK: /home/z/my-project/dashboard.apk (4.8 MB)
+- Grid3x3 → LayoutGrid (fixes module factory error)
+- Drawer ScrollArea now properly constrained (all 36 sections including Settings/Appearance are reachable)
