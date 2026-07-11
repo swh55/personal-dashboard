@@ -10,6 +10,17 @@ interface Settings {
   theme: "dark" | "light";
   accent: string;
   username: string;
+  // Location
+  city: string;
+  lat: number;
+  lng: number;
+  timezone: string;
+  // Finance
+  exchangeRate: number; // USD to SYP
+  // AI
+  aiApiKey: string;
+  aiModel: string;
+  aiBaseUrl: string;
 }
 
 interface AppSettingsState {
@@ -23,6 +34,14 @@ interface AppSettingsState {
   setTheme: (t: "dark" | "light") => void;
   setAccent: (a: string) => void;
   setUsername: (n: string) => void;
+  setCity: (v: string) => void;
+  setLat: (v: number) => void;
+  setLng: (v: number) => void;
+  setTimezone: (v: string) => void;
+  setExchangeRate: (v: number) => void;
+  setAiApiKey: (v: string) => void;
+  setAiModel: (v: string) => void;
+  setAiBaseUrl: (v: string) => void;
 }
 
 const defaultSettings: Settings = {
@@ -32,6 +51,14 @@ const defaultSettings: Settings = {
   theme: "dark",
   accent: "emerald",
   username: "عبد الله",
+  city: "حلب",
+  lat: 36.2021,
+  lng: 37.1343,
+  timezone: "Asia/Damascus",
+  exchangeRate: 12500,
+  aiApiKey: "",
+  aiModel: "glm-4-flash",
+  aiBaseUrl: "",
 };
 
 export const useAppSettings = create<AppSettingsState>()(
@@ -50,6 +77,14 @@ export const useAppSettings = create<AppSettingsState>()(
       setTheme: (t) => set((s) => ({ settings: { ...s.settings, theme: t } })),
       setAccent: (a) => set((s) => ({ settings: { ...s.settings, accent: a } })),
       setUsername: (n) => set((s) => ({ settings: { ...s.settings, username: n } })),
+      setCity: (v) => set((s) => ({ settings: { ...s.settings, city: v } })),
+      setLat: (v) => set((s) => ({ settings: { ...s.settings, lat: v } })),
+      setLng: (v) => set((s) => ({ settings: { ...s.settings, lng: v } })),
+      setTimezone: (v) => set((s) => ({ settings: { ...s.settings, timezone: v } })),
+      setExchangeRate: (v) => set((s) => ({ settings: { ...s.settings, exchangeRate: v } })),
+      setAiApiKey: (v) => set((s) => ({ settings: { ...s.settings, aiApiKey: v } })),
+      setAiModel: (v) => set((s) => ({ settings: { ...s.settings, aiModel: v } })),
+      setAiBaseUrl: (v) => set((s) => ({ settings: { ...s.settings, aiBaseUrl: v } })),
     }),
     {
       name: "app-settings",

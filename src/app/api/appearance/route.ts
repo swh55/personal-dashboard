@@ -1,6 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
+// All keys we know about. Unknown keys are silently ignored to prevent abuse.
+const ALLOWED_KEYS = [
+  "theme",
+  "accent",
+  "username",
+  "pinEnabled",
+  "pinCode",
+  "city",
+  "lat",
+  "lng",
+  "timezone",
+  "exchangeRate",
+  "aiApiKey",
+  "aiModel",
+  "aiBaseUrl",
+] as const;
+
 // GET: appearance settings (from AppSetting table + localStorage defaults)
 export async function GET() {
   try {
@@ -15,6 +32,15 @@ export async function GET() {
         accent: map.accent || "emerald",
         username: map.username || "عبد الله",
         pinEnabled: map.pinEnabled === "true",
+        ...(map.pinCode ? { pinCode: map.pinCode } : {}),
+        city: map.city || "حلب",
+        lat: map.lat !== undefined ? Number(map.lat) : 36.2021,
+        lng: map.lng !== undefined ? Number(map.lng) : 37.1343,
+        timezone: map.timezone || "Asia/Damascus",
+        exchangeRate: map.exchangeRate !== undefined ? Number(map.exchangeRate) : 12500,
+        aiApiKey: map.aiApiKey || "",
+        aiModel: map.aiModel || "glm-4-flash",
+        aiBaseUrl: map.aiBaseUrl || "",
       },
     });
   } catch (error) {
@@ -26,14 +52,14 @@ export async function GET() {
 export async function PUT(req: NextRequest) {
   try {
     const body = await req.json();
-    const { theme, accent, username, pinEnabled, pinCode } = body;
 
     const updates: Array<[string, string]> = [];
-    if (theme !== undefined) updates.push(["theme", theme]);
-    if (accent !== undefined) updates.push(["accent", accent]);
-    if (username !== undefined) updates.push(["username", username]);
-    if (pinEnabled !== undefined) updates.push(["pinEnabled", String(pinEnabled)]);
-    if (pinCode !== undefined) updates.push(["pinCode", pinCode]);
+    for (const key of ALLOWED_KEYS) {
+      if (body[key] === undefined) continue;
+      // Store as string. Numbers/booleans get coerced.
+      const v = body[key];
+      updates.push([key, typeof v === "string" ? v : String(v)]);
+    }
 
     for (const [key, value] of updates) {
       const existing = await db.appSetting.findUnique({ where: { key } });

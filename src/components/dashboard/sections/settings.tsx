@@ -18,10 +18,18 @@ import {
   Smartphone,
   Github,
   Heart,
+  MapPin,
+  Locate,
+  DollarSign,
+  Sparkles,
+  Eye,
+  EyeOff,
+  Loader2,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useAppSettings } from "@/hooks/use-app-settings";
 import { toast } from "@/lib/api";
+import { getCurrentLocation, isNative } from "@/lib/native/bridge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,6 +58,31 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+const TIMEZONES = [
+  { value: "Asia/Damascus", label: "دمشق (سوريا)" },
+  { value: "Asia/Riyadh", label: "الرياض (السعودية)" },
+  { value: "Africa/Cairo", label: "القاهرة (مصر)" },
+  { value: "Asia/Beirut", label: "بيروت (لبنان)" },
+  { value: "Asia/Amman", label: "عمّان (الأردن)" },
+  { value: "Asia/Baghdad", label: "بغداد (العراق)" },
+  { value: "Asia/Kuwait", label: "الكويت" },
+  { value: "Asia/Qatar", label: "الدوحة (قطر)" },
+  { value: "Asia/Dubai", label: "دبي (الإمارات)" },
+  { value: "Europe/Istanbul", label: "إسطنبول (تركيا)" },
+  { value: "Asia/Jerusalem", label: "القدس" },
+  { value: "Asia/Tehran", label: "طهران (إيران)" },
+  { value: "UTC", label: "UTC (عالمي)" },
+];
+
+const AI_MODELS = [
+  { value: "glm-4.5", label: "GLM-4.5 (الأحدث والأذكى)" },
+  { value: "glm-4-plus", label: "GLM-4-Plus" },
+  { value: "glm-4-air", label: "GLM-4-Air (سريع)" },
+  { value: "glm-4-flash", label: "GLM-4-Flash (مجاني)" },
+  { value: "glm-4-flashx", label: "GLM-4-FlashX" },
+  { value: "glm-4-long", label: "GLM-4-Long (سياق طويل)" },
+];
+
 const ACCENTS = [
   { value: "emerald", label: "زمردي", color: "oklch(0.78 0.18 152)" },
   { value: "amber", label: "كهرماني", color: "oklch(0.82 0.16 75)" },
@@ -61,7 +94,22 @@ const ACCENTS = [
 const APP_VERSION = "1.0.0";
 
 export function SettingsSection() {
-  const { settings, setUsername, setTheme: setStoreTheme, setAccent, setPinEnabled, setPinCode } = useAppSettings();
+  const {
+    settings,
+    setUsername,
+    setTheme: setStoreTheme,
+    setAccent,
+    setPinEnabled,
+    setPinCode,
+    setCity,
+    setLat,
+    setLng,
+    setTimezone,
+    setExchangeRate,
+    setAiApiKey,
+    setAiModel,
+    setAiBaseUrl,
+  } = useAppSettings();
   const { theme: renderedTheme, setTheme: setRenderedTheme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
 
@@ -74,6 +122,25 @@ export function SettingsSection() {
   const [clearOpen, setClearOpen] = React.useState(false);
   const [clearing, setClearing] = React.useState(false);
 
+  // Location inputs
+  const [cityInput, setCityInput] = React.useState(settings.city);
+  const [latInput, setLatInput] = React.useState(String(settings.lat));
+  const [lngInput, setLngInput] = React.useState(String(settings.lng));
+  const [timezoneInput, setTimezoneInput] = React.useState(settings.timezone);
+  const [savingLocation, setSavingLocation] = React.useState(false);
+  const [locating, setLocating] = React.useState(false);
+
+  // Exchange rate input
+  const [rateInput, setRateInput] = React.useState(String(settings.exchangeRate));
+  const [savingRate, setSavingRate] = React.useState(false);
+
+  // AI API inputs
+  const [aiKeyInput, setAiKeyInput] = React.useState(settings.aiApiKey);
+  const [aiModelInput, setAiModelInput] = React.useState(settings.aiModel);
+  const [aiBaseUrlInput, setAiBaseUrlInput] = React.useState(settings.aiBaseUrl);
+  const [showApiKey, setShowApiKey] = React.useState(false);
+  const [savingAi, setSavingAi] = React.useState(false);
+
   React.useEffect(() => {
     setMounted(true);
   }, []);
@@ -85,6 +152,20 @@ export function SettingsSection() {
   React.useEffect(() => {
     setPinInput(settings.pinCode || "");
   }, [settings.pinCode]);
+  React.useEffect(() => {
+    setCityInput(settings.city);
+    setLatInput(String(settings.lat));
+    setLngInput(String(settings.lng));
+    setTimezoneInput(settings.timezone);
+  }, [settings.city, settings.lat, settings.lng, settings.timezone]);
+  React.useEffect(() => {
+    setRateInput(String(settings.exchangeRate));
+  }, [settings.exchangeRate]);
+  React.useEffect(() => {
+    setAiKeyInput(settings.aiApiKey);
+    setAiModelInput(settings.aiModel);
+    setAiBaseUrlInput(settings.aiBaseUrl);
+  }, [settings.aiApiKey, settings.aiModel, settings.aiBaseUrl]);
 
   async function persistAppearance(payload: Record<string, any>) {
     try {
@@ -148,6 +229,80 @@ export function SettingsSection() {
     setAccent(a);
     await persistAppearance({ accent: a });
     toast.success("تم تغيير اللون المميز");
+  }
+
+  async function saveLocation() {
+    setSavingLocation(true);
+    const lat = parseFloat(latInput);
+    const lng = parseFloat(lngInput);
+    if (Number.isNaN(lat) || Number.isNaN(lng)) {
+      toast.error("الإحداثيات غير صالحة");
+      setSavingLocation(false);
+      return;
+    }
+    const city = cityInput.trim() || "حلب";
+    const tz = timezoneInput || "Asia/Damascus";
+    setCity(city);
+    setLat(lat);
+    setLng(lng);
+    setTimezone(tz);
+    const ok = await persistAppearance({
+      city,
+      lat,
+      lng,
+      timezone: tz,
+    });
+    if (ok) toast.success("تم حفظ إعدادات الموقع");
+    setSavingLocation(false);
+  }
+
+  async function useGpsLocation() {
+    setLocating(true);
+    try {
+      const loc = await getCurrentLocation();
+      if (!loc) {
+        toast.error("تعذر الحصول على موقعك — تحقق من صلاحية GPS");
+        return;
+      }
+      setLatInput(String(loc.latitude.toFixed(4)));
+      setLngInput(String(loc.longitude.toFixed(4)));
+      toast.success("تم تحديد إحداثيات موقعك الحالي");
+    } catch (e: any) {
+      toast.error(e?.message || "خطأ في تحديد الموقع");
+    } finally {
+      setLocating(false);
+    }
+  }
+
+  async function saveExchangeRate() {
+    setSavingRate(true);
+    const rate = parseFloat(rateInput);
+    if (Number.isNaN(rate) || rate <= 0) {
+      toast.error("سعر الصرف غير صالح");
+      setSavingRate(false);
+      return;
+    }
+    setExchangeRate(rate);
+    const ok = await persistAppearance({ exchangeRate: rate });
+    if (ok) toast.success("تم حفظ سعر الصرف");
+    setSavingRate(false);
+  }
+
+  async function saveAi() {
+    setSavingAi(true);
+    const key = aiKeyInput.trim();
+    const model = aiModelInput || "glm-4-flash";
+    const baseUrl = aiBaseUrlInput.trim();
+    setAiApiKey(key);
+    setAiModel(model);
+    setAiBaseUrl(baseUrl);
+    const ok = await persistAppearance({
+      aiApiKey: key,
+      aiModel: model,
+      aiBaseUrl: baseUrl,
+    });
+    if (ok) toast.success("تم حفظ إعدادات الذكاء الاصطناعي");
+    setSavingAi(false);
   }
 
   async function exportData() {
@@ -357,6 +512,199 @@ export function SettingsSection() {
                   ))}
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Location */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <MapPin className="size-4 text-emerald-glow" />
+                الموقع
+              </CardTitle>
+              <CardDescription className="text-xs">
+                المدينة والإحداثيات والمنطقة الزمنية — تُستخدم للطقس والتقويم
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-2">
+              <div className="grid gap-1.5">
+                <Label htmlFor="city">المدينة</Label>
+                <Input
+                  id="city"
+                  value={cityInput}
+                  onChange={(e) => setCityInput(e.target.value)}
+                  placeholder="حلب"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="grid gap-1.5">
+                  <Label htmlFor="lat">خط العرض (Latitude)</Label>
+                  <Input
+                    id="lat"
+                    inputMode="decimal"
+                    dir="ltr"
+                    value={latInput}
+                    onChange={(e) => setLatInput(e.target.value)}
+                    placeholder="36.2021"
+                  />
+                </div>
+                <div className="grid gap-1.5">
+                  <Label htmlFor="lng">خط الطول (Longitude)</Label>
+                  <Input
+                    id="lng"
+                    inputMode="decimal"
+                    dir="ltr"
+                    value={lngInput}
+                    onChange={(e) => setLngInput(e.target.value)}
+                    placeholder="37.1343"
+                  />
+                </div>
+              </div>
+              <div className="grid gap-1.5">
+                <Label>المنطقة الزمنية</Label>
+                <Select value={timezoneInput} onValueChange={setTimezoneInput}>
+                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {TIMEZONES.map((t) => (
+                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={useGpsLocation}
+                  disabled={locating}
+                >
+                  {locating ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <Locate className="size-4" />
+                  )}
+                  استخدام موقعي الحالي
+                </Button>
+                <Button size="sm" onClick={saveLocation} disabled={savingLocation}>
+                  {savingLocation ? "جارٍ الحفظ..." : "حفظ"}
+                </Button>
+              </div>
+              {!isNative() ? (
+                <p className="text-[10px] text-muted-foreground">
+                  💡 GPS يعتمد على متصفحك. على الهاتف، يستخدم GPS الجهاز.
+                </p>
+              ) : null}
+            </CardContent>
+          </Card>
+
+          {/* Exchange Rate */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <DollarSign className="size-4 text-emerald-glow" />
+                سعر الصرف
+              </CardTitle>
+              <CardDescription className="text-xs">
+                سعر صرف الدولار مقابل الليرة السورية — يُستخدم في القسم المالي
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-2">
+              <div className="grid gap-1.5">
+                <Label htmlFor="rate">1 دولار = ? ليرة سورية</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="rate"
+                    inputMode="numeric"
+                    dir="ltr"
+                    value={rateInput}
+                    onChange={(e) => setRateInput(e.target.value.replace(/[^\d.]/g, ""))}
+                    placeholder="12500"
+                    className="text-right"
+                  />
+                  <Badge variant="secondary" className="shrink-0">ل.س</Badge>
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <Button size="sm" onClick={saveExchangeRate} disabled={savingRate}>
+                  {savingRate ? "جارٍ الحفظ..." : "حفظ"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* AI API */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Sparkles className="size-4 text-emerald-glow" />
+                إعدادات الذكاء الاصطناعي
+              </CardTitle>
+              <CardDescription className="text-xs">
+                مفتاح API للمساعد الذكي — يُستخدم في المساعد والاقتراحات الذكية
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-2">
+              <div className="grid gap-1.5">
+                <Label htmlFor="ai-key">مفتاح API</Label>
+                <div className="relative">
+                  <Input
+                    id="ai-key"
+                    type={showApiKey ? "text" : "password"}
+                    dir="ltr"
+                    value={aiKeyInput}
+                    onChange={(e) => setAiKeyInput(e.target.value)}
+                    placeholder="••••••••••••••••••••••••"
+                    className="pr-10 text-right"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowApiKey((s) => !s)}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition"
+                    aria-label={showApiKey ? "إخفاء المفتاح" : "إظهار المفتاح"}
+                  >
+                    {showApiKey ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  </button>
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  احصل على مفتاحك من منصة Z.ai (z.ai). يُحفظ محلياً وفي قاعدة البيانات فقط.
+                </p>
+              </div>
+              <Separator />
+              <div className="grid gap-1.5">
+                <Label>النموذج</Label>
+                <Select value={aiModelInput} onValueChange={setAiModelInput}>
+                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {AI_MODELS.map((m) => (
+                      <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="ai-baseurl">عنوان API (اختياري)</Label>
+                <Input
+                  id="ai-baseurl"
+                  dir="ltr"
+                  value={aiBaseUrlInput}
+                  onChange={(e) => setAiBaseUrlInput(e.target.value)}
+                  placeholder="https://api.z.ai/api/paas/v4"
+                  className="text-right"
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  اتركه فارغاً لاستخدام العنوان الافتراضي. مفيد لنقاط نهاية مخصصة.
+                </p>
+              </div>
+              <div className="flex justify-end">
+                <Button size="sm" onClick={saveAi} disabled={savingAi}>
+                  {savingAi ? "جارٍ الحفظ..." : "حفظ"}
+                </Button>
+              </div>
+              {!settings.aiApiKey ? (
+                <div className="rounded-lg border border-amber-glow/30 bg-amber-glow/5 p-2 text-xs">
+                  ⚠️ لم يتم ضبط مفتاح API. المساعد الذكي سيطلب منك الإعداد قبل العمل.
+                </div>
+              ) : null}
             </CardContent>
           </Card>
 

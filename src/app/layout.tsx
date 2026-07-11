@@ -5,6 +5,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { LocalModeInitializer } from "@/components/local-mode-initializer";
+import { startGlobalPomodoroTicker } from "@/store/use-pomodoro";
+
+// Start the global Pomodoro ticker at module load time — it runs independently
+// of which panel is active, so the timer keeps ticking in the background.
+if (typeof window !== "undefined") {
+  startGlobalPomodoroTicker();
+}
 
 const cairo = Cairo({
   variable: "--font-cairo",

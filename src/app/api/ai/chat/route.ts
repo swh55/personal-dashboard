@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import ZAI from "z-ai-web-dev-sdk";
 import { db } from "@/lib/db";
 
 export const runtime = "nodejs";
@@ -20,6 +19,33 @@ const SYSTEM_PROMPT = `أنت مساعد شخصي ذكي لرجل أعمال س�
 - قدم اقتراحات عملية وقابلة للتنفيذ
 - كن إيجابياً ومحفزاً`;
 
+interface AISettings {
+  apiKey: string;
+  model: string;
+  baseUrl: string;
+}
+
+async function readAISettings(): Promise<AISettings> {
+  try {
+    const rows = await db.appSetting.findMany({
+      where: { key: { in: ["aiApiKey", "aiModel", "aiBaseUrl"] } },
+    });
+    const map: Record<string, string> = {};
+    for (const r of rows) map[r.key] = r.value;
+    return {
+      apiKey: map.aiApiKey || "",
+      model: map.aiModel || "glm-4-flash",
+      baseUrl: map.aiBaseUrl || "https://api.z.ai/api/paas/v4",
+    };
+  } catch {
+    return {
+      apiKey: "",
+      model: "glm-4-flash",
+      baseUrl: "https://api.z.ai/api/paas/v4",
+    };
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -29,7 +55,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "الرسالة مطلوبة" }, { status: 400 });
     }
 
-    // بناء سياق البيانات الحالية
+    const ai = await readAISettings();
+
+    // If no API key is set, prompt the user to configure one in Settings.
+    if (!ai.apiKey) {
+      return NextResponse.json({
+        success: false,
+        error: "لم يتم ضبط مفتاح API للذكاء الاصطناعي",
+        response:
+          "🔑 لتفعيل المساعد الذكي، يرجى الذهاب إلى الإعدادات → إعدادات الذكاء الاصطناعي وإدخال مفتاح API الخاص بك.",
+      });
+    }
+
+    // Build data context (today's events, pending tasks, recent expenses, occasions)
     let dataContext = "";
     if (context?.includeData) {
       const today = new Date();
@@ -51,17 +89,31 @@ export async function POST(req: NextRequest) {
 المناسبات القادمة: ${occasions.map((o: { title: string; date: Date }) => `${o.title} (${new Date(o.date).toLocaleDateString("ar-SY")})`).join("، ")}`;
     }
 
-    const zai = await ZAI.create();
-
-    const completion = await zai.chat.completions.create({
-      messages: [
-        { role: "assistant", content: SYSTEM_PROMPT + dataContext },
-        { role: "user", content: message },
-      ],
-      thinking: { type: "disabled" },
+    // Make a direct fetch to the configured Z.ai-compatible endpoint.
+    const res = await fetch(`${ai.baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${ai.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: ai.model,
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT + dataContext },
+          { role: "user", content: message },
+        ],
+        thinking: { type: "disabled" },
+      }),
     });
 
-    const response = completion.choices[0]?.message?.content;
+    if (!res.ok) {
+      const errText = await res.text().catch(() => "");
+      console.error("AI chat API error:", res.status, errText);
+      throw new Error(`AI API error: ${res.status}`);
+    }
+
+    const data = await res.json();
+    const response = data?.choices?.[0]?.message?.content;
 
     if (!response) {
       throw new Error("Empty response from AI");

@@ -2235,6 +2235,22 @@ async function homeRoute(req: ParsedRequest): Promise<Response> {
 }
 
 // ---- /api/appearance --------------------------------------------------------
+const APPEARANCE_KEYS = [
+  "theme",
+  "accent",
+  "username",
+  "pinEnabled",
+  "pinCode",
+  "city",
+  "lat",
+  "lng",
+  "timezone",
+  "exchangeRate",
+  "aiApiKey",
+  "aiModel",
+  "aiBaseUrl",
+] as const;
+
 async function appearanceRoute(req: ParsedRequest): Promise<Response> {
   const settings = db.getCollection("appSettings");
   const map: Record<string, string> = {};
@@ -2247,17 +2263,26 @@ async function appearanceRoute(req: ParsedRequest): Promise<Response> {
       username: map.username || "عبد الله",
       pinEnabled: map.pinEnabled === "true",
       ...(map.pinCode ? { pinCode: map.pinCode } : {}),
+      city: map.city || "حلب",
+      lat: map.lat !== undefined ? Number(map.lat) : 36.2021,
+      lng: map.lng !== undefined ? Number(map.lng) : 37.1343,
+      timezone: map.timezone || "Asia/Damascus",
+      exchangeRate:
+        map.exchangeRate !== undefined ? Number(map.exchangeRate) : 12500,
+      aiApiKey: map.aiApiKey || "",
+      aiModel: map.aiModel || "glm-4-flash",
+      aiBaseUrl: map.aiBaseUrl || "",
     });
   }
 
   if (req.method === "PUT") {
     const b = req.body || {};
     const updates: Array<[string, string]> = [];
-    if (b.theme !== undefined) updates.push(["theme", b.theme]);
-    if (b.accent !== undefined) updates.push(["accent", b.accent]);
-    if (b.username !== undefined) updates.push(["username", b.username]);
-    if (b.pinEnabled !== undefined) updates.push(["pinEnabled", String(b.pinEnabled)]);
-    if (b.pinCode !== undefined) updates.push(["pinCode", b.pinCode]);
+    for (const key of APPEARANCE_KEYS) {
+      if (b[key] === undefined) continue;
+      const v = b[key];
+      updates.push([key, typeof v === "string" ? v : String(v)]);
+    }
 
     for (const [key, value] of updates) {
       const existing = settings.find((s) => s.key === key);
@@ -2272,6 +2297,91 @@ async function appearanceRoute(req: ParsedRequest): Promise<Response> {
 
 // ---- /api/weather -----------------------------------------------------------
 async function weatherRoute(_req: ParsedRequest): Promise<Response> {
+  // Read city/lat/lng from appSettings (with sensible defaults).
+  const settingsMap: Record<string, string> = {};
+  for (const s of db.getCollection("appSettings")) settingsMap[s.key] = s.value;
+  const city = settingsMap.city || "حلب";
+  const lat =
+    settingsMap.lat !== undefined && settingsMap.lat !== ""
+      ? Number(settingsMap.lat)
+      : 36.2021;
+  const lng =
+    settingsMap.lng !== undefined && settingsMap.lng !== ""
+      ? Number(settingsMap.lng)
+      : 37.1343;
+  const timezone = settingsMap.timezone || "Asia/Damascus";
+
+  // Try live open-meteo data first; fall back to a static response if offline.
+  try {
+    const url =
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}` +
+      `&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,pressure_msl` +
+      `&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset` +
+      `&timezone=${encodeURIComponent(timezone)}&forecast_days=5`;
+    const res = await fetch(url);
+    if (res.ok) {
+      const data = await res.json();
+      const weatherDescriptions: Record<number, { ar: string; icon: string }> = {
+        0: { ar: "سماء صافية", icon: "Sun" },
+        1: { ar: "صافي غالباً", icon: "Sun" },
+        2: { ar: "غائم جزئياً", icon: "CloudSun" },
+        3: { ar: "غائم", icon: "Cloud" },
+        45: { ar: "ضباب", icon: "CloudFog" },
+        48: { ar: "ضباب متجمد", icon: "CloudFog" },
+        51: { ar: "رذاذ خفيف", icon: "CloudDrizzle" },
+        53: { ar: "رذاذ متوسط", icon: "CloudDrizzle" },
+        55: { ar: "رذاذ كثيف", icon: "CloudDrizzle" },
+        61: { ar: "أمطار خفيفة", icon: "CloudRain" },
+        63: { ar: "أمطار متوسطة", icon: "CloudRain" },
+        65: { ar: "أمطار غزيرة", icon: "CloudRain" },
+        71: { ar: "ثلوج خفيفة", icon: "CloudSnow" },
+        73: { ar: "ثلوج متوسطة", icon: "CloudSnow" },
+        75: { ar: "ثلوج كثيفة", icon: "CloudSnow" },
+        80: { ar: "زخات مطر", icon: "CloudRain" },
+        81: { ar: "زخات مطر قوية", icon: "CloudRain" },
+        82: { ar: "زخات مطر عنيفة", icon: "CloudRainWind" },
+        95: { ar: "عاصفة رعدية", icon: "CloudLightning" },
+        96: { ar: "عاصفة رعدية مع بَرَد", icon: "CloudLightning" },
+        99: { ar: "عاصفة رعدية شديدة", icon: "CloudLightning" },
+      };
+      const current = data.current;
+      const info = weatherDescriptions[current.weather_code] || {
+        ar: "غير معروف",
+        icon: "Cloud",
+      };
+      const daily = data.daily;
+      const forecast = daily.time.map((time: string, i: number) => ({
+        date: time,
+        maxTemp: Math.round(daily.temperature_2m_max[i]),
+        minTemp: Math.round(daily.temperature_2m_min[i]),
+        weatherCode: daily.weather_code[i],
+        weather:
+          weatherDescriptions[daily.weather_code[i]] || { ar: "—", icon: "Cloud" },
+        sunrise: daily.sunrise[i],
+        sunset: daily.sunset[i],
+      }));
+      return ok({
+        current: {
+          temperature: Math.round(current.temperature_2m),
+          apparentTemperature: Math.round(current.apparent_temperature),
+          humidity: current.relative_humidity_2m,
+          windSpeed: Math.round(current.wind_speed_10m),
+          windDirection: current.wind_direction_10m,
+          pressure: Math.round(current.pressure_msl),
+          weatherCode: current.weather_code,
+          weatherDescription: info.ar,
+          weatherIcon: info.icon,
+        },
+        forecast,
+        city,
+        timezone,
+      });
+    }
+  } catch (err) {
+    // Offline — fall through to static fallback.
+    console.warn("[local] weather fetch failed, using fallback:", err);
+  }
+
   return ok({
     current: {
       temperature: 24,
@@ -2282,20 +2392,69 @@ async function weatherRoute(_req: ParsedRequest): Promise<Response> {
       weatherIcon: "Sun",
     },
     forecast: [],
-    city: "حلب",
-    timezone: "Asia/Damascus",
+    city,
+    timezone,
   });
 }
 
 // ---- /api/ai/chat -----------------------------------------------------------
 async function aiChatRoute(req: ParsedRequest): Promise<Response> {
   if (req.method !== "POST") return fail("الطريقة غير مدعومة", 405);
-  const { message } = req.body || {};
+  const { message, context } = req.body || {};
   if (!message) return fail("الرسالة مطلوبة", 400);
+
+  // Read AI API key + model + base URL from appSettings.
+  const settingsMap: Record<string, string> = {};
+  for (const s of db.getCollection("appSettings")) settingsMap[s.key] = s.value;
+  const apiKey = settingsMap.aiApiKey || "";
+  const model = settingsMap.aiModel || "glm-4-flash";
+  const baseUrl =
+    settingsMap.aiBaseUrl || "https://api.z.ai/api/paas/v4";
+
+  // If a real API key is set, attempt a real API call.
+  if (apiKey) {
+    try {
+      const systemPrompt =
+        "أنت مساعد شخصي ذكي لرجل أعمال سوري اسمه عبد الله، يعيش في حلب. أجب بالعربية الفصحى المبسطة، كن مختصراً ومفيداً، واستخدم الرموز التعبيرية باعتدال.";
+      const res = await fetch(`${baseUrl}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: message },
+          ],
+          thinking: { type: "disabled" },
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const reply = data?.choices?.[0]?.message?.content;
+        if (reply) {
+          return json({ success: true, response: reply });
+        }
+      }
+      // If the call failed, fall through to the mock response below.
+      console.warn("[local] AI API call failed:", res.status);
+    } catch (err) {
+      console.warn("[local] AI API call error:", err);
+    }
+  }
+
+  // No API key (or API call failed) → mock response.
+  const ctxHint = context?.includeData
+    ? " لاحظت أنك طلبت تضمين بياناتك، لكن لا يمكنني الوصول إلى بياناتك محلياً دون مفتاح API."
+    : "";
   return json({
     success: true,
     response:
-      "مرحباً! أنا المساعد الذكي. في النسخة المحلية (بدون إنترنت) أستطيع تقديم ردود عامة. للحصول على ردود ذكية متكاملة، يرجى الاتصال بالإنترنت.",
+      `مرحباً! استلمت رسالتك: "${message}".` +
+      ctxHint +
+      " في النسخة المحلية (بدون مفتاح API) أقدم ردوداً عامة. للحصول على ردود ذكية متكاملة، يرجى ضبط مفتاح API في الإعدادات.",
   });
 }
 

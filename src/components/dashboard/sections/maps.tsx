@@ -18,8 +18,12 @@ import {
   Map as MapIcon,
   Inbox,
   Crosshair,
+  Locate,
+  Loader2,
+  WifiOff,
 } from "lucide-react";
 import { useApi, toast } from "@/lib/api";
+import { getCurrentLocation } from "@/lib/native/bridge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,13 +41,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -53,6 +50,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+
+// ---------------------------------------------------------------------------
+// Types & constants
+// ---------------------------------------------------------------------------
 
 interface SavedLocation {
   id: string;
@@ -97,13 +98,6 @@ function colorCls(value: string) {
 // Aleppo default center
 const DEFAULT_CENTER = { lat: 36.2021, lng: 37.1343 };
 
-function buildMapUrl(loc?: { lat: number; lng: number }) {
-  const c = loc || DEFAULT_CENTER;
-  const delta = 0.01;
-  const bbox = `${c.lng - delta},${c.lat - delta},${c.lng + delta},${c.lat + delta}`;
-  return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${c.lat},${c.lng}`;
-}
-
 const EMPTY_FORM = {
   name: "",
   address: "",
@@ -113,6 +107,264 @@ const EMPTY_FORM = {
   color: "emerald",
 };
 
+// ---------------------------------------------------------------------------
+// useLeaflet — dynamic CDN loader (CSS + JS), runs once per session
+// ---------------------------------------------------------------------------
+
+interface LeafletState {
+  loaded: boolean;
+  failed: boolean;
+}
+
+const LEAFLET_CSS_HREF = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+const LEAFLET_JS_SRC = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+
+function useLeaflet(): LeafletState {
+  const [state, setState] = React.useState<LeafletState>({ loaded: false, failed: false });
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const w = window as any;
+    // Already loaded — done
+    if (w.L) {
+      setState({ loaded: true, failed: false });
+      return;
+    }
+
+    let cancelled = false;
+
+    // Inject CSS once
+    if (!document.getElementById("leaflet-css")) {
+      const link = document.createElement("link");
+      link.id = "leaflet-css";
+      link.rel = "stylesheet";
+      link.href = LEAFLET_CSS_HREF;
+      link.crossOrigin = "";
+      document.head.appendChild(link);
+    }
+
+    // Inject JS once
+    const finish = (ok: boolean) => {
+      if (cancelled) return;
+      if (ok && w.L) {
+        setState({ loaded: true, failed: false });
+      } else {
+        setState({ loaded: false, failed: true });
+      }
+    };
+
+    const existing = document.getElementById("leaflet-js") as HTMLScriptElement | null;
+    if (existing) {
+      if (w.L) {
+        finish(true);
+      } else {
+        existing.addEventListener("load", () => finish(true));
+        existing.addEventListener("error", () => finish(false));
+      }
+    } else {
+      const script = document.createElement("script");
+      script.id = "leaflet-js";
+      script.src = LEAFLET_JS_SRC;
+      script.async = true;
+      script.onload = () => finish(true);
+      script.onerror = () => finish(false);
+      document.head.appendChild(script);
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return state;
+}
+
+// ---------------------------------------------------------------------------
+// LeafletMap — interactive pannable/zoomable map with a draggable marker
+// ---------------------------------------------------------------------------
+
+interface LeafletMapProps {
+  lat: number;
+  lng: number;
+  zoom?: number;
+  onMarkerMove?: (lat: number, lng: number) => void;
+  draggable?: boolean;
+  height?: string;
+  className?: string;
+  /** Show a hint banner above the map (drag/click instructions). */
+  hint?: string;
+}
+
+function LeafletMap({
+  lat,
+  lng,
+  zoom = 14,
+  onMarkerMove,
+  draggable = true,
+  height = "300px",
+  className,
+  hint,
+}: LeafletMapProps) {
+  const { loaded, failed } = useLeaflet();
+
+  const containerRef = React.useRef<HTMLDivElement | null>(null);
+  const mapRef = React.useRef<any>(null);
+  const markerRef = React.useRef<any>(null);
+
+  // Keep latest props in refs without re-running the init effect
+  const onMarkerMoveRef = React.useRef(onMarkerMove);
+  React.useEffect(() => {
+    onMarkerMoveRef.current = onMarkerMove;
+  }, [onMarkerMove]);
+
+  // Initialize the map once Leaflet is loaded and the container is in the DOM
+  React.useEffect(() => {
+    if (!loaded) return;
+    const node = containerRef.current;
+    if (!node) return;
+    const L = (window as any).L;
+    if (!L) return;
+    if (mapRef.current) return; // already init
+
+    const map = L.map(node, {
+      center: [lat, lng],
+      zoom,
+      zoomControl: true,
+      attributionControl: true,
+    });
+    mapRef.current = map;
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap contributors",
+      maxZoom: 19,
+    }).addTo(map);
+
+    const marker = L.marker([lat, lng], { draggable }).addTo(map);
+    markerRef.current = marker;
+
+    marker.on("dragend", () => {
+      const ll = marker.getLatLng();
+      onMarkerMoveRef.current?.(ll.lat, ll.lng);
+    });
+
+    map.on("click", (e: any) => {
+      const { lat: cl, lng: cL } = e.latlng;
+      marker.setLatLng([cl, cL]);
+      onMarkerMoveRef.current?.(cl, cL);
+    });
+
+    // Tiles can render before the container has its final size
+    // (especially inside a dialog that animates open). Defer a layout fix.
+    const t = window.setTimeout(() => map.invalidateSize(), 120);
+
+    return () => {
+      window.clearTimeout(t);
+      try {
+        map.remove();
+      } catch {
+        /* ignore */
+      }
+      mapRef.current = null;
+      markerRef.current = null;
+    };
+  }, [loaded]);
+
+  // ResizeObserver — keep tile grid aligned if the container resizes
+  React.useEffect(() => {
+    if (!loaded) return;
+    const node = containerRef.current;
+    if (!node || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => {
+      mapRef.current?.invalidateSize();
+    });
+    ro.observe(node);
+    return () => ro.disconnect();
+  }, [loaded]);
+
+  // Sync marker position when lat/lng props change externally
+  React.useEffect(() => {
+    if (!loaded) return;
+    const marker = markerRef.current;
+    const map = mapRef.current;
+    if (!marker || !map) return;
+    const cur = marker.getLatLng();
+    if (Math.abs(cur.lat - lat) > 1e-9 || Math.abs(cur.lng - lng) > 1e-9) {
+      marker.setLatLng([lat, lng]);
+      map.panTo([lat, lng], { animate: true });
+    }
+  }, [lat, lng, loaded]);
+
+  // Toggle draggable on the marker
+  React.useEffect(() => {
+    if (!loaded) return;
+    const marker = markerRef.current;
+    if (!marker) return;
+    try {
+      if (draggable) marker.dragging?.enable();
+      else marker.dragging?.disable();
+    } catch {
+      /* ignore */
+    }
+  }, [draggable, loaded]);
+
+  // ----- Render states -----
+
+  if (failed) {
+    return (
+      <div
+        dir="ltr"
+        className={
+          "flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-border/60 bg-muted/30 p-4 text-center text-sm text-muted-foreground " +
+          (className || "")
+        }
+        style={{ height, width: "100%" }}
+      >
+        <WifiOff className="size-5" />
+        <span>تعذّر تحميل الخريطة — تحقق من اتصال الإنترنت</span>
+      </div>
+    );
+  }
+
+  if (!loaded) {
+    return (
+      <div
+        dir="ltr"
+        className={
+          "flex items-center justify-center rounded-md bg-muted/30 text-sm text-muted-foreground " +
+          (className || "")
+        }
+        style={{ height, width: "100%" }}
+      >
+        <div className="flex items-center gap-2">
+          <Loader2 className="size-4 animate-spin" />
+          <span>جارٍ تحميل الخريطة...</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={className} style={{ width: "100%" }}>
+      {hint && (
+        <div className="mb-1 text-center text-[11px] text-muted-foreground">
+          {hint}
+        </div>
+      )}
+      {/* Leaflet needs an explicit height + LTR direction */}
+      <div
+        ref={containerRef}
+        dir="ltr"
+        style={{ height, width: "100%", background: "#e5e7eb", borderRadius: "0.375rem" }}
+      />
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main section
+// ---------------------------------------------------------------------------
+
 export function MapsSection() {
   const { data, loading, error, reload } = useApi<SavedLocation[]>(
     "/api/locations"
@@ -120,15 +372,29 @@ export function MapsSection() {
   const locations = data || [];
 
   const [selected, setSelected] = React.useState<SavedLocation | null>(null);
+  // Live pin position on the main map. Driven by `selected` but the user can
+  // drag the marker to explore. Used to pre-fill the add dialog.
+  const [pinPos, setPinPos] = React.useState<{ lat: number; lng: number }>(
+    DEFAULT_CENTER
+  );
+
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [form, setForm] = React.useState(EMPTY_FORM);
   const [submitting, setSubmitting] = React.useState(false);
   const [deleteId, setDeleteId] = React.useState<string | null>(null);
+  const [locating, setLocating] = React.useState(false);
 
-  const mapUrl = selected ? buildMapUrl(selected) : buildMapUrl();
+  // When a location is selected, snap the main map's pin to it.
+  React.useEffect(() => {
+    if (selected) setPinPos({ lat: selected.lat, lng: selected.lng });
+  }, [selected]);
 
   function openAdd() {
-    setForm(EMPTY_FORM);
+    setForm({
+      ...EMPTY_FORM,
+      lat: String(pinPos.lat),
+      lng: String(pinPos.lng),
+    });
     setDialogOpen(true);
   }
 
@@ -186,6 +452,30 @@ export function MapsSection() {
     }
   }
 
+  /** Use device GPS (native bridge falls back to browser geolocation on web). */
+  async function locateMe(target: "main" | "dialog") {
+    setLocating(true);
+    try {
+      const loc = await getCurrentLocation();
+      if (!loc) {
+        toast.error("تعذّر الحصول على موقعك الحالي");
+        return;
+      }
+      if (target === "main") {
+        setPinPos({ lat: loc.latitude, lng: loc.longitude });
+      } else {
+        setForm((f) => ({
+          ...f,
+          lat: String(loc.latitude),
+          lng: String(loc.longitude),
+        }));
+      }
+      toast.success("تم تحديد موقعك الحالي");
+    } finally {
+      setLocating(false);
+    }
+  }
+
   return (
     <div className="flex h-full flex-col gap-2">
       {/* Header */}
@@ -193,10 +483,23 @@ export function MapsSection() {
         <div>
           <h2 className="text-xl font-bold tracking-tight">الأماكن المحفوظة</h2>
           <p className="text-sm text-muted-foreground">
-            خريطة المواقع الهامة حولك
+            خريطة تفاعلية — اسحب الدبوس أو انقر على الخريطة لتحديد الموقع
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => locateMe("main")}
+            disabled={locating}
+          >
+            {locating ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Locate className="size-4" />
+            )}
+            <span className="hidden sm:inline">موقعي الحالي</span>
+          </Button>
           <Button variant="outline" size="sm" onClick={reload} disabled={loading}>
             <RefreshCw className={loading ? "size-4 animate-spin" : "size-4"} />
             <span className="hidden sm:inline">تحديث</span>
@@ -223,8 +526,8 @@ export function MapsSection() {
           cls="text-amber-glow bg-amber-glow/10"
         />
         <StatCard
-          label="الخريطة"
-          value={selected ? "مخصّصة" : "حلب"}
+          label="موقع الدبوس"
+          value={`${pinPos.lat.toFixed(3)}, ${pinPos.lng.toFixed(3)}`}
           icon={<MapIcon className="size-4" />}
           cls="text-blue-500 bg-blue-500/10"
           text
@@ -234,7 +537,7 @@ export function MapsSection() {
       {/* Body */}
       {loading ? (
         <div className="grid flex-1 gap-2 lg:grid-cols-[1fr_320px]">
-          <Skeleton className="h-[420px] w-full rounded-xl" />
+          <Skeleton className="h-[300px] w-full rounded-xl" />
           <div className="grid gap-2">
             {Array.from({ length: 4 }).map((_, i) => (
               <Skeleton key={i} className="h-20 w-full rounded-lg" />
@@ -255,20 +558,18 @@ export function MapsSection() {
       ) : (
         <div className="grid flex-1 gap-2 lg:grid-cols-[1fr_340px] min-h-0">
           {/* Map */}
-          <Card className="overflow-hidden border-border/60 min-h-[300px]">
-            <CardContent className="p-0 h-full">
+          <Card className="overflow-hidden border-border/60 min-h-[300px] flex flex-col">
+            <CardContent className="p-0 flex flex-col flex-1 min-h-0">
               <div className="flex items-center justify-between gap-2 border-b border-border/60 bg-muted/30 px-2 py-1">
                 <div className="flex items-center gap-2 text-sm">
                   <MapIcon className="size-4 text-emerald-glow" />
                   <span className="font-medium">
                     {selected ? selected.name : "خريطة حلب"}
                   </span>
-                  {selected && (
-                    <Badge variant="outline" className="gap-1">
-                      <Navigation className="size-3" />
-                      {selected.lat.toFixed(4)}، {selected.lng.toFixed(4)}
-                    </Badge>
-                  )}
+                  <Badge variant="outline" className="gap-1" dir="ltr">
+                    <Navigation className="size-3" />
+                    {pinPos.lat.toFixed(4)}، {pinPos.lng.toFixed(4)}
+                  </Badge>
                 </div>
                 {selected && (
                   <Button
@@ -281,12 +582,18 @@ export function MapsSection() {
                   </Button>
                 )}
               </div>
-              <iframe
-                title="map"
-                src={mapUrl}
-                className="h-[420px] w-full border-0 lg:h-[calc(100%-41px)]"
-                loading="lazy"
-              />
+              <div className="flex-1 min-h-0 p-1">
+                <LeafletMap
+                  lat={pinPos.lat}
+                  lng={pinPos.lng}
+                  zoom={14}
+                  draggable
+                  height="250px"
+                  className="h-full"
+                  hint="اسحب الدبوس أو انقر على الخريطة لنقله"
+                  onMarkerMove={(lat, lng) => setPinPos({ lat, lng })}
+                />
+              </div>
             </CardContent>
           </Card>
 
@@ -396,14 +703,14 @@ export function MapsSection() {
 
       {/* Add Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>إضافة مكان جديد</DialogTitle>
             <DialogDescription>
-              احفظ موقعاً هاماً لعرضه على الخريطة
+              اسحب الدبوس أو انقر على الخريطة، أو أدخل الإحداثيات يدويًا
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-2 py-2">
+          <div className="grid gap-2 py-1">
             <div className="grid gap-2">
               <Label htmlFor="name">الاسم *</Label>
               <Input
@@ -426,6 +733,43 @@ export function MapsSection() {
                 placeholder="الحي، الشارع..."
               />
             </div>
+
+            {/* Interactive picker map inside the dialog */}
+            <div className="grid gap-1.5">
+              <div className="flex items-center justify-between">
+                <Label>الموقع على الخريطة</Label>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7"
+                  onClick={() => locateMe("dialog")}
+                  disabled={locating}
+                >
+                  {locating ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <Locate className="size-3.5" />
+                  )}
+                  موقعي الحالي
+                </Button>
+              </div>
+              <LeafletMap
+                lat={Number(form.lat) || DEFAULT_CENTER.lat}
+                lng={Number(form.lng) || DEFAULT_CENTER.lng}
+                zoom={14}
+                draggable
+                height="220px"
+                hint="اسحب الدبوس أو انقر على الخريطة لنقله"
+                onMarkerMove={(lat, lng) =>
+                  setForm((f) => ({
+                    ...f,
+                    lat: String(lat),
+                    lng: String(lng),
+                  }))
+                }
+              />
+            </div>
+
             <div className="grid grid-cols-2 gap-2">
               <div className="grid gap-2">
                 <Label htmlFor="lat">خط العرض (lat)</Label>
@@ -563,8 +907,14 @@ function StatCard({
         <div className={`flex size-8 items-center justify-center rounded-lg ${cls}`}>
           {icon}
         </div>
-        <div>
-          <div className={"font-bold leading-none " + (text ? "text-base" : "text-xl")}>
+        <div className="min-w-0">
+          <div
+            className={
+              "font-bold leading-none truncate " +
+              (text ? "text-sm font-mono" : "text-xl")
+            }
+            dir={text ? "ltr" : undefined}
+          >
             {value}
           </div>
           <div className="mt-1 text-xs text-muted-foreground">{label}</div>

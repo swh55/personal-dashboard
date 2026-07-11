@@ -1,9 +1,41 @@
 import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
 import { USER_PROFILE } from "@/lib/constants";
 
-export async function GET() {
+interface LocSettings {
+  city: string;
+  lat: number;
+  lng: number;
+  timezone: string;
+}
+
+async function readLocationSettings(): Promise<LocSettings> {
   try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${USER_PROFILE.lat}&longitude=${USER_PROFILE.lng}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,pressure_msl&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset&timezone=Asia/Damascus&forecast_days=5`;
+    const rows = await db.appSetting.findMany({
+      where: { key: { in: ["city", "lat", "lng", "timezone"] } },
+    });
+    const map: Record<string, string> = {};
+    for (const r of rows) map[r.key] = r.value;
+    return {
+      city: map.city || USER_PROFILE.city,
+      lat: map.lat !== undefined && map.lat !== "" ? Number(map.lat) : USER_PROFILE.lat,
+      lng: map.lng !== undefined && map.lng !== "" ? Number(map.lng) : USER_PROFILE.lng,
+      timezone: map.timezone || USER_PROFILE.timezone,
+    };
+  } catch {
+    return {
+      city: USER_PROFILE.city,
+      lat: USER_PROFILE.lat,
+      lng: USER_PROFILE.lng,
+      timezone: USER_PROFILE.timezone,
+    };
+  }
+}
+
+export async function GET() {
+  const loc = await readLocationSettings();
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lng}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,pressure_msl&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset&timezone=${encodeURIComponent(loc.timezone)}&forecast_days=5`;
 
     const res = await fetch(url, {
       next: { revalidate: 1800 },
@@ -71,8 +103,8 @@ export async function GET() {
           weatherIcon: weatherInfo.icon,
         },
         forecast,
-        city: USER_PROFILE.city,
-        timezone: "Asia/Damascus",
+        city: loc.city,
+        timezone: loc.timezone,
       },
     });
   } catch (error) {
@@ -90,7 +122,7 @@ export async function GET() {
           weatherIcon: "Cloud",
         },
         forecast: [],
-        city: USER_PROFILE.city,
+        city: loc.city,
       },
     });
   }

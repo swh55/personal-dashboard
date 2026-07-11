@@ -27,9 +27,14 @@ import {
   CircleAlert,
   RefreshCw,
   CircleDot,
+  Smartphone,
+  Share2,
+  Loader2,
 } from "lucide-react";
 import { useApi, toast, formatTime } from "@/lib/api";
 import { EVENT_COLORS } from "@/lib/constants";
+import { isNative } from "@/lib/native/bridge";
+import CalendarSync from "@/lib/native/calendar-sync";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -138,17 +143,31 @@ export function CalendarSection() {
   const [editing, setEditing] = React.useState<EventItem | null>(null);
   const [deleteId, setDeleteId] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
+  const [syncingPhone, setSyncingPhone] = React.useState(false);
+  const [exportingPhone, setExportingPhone] = React.useState(false);
+  // Phone-imported events (kept in local state, merged into the visible list).
+  const [phoneEvents, setPhoneEvents] = React.useState<EventItem[]>([]);
 
   const days = React.useMemo(() => eachDayOfInterval({ start: monthStart, end: monthEnd }), [monthStart, monthEnd]);
+  const mergedEvents = React.useMemo(() => {
+    const local = data || [];
+    // Only include phone events that fall in the currently-visible month window.
+    const phone = phoneEvents.filter(
+      (e) =>
+        new Date(e.startDate) >= monthStart &&
+        (!e.endDate || new Date(e.endDate) <= monthEnd || new Date(e.startDate) <= monthEnd)
+    );
+    return [...local, ...phone];
+  }, [data, phoneEvents, monthStart, monthEnd]);
   const eventsByDay = React.useMemo(() => {
     const map = new Map<string, EventItem[]>();
-    for (const e of data || []) {
+    for (const e of mergedEvents) {
       const key = format(new Date(e.startDate), "yyyy-MM-dd");
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(e);
     }
     return map;
-  }, [data]);
+  }, [mergedEvents]);
 
   const selectedDayEvents = React.useMemo(() => {
     if (!selectedDay) return [];
@@ -158,12 +177,78 @@ export function CalendarSection() {
 
   const upcoming = React.useMemo(() => {
     const now = Date.now();
-    return (data || [])
+    return mergedEvents
       .filter((e) => new Date(e.startDate).getTime() >= now)
       .slice()
       .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
       .slice(0, 8);
-  }, [data]);
+  }, [mergedEvents]);
+
+  async function syncFromPhone() {
+    setSyncingPhone(true);
+    try {
+      const perm = await CalendarSync.requestPermissions();
+      if (perm.read !== "granted") {
+        toast.error("تم رفض إذن التقويم — لا يمكن قراءة الأحداث");
+        return;
+      }
+      const result = await CalendarSync.getEvents({
+        startTime: monthStart.getTime(),
+        endTime: monthEnd.getTime(),
+      });
+      const imported: EventItem[] = (result.events || []).map((e) => ({
+        id: `phone-${e.id}`,
+        title: `[هاتف] ${e.title || "بدون عنوان"}`,
+        description: e.description,
+        startDate: new Date(e.startTime).toISOString(),
+        endDate: e.endTime ? new Date(e.endTime).toISOString() : null,
+        allDay: !!e.allDay,
+        type: "other",
+        color: "blue",
+        location: e.location,
+      }));
+      setPhoneEvents((prev) => {
+        // Replace previous phone events for this window.
+        const others = prev.filter((e) => !e.id.startsWith("phone-"));
+        return [...others, ...imported];
+      });
+      toast.success(`تم استيراد ${imported.length} حدث من تقويم الهاتف`);
+    } catch (e: any) {
+      toast.error(e?.message || "فشلت المزامنة");
+    } finally {
+      setSyncingPhone(false);
+    }
+  }
+
+  async function exportToPhone(ev: EventItem) {
+    setExportingPhone(true);
+    try {
+      const perm = await CalendarSync.requestPermissions();
+      if (perm.write !== "granted") {
+        toast.error("تم رفض إذن الكتابة في التقويم");
+        return;
+      }
+      const start = new Date(ev.startDate).getTime();
+      const end = ev.endDate ? new Date(ev.endDate).getTime() : start + 60 * 60 * 1000;
+      const result = await CalendarSync.createEvent({
+        title: ev.title,
+        description: ev.description || undefined,
+        location: ev.location || undefined,
+        startTime: start,
+        endTime: end,
+        allDay: ev.allDay,
+      });
+      if (result.success) {
+        toast.success("تم تصدير الحدث إلى تقويم الهاتف");
+      } else {
+        toast.error("فشل إنشاء الحدث في تقويم الهاتف");
+      }
+    } catch (e: any) {
+      toast.error(e?.message || "فشل التصدير");
+    } finally {
+      setExportingPhone(false);
+    }
+  }
 
   function openAdd(prefillDay?: Date) {
     setEditing(null);
@@ -283,6 +368,21 @@ export function CalendarSection() {
             <RefreshCw className="size-4" />
             تحديث
           </Button>
+          {isNative() ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={syncFromPhone}
+              disabled={syncingPhone}
+            >
+              {syncingPhone ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Smartphone className="size-4" />
+              )}
+              مزامنة مع الهاتف
+            </Button>
+          ) : null}
           <Button size="sm" onClick={() => openAdd(selectedDay || today)}>
             <Plus className="size-4" />
             إضافة حدث
@@ -403,6 +503,9 @@ export function CalendarSection() {
                       ev={ev}
                       onEdit={() => openEdit(ev)}
                       onDelete={() => setDeleteId(ev.id)}
+                      showExportPhone={isNative()}
+                      onExportPhone={() => exportToPhone(ev)}
+                      exportingPhone={exportingPhone}
                     />
                   ))
                 ) : (
@@ -434,7 +537,16 @@ export function CalendarSection() {
           ) : upcoming.length > 0 ? (
             <div className="grid gap-2 p-2 sm:grid-cols-2 lg:grid-cols-3">
               {upcoming.map((ev) => (
-                <EventCard key={ev.id} ev={ev} compact onEdit={() => openEdit(ev)} onDelete={() => setDeleteId(ev.id)} />
+                <EventCard
+                  key={ev.id}
+                  ev={ev}
+                  compact
+                  onEdit={() => openEdit(ev)}
+                  onDelete={() => setDeleteId(ev.id)}
+                  showExportPhone={isNative()}
+                  onExportPhone={() => exportToPhone(ev)}
+                  exportingPhone={exportingPhone}
+                />
               ))}
             </div>
           ) : (
@@ -571,12 +683,19 @@ function EventCard({
   compact,
   onEdit,
   onDelete,
+  onExportPhone,
+  showExportPhone,
+  exportingPhone,
 }: {
   ev: EventItem;
   compact?: boolean;
   onEdit: () => void;
   onDelete: () => void;
+  onExportPhone?: () => void;
+  showExportPhone?: boolean;
+  exportingPhone?: boolean;
 }) {
+  const isPhoneEvent = ev.id.startsWith("phone-");
   return (
     <div className={`group rounded-lg border p-2 ${compact ? "" : "bg-card"}`}>
       <div className="flex items-start gap-2">
@@ -603,12 +722,32 @@ function EventCard({
           ) : null}
         </div>
         <div className="flex shrink-0 gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-          <Button size="icon" variant="ghost" className="size-7" onClick={onEdit} aria-label="تعديل">
-            <Pencil className="size-3.5" />
-          </Button>
-          <Button size="icon" variant="ghost" className="size-7 text-destructive" onClick={onDelete} aria-label="حذف">
-            <Trash2 className="size-3.5" />
-          </Button>
+          {showExportPhone && !isPhoneEvent && onExportPhone ? (
+            <Button
+              size="icon"
+              variant="ghost"
+              className="size-7 text-emerald-glow"
+              onClick={onExportPhone}
+              aria-label="تصدير للهاتف"
+              disabled={exportingPhone}
+            >
+              {exportingPhone ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <Share2 className="size-3.5" />
+              )}
+            </Button>
+          ) : null}
+          {!isPhoneEvent ? (
+            <>
+              <Button size="icon" variant="ghost" className="size-7" onClick={onEdit} aria-label="تعديل">
+                <Pencil className="size-3.5" />
+              </Button>
+              <Button size="icon" variant="ghost" className="size-7 text-destructive" onClick={onDelete} aria-label="حذف">
+                <Trash2 className="size-3.5" />
+              </Button>
+            </>
+          ) : null}
         </div>
       </div>
     </div>

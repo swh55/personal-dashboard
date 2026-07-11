@@ -16,10 +16,13 @@ import {
   CircleAlert,
   Send,
   Contact as ContactIcon,
+  Smartphone,
+  Loader2,
 } from "lucide-react";
 import { useApi, toast, timeAgo } from "@/lib/api";
 import { RELATION_TYPES } from "@/lib/constants";
 import { makePhoneCall, sendSMS, openWhatsApp, getDeviceContacts, isNative } from "@/lib/native/bridge";
+import CallLogSync from "@/lib/native/calllog-sync";
 import { db } from "@/lib/local/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -85,6 +88,8 @@ export function CallPadSection() {
   const [addOpen, setAddOpen] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
   const [newContact, setNewContact] = React.useState({ name: "", phone: "" });
+  const [syncingLogs, setSyncingLogs] = React.useState(false);
+  const [phoneLogs, setPhoneLogs] = React.useState<CallLog[]>([]);
 
   const filteredContacts = React.useMemo(() => {
     const list = (contacts || []).slice().sort((a, b) => Number(b.favorite) - Number(a.favorite) || a.name.localeCompare(b.name, "ar"));
@@ -92,6 +97,41 @@ export function CallPadSection() {
     const q = search.trim().toLowerCase();
     return list.filter((c) => c.name.toLowerCase().includes(q) || c.phone.includes(q) || (c.whatsapp || "").includes(c.whatsapp ? q : ""));
   }, [contacts, search]);
+
+  // Merge local logs with phone-imported logs; phone logs are newest-first.
+  const mergedLogs = React.useMemo(() => {
+    const local = logs || [];
+    const combined = [...local, ...phoneLogs];
+    combined.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return combined;
+  }, [logs, phoneLogs]);
+
+  async function syncCallLogsFromPhone() {
+    setSyncingLogs(true);
+    try {
+      const perm = await CallLogSync.requestPermissions();
+      if (perm.read !== "granted") {
+        toast.error("تم رفض إذن سجل المكالمات");
+        return;
+      }
+      const result = await CallLogSync.getCallLogs({ limit: 100 });
+      const imported: CallLog[] = (result.logs || []).map((l) => ({
+        id: `phone-${l.id}`,
+        name: l.name || l.number,
+        phone: l.number,
+        type: "call",
+        direction: l.direction === "unknown" ? "outgoing" : l.direction,
+        createdAt: new Date(l.date).toISOString(),
+        contactId: null,
+      }));
+      setPhoneLogs(imported);
+      toast.success(`تم استيراد ${imported.length} سجل مكالمة من الهاتف`);
+    } catch (e: any) {
+      toast.error(e?.message || "فشلت المزامنة");
+    } finally {
+      setSyncingLogs(false);
+    }
+  }
 
   function pressKey(k: string) {
     setDialed((d) => (d.length < 20 ? d + k : d));
@@ -197,6 +237,21 @@ export function CallPadSection() {
             <RefreshCw className="size-4" />
             تحديث
           </Button>
+          {isNative() ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={syncCallLogsFromPhone}
+              disabled={syncingLogs}
+            >
+              {syncingLogs ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Smartphone className="size-4" />
+              )}
+              مزامنة السجل
+            </Button>
+          ) : null}
           {isNative() && (
             <Button
               variant="outline"
@@ -418,29 +473,37 @@ export function CallPadSection() {
                 <div className="space-y-2 p-2">
                   {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
                 </div>
-              ) : (logs || []).length > 0 ? (
+              ) : mergedLogs.length > 0 ? (
                 <ul className="divide-y">
-                  {logs!.map((l) => (
-                    <li key={l.id} className="flex items-center gap-2 px-3 py-2 hover:bg-accent/40 transition-colors">
-                      <DirectionIcon direction={l.direction} type={l.type} />
-                      <div className="min-w-0 flex-1">
-                        <div className="text-sm font-medium truncate">{l.name}</div>
-                        <div className="flex items-center justify-between gap-2">
-                          <span dir="ltr" className="text-xs text-muted-foreground text-right truncate">{l.phone}</span>
-                          <span className="text-[10px] text-muted-foreground shrink-0">{timeAgo(l.createdAt)}</span>
+                  {mergedLogs.map((l) => {
+                    const isPhoneLog = l.id.startsWith("phone-");
+                    return (
+                      <li key={l.id} className="flex items-center gap-2 px-3 py-2 hover:bg-accent/40 transition-colors">
+                        <DirectionIcon direction={l.direction} type={l.type} />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-sm font-medium truncate">{l.name}</span>
+                            {isPhoneLog ? (
+                              <Badge variant="outline" className="shrink-0 text-[9px] px-1 py-0">هاتف</Badge>
+                            ) : null}
+                          </div>
+                          <div className="flex items-center justify-between gap-2">
+                            <span dir="ltr" className="text-xs text-muted-foreground text-right truncate">{l.phone}</span>
+                            <span className="text-[10px] text-muted-foreground shrink-0">{timeAgo(l.createdAt)}</span>
+                          </div>
                         </div>
-                      </div>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="size-8 text-emerald-glow shrink-0"
-                        onClick={() => { setDialed(l.phone); makeCall(l.phone, l.name); }}
-                        aria-label="إعادة الاتصال"
-                      >
-                        <Phone className="size-4" />
-                      </Button>
-                    </li>
-                  ))}
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="size-8 text-emerald-glow shrink-0"
+                          onClick={() => { setDialed(l.phone); makeCall(l.phone, l.name); }}
+                          aria-label="إعادة الاتصال"
+                        >
+                          <Phone className="size-4" />
+                        </Button>
+                      </li>
+                    );
+                  })}
                 </ul>
               ) : (
                 <div className="flex flex-col items-center justify-center gap-2 py-10 text-center">

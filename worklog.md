@@ -554,3 +554,94 @@ Stage Summary:
 - Permanent bottom dock with all 37 sections (8 visible, horizontal scroll)
 - Swipe up from bottom opens Android app drawer
 - All margins reduced ~20-30%
+
+---
+Task ID: 7-maps
+Agent: maps-rewriter
+Task: Rewrite maps section with interactive Leaflet map (draggable marker)
+
+Work Log:
+- Read existing maps.tsx (575 lines, OpenStreetMap iframe, no drag support) and verified SavedLocation API contract (GET/POST/DELETE /api/locations)
+- Verified available infrastructure: @/lib/api (useApi, toast), @/lib/native/bridge (getCurrentLocation works on web + native), all shadcn/ui components, lucide-react has Locate + Loader2 icons
+- Created `useLeaflet()` custom hook that injects Leaflet 1.9.4 CSS + JS via <link>/<script> tags into document.head (once per session, idempotent, with load/error listeners). Returns `{ loaded, failed }`
+- Created `LeafletMap` component with props {lat, lng, zoom, onMarkerMove, draggable, height, className, hint}. Initializes L.map() on a div ref, adds OSM tile layer, adds draggable marker. marker.dragend + map.click both call onMarkerMove (via ref to avoid stale closures). External lat/lng changes sync marker via marker.setLatLng + map.panTo. ResizeObserver calls map.invalidateSize() on container resize (handles dialog animation). Cleanup calls map.remove()
+- Three render states: loading (spinner + "جارٍ تحميل الخريطة"), failed (WifiOff icon + "تعذّر تحميل الخريطة"), ready (the map)
+- Map container uses dir="ltr" so Leaflet controls render correctly; surrounding UI stays RTL
+- Rewrote MapsSection to use LeafletMap at top (250px, draggable) + LeafletMap inside Add dialog (220px, draggable) above lat/lng inputs. Pin position on main map drives dialog prefill. Bidirectional sync between dialog map marker and lat/lng inputs
+- Added "موقعي الحالي" button (Locate icon) in both header and dialog — calls getCurrentLocation() from native bridge (works on web too via browser geolocation). Loading state shows spinner
+- Stats card "الخريطة" replaced with "موقع الدبوس" showing live pin coords (mono font, LTR)
+- Renamed internal helper from `useMyLocation` to `locateMe` to avoid React's rules-of-hooks lint error (function name started with `use`)
+- Removed unused eslint-disable comment after renaming
+- Verified: `bunx eslint src/components/dashboard/sections/maps.tsx` → 0 errors / 0 warnings; `bunx tsc --noEmit` clean; dev server returns 200 on `/`
+- Wrote agent-ctx work record at /home/z/my-project/agent-ctx/7-maps-maps-rewriter.md
+
+Stage Summary:
+- maps.tsx fully rewritten (575 → 925 lines) using interactive Leaflet map loaded via CDN
+- Draggable marker (drag the pin OR click the map to relocate it) — works on both main section map and Add-dialog map
+- Lat/lng inputs in Add dialog sync bidirectionally with the dialog's map marker
+- "Use my current location" button (in both header and dialog) uses native bridge's getCurrentLocation (falls back to browser geolocation on web)
+- Leaflet loads lazily (only when first LeafletMap mounts), only once per session, with graceful loading + failure states
+- SavedLocation API contract preserved exactly — no schema/route changes
+- All existing functionality preserved: CRUD for saved locations, icon picker (8 options), color picker (6 options), delete confirmation, refresh
+- RTL-aware: the map itself is forced LTR (so Leaflet zoom controls render correctly), all surrounding UI (header, list, dialog) stays RTL Arabic
+- Lint clean, TypeScript clean, dev server compiling successfully
+
+---
+Task ID: 5-settings
+Agent: settings-integrator
+Task: Add missing settings (city, exchange rate, AI API) + integrate calendar/calllog sync
+
+Work Log:
+- Extended `use-app-settings.ts` with 8 new fields (city, lat, lng, timezone, exchangeRate, aiApiKey, aiModel, aiBaseUrl) + setters; defaults: حلب/36.2021/37.1343/Asia/Damascus/12500/""/glm-4-flash/""
+- Extended `/api/appearance/route.ts` (server) and `appearanceRoute` in `src/lib/local/fetch-interceptor.ts` (APK local) with shared `ALLOWED_KEYS`/`APPEARANCE_KEYS` allow-list of 13 keys; both GET (with defaults) and PUT (numbers/booleans coerced to string) handle all keys
+- Updated `/api/weather/route.ts` (server): `readLocationSettings()` reads city/lat/lng/timezone from AppSetting table (falls back to USER_PROFILE); open-meteo URL uses configured lat/lng + URL-encoded timezone
+- Updated `/api/ai/chat/route.ts` (server): `readAISettings()` reads aiApiKey/aiModel/aiBaseUrl from AppSetting; if no key set → returns Arabic prompt to set up key in Settings; otherwise makes direct `fetch(\`${baseUrl}/chat/completions\`)` with Bearer auth (default base URL `https://api.z.ai/api/paas/v4`). Removed dependency on ZAI SDK since `ZAI.create()` doesn't accept user-supplied keys.
+- Updated `weatherRoute` in local fetch-interceptor: reads city/lat/lng/timezone from appSettings collection, attempts live open-meteo fetch, falls back to static mock on failure
+- Updated `aiChatRoute` in local fetch-interceptor: reads aiApiKey/aiModel/aiBaseUrl from appSettings; if key present → real API call to Z.ai endpoint; otherwise mock response prompting user to set up key
+- Added 3 new cards to `settings.tsx`:
+  • Location (الموقع): city/lat/lng inputs + timezone select (13 options) + "use current GPS location" button (calls `getCurrentLocation()` from native bridge) + Save button (persists via PUT /api/appearance + zustand store)
+  • Exchange Rate (سعر الصرف): numeric input + ل.س badge + Save button
+  • AI API (إعدادات الذكاء الاصطناعي): API key input (password type with Eye/EyeOff show-toggle), model select (6 GLM models: 4.5/4-plus/4-air/4-flash/4-flashx/4-long), optional base URL input, Save button, warning banner if no key set
+- Integrated Calendar Sync in `calendar-section.tsx`:
+  • Added "مزامنة مع الهاتف" button in header (only when `isNative()`): requests permissions → `CalendarSync.getEvents({startTime, endTime})` → maps phone events with `[هاتف]` title prefix and `phone-` id → toast with imported count
+  • Added "تصدير للهاتف" Share2 icon button on EventCard (only for non-phone events, only when `isNative()`): calls `CalendarSync.createEvent()`
+  • Phone events merged into visible month window; phone events are read-only (no edit/delete buttons)
+- Integrated Call Log Sync in `callpad.tsx`:
+  • Added "مزامنة السجل" button (only when `isNative()`): requests permissions → `CallLogSync.getCallLogs({limit: 100})` → maps to CallLog shape with `phone-` id prefix → toast with count
+  • Phone logs merged with local logs (newest-first sort); phone entries shown with "هاتف" outline badge; tap-to-redial still works
+- Lint clean (`bunx eslint` on all 8 touched files → 0 errors / 0 warnings)
+- TypeScript: only pre-existing error remains (fetch-interceptor.ts line 264, in calllogs route handler I didn't touch — verified by git stash)
+- Dev server compiles cleanly (`✓ Compiled in 5.4s`)
+- Wrote agent-ctx work record at /home/z/my-project/agent-ctx/5-settings-settings-integrator.md
+
+Stage Summary:
+- 3 new settings cards (Location / Exchange Rate / AI API) added; all persist to AppSetting table (server) + appSettings local collection (APK)
+- Weather (server + local) now uses configured city/lat/lng/timezone instead of hardcoded defaults
+- AI chat (server + local) now uses user-supplied API key + model + optional base URL; prompts setup if no key
+- Calendar section: import phone events with `[هاتف]` prefix + export events to phone calendar (only when `isNative()`)
+- Callpad section: import phone call logs with "هاتف" badge, merged with local logs (only when `isNative()`)
+- All sync buttons gracefully hidden in browser; existing settings/data flows unchanged
+
+---
+Task ID: 17
+Agent: main (7 improvements)
+Task: Calendar sync, collapsible dock, call log sync, remove seed data, settings, pomodoro fix, maps fix
+
+Work Log:
+1. Calendar sync: Created CalendarSyncPlugin.java (getCalendars, getEvents, createEvent) + TypeScript interface. Integrated into calendar-section.tsx with "مزامنة مع الهاتف" and "تصدير للهاتف" buttons.
+2. Collapsible dock: Redesigned bottom dock — collapsed shows 7 icons + expand toggle + floating "+" button; expanded shows full 8-column grid with all 37 icons. Quick-add dialog has 8 actions (موعد، مهمة، اجتماع، مصروف، ملاحظة، مناسبة، تذكير، قراءة).
+3. Call log sync: Created CallLogSyncPlugin.java (getCallLogs from Android CallLog provider) + TypeScript interface. Integrated into callpad.tsx with "مزامنة السجل" button.
+4. Removed ALL seed data: seed-data.ts now starts empty (only appSettings with defaults + integrations list). prisma/seed.ts clears all tables. Ran seed to empty the website DB.
+5. Added missing settings: Location (city, lat, lng, timezone + GPS button), Exchange rate (USD→SYP), AI API (key, model, base URL). Updated weather route to use city/lat from settings. Updated AI chat to use API key from settings.
+6. Fixed Pomodoro: Created global Zustand store (use-pomodoro.ts) with timestamp-based timer. Global ticker started at module load in layout.tsx. Timer survives panel switching because state is in global store, not component state.
+7. Fixed Maps: Rewrote with Leaflet (loaded via CDN). Draggable marker + click-to-move + bidirectional sync with lat/lng inputs + "use my GPS" button.
+- Clean rebuilt APK with all 3 native plugins compiled.
+
+Stage Summary:
+- APK: /home/z/my-project/dashboard.apk (9.3 MB)
+- 3 native plugins: AppDrawer, CalendarSync, CallLogSync
+- Collapsible dock (8-col grid) + floating + quick-add
+- All seed data removed — app starts empty
+- Settings: city, exchange rate, AI API key
+- Pomodoro runs in background (global store + ticker)
+- Maps: interactive Leaflet with draggable marker
