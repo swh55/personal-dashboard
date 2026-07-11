@@ -16,9 +16,13 @@ async function waitForLocalMode(): Promise<void> {
     const isApkMode = process.env.NEXT_PUBLIC_APK_MODE === "true";
     const isCapacitorNative =
       w.capacitor?.isNative === true || w.capacitor?.platform === "android";
-    const isForced =
-      typeof localStorage !== "undefined" &&
-      localStorage.getItem("force-local-mode") === "true";
+    // Use try/catch to safely check localStorage (avoids minifier issues with typeof)
+    let isForced = false;
+    try {
+      isForced = localStorage.getItem("force-local-mode") === "true";
+    } catch {
+      // localStorage not available
+    }
     if (isApkMode || isCapacitorNative || isForced) {
       // Mark as pending so the initializer knows to set ready
       w.__localModePending = true;

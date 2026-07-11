@@ -2699,10 +2699,13 @@ function shouldIntercept(): boolean {
   const isNative =
     (window as any).capacitor?.isNative === true ||
     (window as any).capacitor?.platform === "android";
-  // Manual override for browser testing
-  const forceLocal =
-    typeof window.localStorage !== "undefined" &&
-    window.localStorage.getItem("force-local-mode") === "true";
+  // Manual override for browser testing (use try/catch to avoid minifier issues)
+  let forceLocal = false;
+  try {
+    forceLocal = window.localStorage.getItem("force-local-mode") === "true";
+  } catch {
+    // localStorage not available
+  }
   return isApkMode || isNative || forceLocal;
 }
 
