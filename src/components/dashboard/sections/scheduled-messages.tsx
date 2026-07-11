@@ -249,11 +249,11 @@ export function ScheduledMessagesSection() {
   ];
 
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div className="flex h-full flex-col gap-2">
       {/* header */}
-      <header className="flex flex-wrap items-center justify-between gap-3">
+      <header className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">الرسائل المجدولة</h2>
+          <h2 className="text-xl font-bold tracking-tight">الرسائل المجدولة</h2>
           <p className="text-sm text-muted-foreground">
             جدولة رسائل الواتساب وSMS والتيليغرام والبريد لإرسالها لاحقاً
           </p>
@@ -276,7 +276,7 @@ export function ScheduledMessagesSection() {
           const I = s.icon;
           return (
             <Card key={s.label} className="border-border/60">
-              <CardContent className="flex items-center gap-3 p-3">
+              <CardContent className="flex items-center gap-2 p-2">
                 <div className={`flex size-9 items-center justify-center rounded-md shrink-0 ${s.cls}`}>
                   <I className="size-4" />
                 </div>
@@ -338,8 +338,8 @@ export function ScheduledMessagesSection() {
                   key={m.id}
                   className={`group transition-shadow hover:shadow-md ${m.sent ? "opacity-70" : ""}`}
                 >
-                  <CardContent className="flex flex-col gap-2 p-3">
-                    <div className="flex items-start gap-3">
+                  <CardContent className="flex flex-col gap-2 p-2">
+                    <div className="flex items-start gap-2">
                       <div className={`flex size-9 items-center justify-center rounded-md shrink-0 ${meta.badge}`}>
                         <I className="size-4" />
                       </div>
@@ -403,7 +403,7 @@ export function ScheduledMessagesSection() {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
-            <Inbox className="size-10 text-muted-foreground/40" />
+            <Inbox className="size-8 text-muted-foreground/40" />
             <p className="text-sm font-medium">لا رسائل {tab === "pending" ? "بانتظار الإرسال" : tab === "sent" ? "مُرسَلة" : "مجدولة"}</p>
             <p className="text-xs text-muted-foreground">جدول رسالة لإرسالها في وقت محدد</p>
             <Button size="sm" variant="outline" className="mt-1" onClick={openAdd}>
@@ -421,7 +421,7 @@ export function ScheduledMessagesSection() {
             <DialogTitle>{editing ? "تعديل رسالة مجدولة" : "جدولة رسالة"}</DialogTitle>
             <DialogDescription>حدّد المستلم والقناة والوقت لإرسال الرسالة.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-3 py-1">
+          <div className="grid gap-2 py-1">
             <div className="grid gap-1.5">
               <Label htmlFor="sm-recipient">المستلم *</Label>
               <Input

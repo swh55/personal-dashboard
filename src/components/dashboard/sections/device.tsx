@@ -172,11 +172,11 @@ export function DeviceSection() {
   };
 
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div className="flex h-full flex-col gap-2">
       {/* header */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">الجهاز</h1>
+          <h1 className="text-xl font-bold tracking-tight">الجهاز</h1>
           <p className="text-sm text-muted-foreground">
             معلومات الجهاز، الحساسات، النسخ الاحتياطي، والميزات الأصلية
           </p>
@@ -189,14 +189,14 @@ export function DeviceSection() {
 
       {!isNative() && (
         <Card className="border-amber-500/30 bg-amber-500/5">
-          <CardContent className="p-4 text-sm text-amber-700 dark:text-amber-400">
+          <CardContent className="p-2 text-sm text-amber-700 dark:text-amber-400">
             هذه الميزة تعمل فقط في تطبيق أندرويد. في المتصفح، بعض الوظائف قد تكون محدودة.
           </CardContent>
         </Card>
       )}
 
       <ScrollArea className="custom-scroll flex-1 -mx-1 px-1">
-        <div className="flex flex-col gap-4 pb-4">
+        <div className="flex flex-col gap-2 pb-4">
           {/* Device Info */}
           <Card>
             <CardHeader className="pb-3">
@@ -209,7 +209,7 @@ export function DeviceSection() {
               {loading ? (
                 <Skeleton className="h-24 w-full" />
               ) : deviceInfo ? (
-                <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="grid grid-cols-2 gap-2 text-sm">
                   <InfoRow label="الشركة المصنّعة" value={deviceInfo.manufacturer} />
                   <InfoRow label="الموديل" value={deviceInfo.model} />
                   <InfoRow label="نظام التشغيل" value={`Android ${deviceInfo.osVersion}`} />
@@ -226,8 +226,8 @@ export function DeviceSection() {
           {/* Battery */}
           {deviceInfo && (
             <Card>
-              <CardContent className="flex items-center gap-3 p-4">
-                <div className={`flex size-10 items-center justify-center rounded-xl ${deviceInfo.isCharging ? "bg-emerald-500/15 text-emerald-500" : "bg-muted text-muted-foreground"}`}>
+              <CardContent className="flex items-center gap-2 p-2">
+                <div className={`flex size-8 items-center justify-center rounded-xl ${deviceInfo.isCharging ? "bg-emerald-500/15 text-emerald-500" : "bg-muted text-muted-foreground"}`}>
                   {deviceInfo.isCharging ? <BatteryCharging className="size-5" /> : <Battery className="size-5" />}
                 </div>
                 <div className="flex-1">
@@ -244,8 +244,8 @@ export function DeviceSection() {
 
           {/* Network */}
           <Card>
-            <CardContent className="flex items-center gap-3 p-4">
-              <div className={`flex size-10 items-center justify-center rounded-xl ${network?.connected ? "bg-emerald-500/15 text-emerald-500" : "bg-rose-500/15 text-rose-500"}`}>
+            <CardContent className="flex items-center gap-2 p-2">
+              <div className={`flex size-8 items-center justify-center rounded-xl ${network?.connected ? "bg-emerald-500/15 text-emerald-500" : "bg-rose-500/15 text-rose-500"}`}>
                 {network?.connected ? <Wifi className="size-5" /> : <WifiOff className="size-5" />}
               </div>
               <div className="flex-1">
@@ -275,7 +275,7 @@ export function DeviceSection() {
             </CardHeader>
             <CardContent>
               {location ? (
-                <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="grid grid-cols-2 gap-2 text-sm">
                   <InfoRow label="خط العرض" value={location.latitude.toFixed(6)} />
                   <InfoRow label="خط الطول" value={location.longitude.toFixed(6)} />
                   <InfoRow label="الدقة" value={`±${location.accuracy.toFixed(0)}م`} />
@@ -302,16 +302,16 @@ export function DeviceSection() {
             </CardHeader>
             <CardContent>
               {sensorActive && sensorData ? (
-                <div className="grid grid-cols-3 gap-3 text-center">
-                  <div className="rounded-lg border p-3">
+                <div className="grid grid-cols-3 gap-1.5 text-center">
+                  <div className="rounded-lg border p-2">
                     <div className="text-xs text-muted-foreground">X</div>
                     <div className="text-lg font-bold text-emerald-glow">{sensorData.x.toFixed(2)}</div>
                   </div>
-                  <div className="rounded-lg border p-3">
+                  <div className="rounded-lg border p-2">
                     <div className="text-xs text-muted-foreground">Y</div>
                     <div className="text-lg font-bold text-amber-glow">{sensorData.y.toFixed(2)}</div>
                   </div>
-                  <div className="rounded-lg border p-3">
+                  <div className="rounded-lg border p-2">
                     <div className="text-xs text-muted-foreground">Z</div>
                     <div className="text-lg font-bold text-rose-500">{sensorData.z.toFixed(2)}</div>
                   </div>

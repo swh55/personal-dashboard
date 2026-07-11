@@ -218,11 +218,11 @@ export function BudgetSection() {
   }, [budgets, editing]);
 
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div className="flex h-full flex-col gap-2">
       {/* Header */}
-      <header className="flex flex-wrap items-center justify-between gap-3">
+      <header className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">الميزانيات</h2>
+          <h2 className="text-xl font-bold tracking-tight">الميزانيات</h2>
           <p className="text-sm text-muted-foreground">
             حدّد سقف الإنفاق الشهري لكل فئة وتابع الالتزام
           </p>
@@ -245,7 +245,7 @@ export function BudgetSection() {
 
       {/* Month/Year Selector */}
       <Card className="border-border/60">
-        <CardContent className="flex flex-wrap items-center gap-3 p-3">
+        <CardContent className="flex flex-wrap items-center gap-2 p-2">
           <Calendar className="size-4 text-emerald-glow" />
           <span className="text-sm font-medium">الفترة:</span>
           <Select
@@ -289,9 +289,9 @@ export function BudgetSection() {
       {/* Body */}
       <ScrollArea className="flex-1 custom-scroll -mx-1 px-1">
         {loading ? (
-          <div className="grid gap-3">
+          <div className="grid gap-2">
             <Skeleton className="h-40 w-full rounded-xl" />
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-2 sm:grid-cols-2">
               {Array.from({ length: 4 }).map((_, i) => (
                 <Skeleton key={i} className="h-28 w-full rounded-xl" />
               ))}
@@ -309,7 +309,7 @@ export function BudgetSection() {
             </AlertDescription>
           </Alert>
         ) : (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
             {/* Overall progress hero */}
             {stats && (
               <Card
@@ -322,12 +322,12 @@ export function BudgetSection() {
                     : "bg-emerald-glow/5")
                 }
               >
-                <CardContent className="p-5">
-                  <div className="flex flex-wrap items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
+                <CardContent className="p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
                       <div
                         className={
-                          "flex size-12 items-center justify-center rounded-xl " +
+                          "flex size-9 items-center justify-center rounded-xl " +
                           (stats.percent >= 100
                             ? "bg-rose-500/15 text-rose-500"
                             : stats.percent >= 70
@@ -342,7 +342,7 @@ export function BudgetSection() {
                           الميزانية الإجمالية — {MONTH_NAMES[stats.month - 1]}{" "}
                           {stats.year}
                         </p>
-                        <p className="text-2xl font-bold">
+                        <p className="text-xl font-bold">
                           {formatCurrency(stats.totalBudget, "syp")}
                         </p>
                       </div>
@@ -350,7 +350,7 @@ export function BudgetSection() {
                     <div className="text-left">
                       <p
                         className={
-                          "text-3xl font-bold " +
+                          "text-xl font-bold " +
                           (stats.percent >= 100
                             ? "text-rose-500"
                             : stats.percent >= 70
@@ -366,7 +366,7 @@ export function BudgetSection() {
                   <Progress
                     value={Math.min(stats.percent, 100)}
                     className={
-                      "mt-4 h-2.5 " +
+                      "mt-2 h-2.5 " +
                       (stats.percent >= 100
                         ? "[&>[data-slot=progress-indicator]]:bg-rose-500"
                         : stats.percent >= 70
@@ -415,7 +415,7 @@ export function BudgetSection() {
             {/* Budget list */}
             {budgets.length === 0 ? (
               <Card className="border-dashed">
-                <CardContent className="flex flex-col items-center justify-center gap-3 p-10 text-center">
+                <CardContent className="flex flex-col items-center justify-center gap-2 p-10 text-center">
                   <div className="flex size-14 items-center justify-center rounded-full bg-emerald-glow/10 text-emerald-glow">
                     <Inbox className="size-7" />
                   </div>
@@ -432,7 +432,7 @@ export function BudgetSection() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-2 sm:grid-cols-2">
                 {budgets.map((b) => {
                   const st = statusMeta(b.status);
                   return (
@@ -440,7 +440,7 @@ export function BudgetSection() {
                       key={b.id}
                       className="group border-border/60 transition-colors hover:border-emerald-glow/40"
                     >
-                      <CardContent className="p-4">
+                      <CardContent className="p-2">
                         <div className="flex items-start justify-between gap-2">
                           <div>
                             <h3 className="font-semibold">
@@ -549,7 +549,7 @@ export function BudgetSection() {
               {MONTH_NAMES[month - 1]} {year}
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-2">
+          <div className="grid gap-2 py-2">
             <div className="grid gap-2">
               <Label htmlFor="category">الفئة</Label>
               <Select

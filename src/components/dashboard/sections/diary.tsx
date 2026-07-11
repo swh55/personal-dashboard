@@ -210,11 +210,11 @@ export function DiarySection() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div className="flex h-full flex-col gap-2">
       {/* header */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">المذكرات اليومية</h1>
+          <h1 className="text-xl font-bold tracking-tight">المذكرات اليومية</h1>
           <p className="text-sm text-muted-foreground">{stats.total} مذكرة · سجّل أفكارك ومشاعرك</p>
         </div>
         <div className="flex items-center gap-2">
@@ -231,7 +231,7 @@ export function DiarySection() {
 
       {/* mood filter chips */}
       <Card>
-        <CardContent className="p-3 flex flex-wrap items-center gap-1.5">
+        <CardContent className="p-2 flex flex-wrap items-center gap-1.5">
           <button
             onClick={() => setMoodFilter("all")}
             className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs transition ${moodFilter === "all" ? "border-emerald-glow bg-emerald-glow/10 text-emerald-glow" : "border-border hover:bg-muted"}`}
@@ -255,7 +255,7 @@ export function DiarySection() {
 
       {/* search */}
       <Card>
-        <CardContent className="p-3">
+        <CardContent className="p-2">
           <div className="relative">
             <Search className="absolute right-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -281,11 +281,11 @@ export function DiarySection() {
 
       <ScrollArea className="custom-scroll flex-1 min-h-0 -mx-1 px-1">
         {loading ? (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-44 w-full rounded-xl" />)}
           </div>
         ) : filtered.length > 0 ? (
-          <div className="grid grid-cols-1 gap-3 pb-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-2 pb-4 sm:grid-cols-2 lg:grid-cols-3">
             {filtered.map((e) => {
               const m = moodMeta(e.mood);
               const w = weatherMeta(e.weather);
@@ -296,7 +296,7 @@ export function DiarySection() {
                   className="group cursor-pointer transition-shadow hover:shadow-md"
                   onClick={() => openView(e)}
                 >
-                  <CardContent className="flex flex-col gap-2 p-4">
+                  <CardContent className="flex flex-col gap-2 p-2">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-2 min-w-0">
                         <span className="text-xl shrink-0">{m.emoji}</span>
@@ -323,7 +323,7 @@ export function DiarySection() {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
-            <BookOpen className="size-10 text-muted-foreground/40" />
+            <BookOpen className="size-8 text-muted-foreground/40" />
             <p className="text-sm font-medium">لا مذكرات</p>
             <p className="text-xs text-muted-foreground">
               {search || moodFilter !== "all" ? "لا نتائج مطابقة" : "ابدأ بكتابة أول مذكرة"}
@@ -343,7 +343,7 @@ export function DiarySection() {
             <DialogTitle>{editing ? "تعديل المذكرة" : "إضافة مذكرة"}</DialogTitle>
             <DialogDescription>سجّل يومك ومشاعرك.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-3 max-h-[60vh] overflow-y-auto custom-scroll py-1">
+          <div className="grid gap-2 max-h-[60vh] overflow-y-auto custom-scroll py-1">
             <div className="grid gap-1.5">
               <Label htmlFor="d-title">العنوان</Label>
               <Input id="d-title" value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="عنوان مختصر" />

@@ -195,8 +195,8 @@ export function DebtsSection() {
     const accentBg = accent === "emerald" ? "bg-emerald-glow/10 text-emerald-glow" : "bg-rose-500/10 text-rose-500";
     return (
       <Card key={d.id} className="group">
-        <CardContent className="flex items-start gap-3 p-3">
-          <div className={`flex size-10 items-center justify-center rounded-md shrink-0 ${accentBg}`}>
+        <CardContent className="flex items-start gap-2 p-2">
+          <div className={`flex size-8 items-center justify-center rounded-md shrink-0 ${accentBg}`}>
             {accent === "emerald" ? <ArrowUpRight className="size-5" /> : <ArrowDownRight className="size-5" />}
           </div>
           <div className="min-w-0 flex-1">
@@ -242,11 +242,11 @@ export function DebtsSection() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div className="flex h-full flex-col gap-2">
       {/* header */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">الديون</h1>
+          <h1 className="text-xl font-bold tracking-tight">الديون</h1>
           <p className="text-sm text-muted-foreground">{stats.count} دين نشط</p>
         </div>
         <div className="flex items-center gap-2">
@@ -262,7 +262,7 @@ export function DebtsSection() {
       </div>
 
       {/* stats */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         <StatCard
           icon={ArrowUpRight}
           label="إجمالي الديون لي"
@@ -285,7 +285,7 @@ export function DebtsSection() {
 
       {/* filter */}
       <Card>
-        <CardContent className="flex items-center gap-3 p-3">
+        <CardContent className="flex items-center gap-2 p-2">
           <Filter className="size-4 text-muted-foreground" />
           <Select value={filter} onValueChange={(v) => setFilter(v as ViewFilter)}>
             <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
@@ -314,11 +314,11 @@ export function DebtsSection() {
 
       <ScrollArea className="custom-scroll flex-1 -mx-1 px-1">
         {loading ? (
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
             {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
           </div>
         ) : debts.length > 0 ? (
-          <div className="grid grid-cols-1 gap-4 pb-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-2 pb-4 md:grid-cols-2">
             {/* owed to me */}
             {(filter === "all" || filter === "owed") && (
               <div className="flex flex-col gap-2">
@@ -367,7 +367,7 @@ export function DebtsSection() {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
-            <HandCoins className="size-10 text-muted-foreground/40" />
+            <HandCoins className="size-8 text-muted-foreground/40" />
             <p className="text-sm font-medium">لا ديون مسجّلة</p>
             <p className="text-xs text-muted-foreground">أضف ديناً جديداً لمتابعة مستحقاتك</p>
             <Button size="sm" variant="outline" className="mt-1" onClick={() => openAdd()}>
@@ -385,7 +385,7 @@ export function DebtsSection() {
             <DialogTitle>{editing ? "تعديل الدين" : "إضافة دين"}</DialogTitle>
             <DialogDescription>أدخل تفاصيل الدين.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-3 max-h-[60vh] overflow-y-auto custom-scroll py-1">
+          <div className="grid gap-2 max-h-[60vh] overflow-y-auto custom-scroll py-1">
             <div className="grid gap-1.5">
               <Label htmlFor="d-person">الاسم *</Label>
               <Input
@@ -493,7 +493,7 @@ function StatCard({
         : "text-rose-500 bg-rose-500/10";
   return (
     <Card>
-      <CardContent className="flex items-center gap-3 p-3">
+      <CardContent className="flex items-center gap-2 p-2">
         <div className={`flex size-9 items-center justify-center rounded-md shrink-0 ${accentClass}`}>
           <Icon className="size-4" />
         </div>

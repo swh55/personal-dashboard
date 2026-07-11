@@ -261,11 +261,11 @@ export function IslamicSection() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div className="flex h-full flex-col gap-2">
       {/* header */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">القسم الإسلامي</h1>
+          <h1 className="text-xl font-bold tracking-tight">القسم الإسلامي</h1>
           <p className="text-sm text-muted-foreground">قرآن، أذكار، ومواقيت الصلاة</p>
         </div>
         <Button variant="outline" size="sm" onClick={() => reload()}>
@@ -276,8 +276,8 @@ export function IslamicSection() {
 
       {/* date banner */}
       <Card className="overflow-hidden">
-        <div className="bg-gradient-to-l from-emerald-glow/15 to-amber-glow/10 p-4">
-          <div className="flex items-center gap-3 flex-wrap">
+        <div className="bg-gradient-to-l from-emerald-glow/15 to-amber-glow/10 p-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <div className="flex size-11 items-center justify-center rounded-full bg-emerald-glow/15 text-emerald-glow shrink-0">
               <CalendarHeart className="size-5" />
             </div>
@@ -301,11 +301,11 @@ export function IslamicSection() {
         </Alert>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px] flex-1 min-h-0">
+      <div className="grid grid-cols-1 gap-2 lg:grid-cols-[1fr_320px] flex-1 min-h-0">
         {/* left: quran log */}
-        <div className="flex flex-col gap-4 min-h-0">
+        <div className="flex flex-col gap-2 min-h-0">
           {/* quran stats */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-1.5">
             <StatCard icon={BookOpen} label="آيات مقروءة" value={String(stats.totalAyahs)} accent="emerald" />
             <StatCard icon={Star} label="سور مفتوحة" value={String(stats.surahsRead)} accent="amber" />
             <StatCard icon={Sparkles} label="جلسات القراءة" value={String(stats.sessions)} accent="emerald" />
@@ -335,8 +335,8 @@ export function IslamicSection() {
                       const ayahCount = l.toAyah - l.fromAyah + 1;
                       return (
                         <Card key={l.id} className="group">
-                          <CardContent className="flex items-center gap-3 p-3">
-                            <div className="flex size-10 items-center justify-center rounded-md bg-emerald-glow/10 text-emerald-glow shrink-0">
+                          <CardContent className="flex items-center gap-2 p-2">
+                            <div className="flex size-8 items-center justify-center rounded-md bg-emerald-glow/10 text-emerald-glow shrink-0">
                               <BookOpen className="size-5" />
                             </div>
                             <div className="min-w-0 flex-1">
@@ -369,7 +369,7 @@ export function IslamicSection() {
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
-                    <BookOpen className="size-10 text-muted-foreground/40" />
+                    <BookOpen className="size-8 text-muted-foreground/40" />
                     <p className="text-sm font-medium">لا سجلات قراءة</p>
                     <p className="text-xs text-muted-foreground">ابدأ بتسجيل أول جلسة قراءة</p>
                     <Button size="sm" variant="outline" className="mt-1" onClick={openAdd}>
@@ -384,7 +384,7 @@ export function IslamicSection() {
         </div>
 
         {/* right: prayer times + dhikr */}
-        <div className="flex flex-col gap-4 min-h-0">
+        <div className="flex flex-col gap-2 min-h-0">
           {/* prayer times */}
           <Card>
             <CardHeader className="pb-2">
@@ -401,7 +401,7 @@ export function IslamicSection() {
                 return (
                   <div
                     key={p.key}
-                    className={`flex items-center gap-3 rounded-lg p-2 ${
+                    className={`flex items-center gap-2 rounded-lg p-2 ${
                       isNext ? "bg-emerald-glow/10 border border-emerald-glow/30" : ""
                     }`}
                   >
@@ -450,7 +450,7 @@ export function IslamicSection() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="rounded-xl bg-gradient-to-l from-amber-glow/10 to-emerald-glow/10 p-4 text-center">
+              <div className="rounded-xl bg-gradient-to-l from-amber-glow/10 to-emerald-glow/10 p-2 text-center">
                 <p className="text-lg font-arabic leading-relaxed" style={{ fontFamily: "var(--font-arabic, inherit)" }}>
                   {todaysDhikr.ar}
                 </p>
@@ -471,7 +471,7 @@ export function IslamicSection() {
             <DialogTitle>تسجيل قراءة</DialogTitle>
             <DialogDescription>سجّل جلسة تلاوتك اليومية.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-3 max-h-[60vh] overflow-y-auto custom-scroll py-1">
+          <div className="grid gap-2 max-h-[60vh] overflow-y-auto custom-scroll py-1">
             <div className="grid gap-1.5">
               <Label>السورة *</Label>
               <Select value={form.surah} onValueChange={(v) => setForm((f) => ({ ...f, surah: v }))}>
@@ -570,7 +570,7 @@ function StatCard({
   const accentClass = accent === "emerald" ? "text-emerald-glow bg-emerald-glow/10" : "text-amber-glow bg-amber-glow/10";
   return (
     <Card>
-      <CardContent className="flex items-center gap-2.5 p-3">
+      <CardContent className="flex items-center gap-2.5 p-2">
         <div className={`flex size-9 items-center justify-center rounded-md shrink-0 ${accentClass}`}>
           <Icon className="size-4" />
         </div>

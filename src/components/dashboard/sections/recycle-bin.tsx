@@ -185,11 +185,11 @@ export function RecycleBinSection() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div className="flex h-full flex-col gap-2">
       {/* header */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">سلة المحذوفات</h1>
+          <h1 className="text-xl font-bold tracking-tight">سلة المحذوفات</h1>
           <p className="text-sm text-muted-foreground">
             {total > 0 ? `${total} عنصر محذوف — يمكن استرجاعه` : "السلة فارغة"}
           </p>
@@ -239,12 +239,12 @@ export function RecycleBinSection() {
         </ScrollArea>
       ) : total === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-2 py-16 text-center">
-          <Inbox className="size-12 text-muted-foreground/40" />
+          <Inbox className="size-9 text-muted-foreground/40" />
           <p className="text-sm font-medium">السلة فارغة</p>
           <p className="text-xs text-muted-foreground">لا توجد عناصر محذوفة لعرضها</p>
         </div>
       ) : (
-        <Tabs defaultValue={activeTypes[0] || "contacts"} className="flex-1 min-h-0 flex flex-col gap-3">
+        <Tabs defaultValue={activeTypes[0] || "contacts"} className="flex-1 min-h-0 flex flex-col gap-2">
           <ScrollArea className="custom-scroll w-full overflow-x-auto">
             <TabsList className="h-9">
               {TYPE_ORDER.map((t) => {
@@ -274,7 +274,7 @@ export function RecycleBinSection() {
                       const deletedAt = i.deletedAt || i.updatedAt || i.createdAt;
                       return (
                         <Card key={i.id} className="transition-shadow hover:shadow-md">
-                          <CardContent className="flex items-center gap-3 p-3">
+                          <CardContent className="flex items-center gap-2 p-2">
                             <div className="flex size-9 items-center justify-center rounded-md bg-muted text-muted-foreground shrink-0">
                               <MIcon className="size-4" />
                             </div>

@@ -232,10 +232,10 @@ export function PomodoroWidget() {
   const offset = c * (1 - progress);
 
   return (
-    <div className="flex h-full flex-col gap-4">
-      <header className="flex flex-wrap items-center justify-between gap-3">
+    <div className="flex h-full flex-col gap-2">
+      <header className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
+          <h2 className="flex items-center gap-2 text-xl font-bold tracking-tight">
             <Flame className="size-6 text-emerald-glow" />
             مؤقّت بومودورو
           </h2>
@@ -258,7 +258,7 @@ export function PomodoroWidget() {
         </div>
       </header>
 
-      <div className="flex flex-1 flex-col items-center justify-center gap-6 overflow-y-auto custom-scroll">
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 overflow-y-auto custom-scroll">
         {/* Mode tabs */}
         <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-muted/30 p-1">
           {(Object.keys(modeConfig) as Mode[]).map((m) => {
@@ -294,7 +294,7 @@ export function PomodoroWidget() {
               : "border-violet-400/30 from-violet-400/5 to-transparent")
           }
         >
-          <CardContent className="p-6">
+          <CardContent className="p-3">
             <div className="relative" style={{ width: size, height: size }}>
               <svg width={size} height={size} className="-rotate-90">
                 <circle
@@ -335,7 +335,7 @@ export function PomodoroWidget() {
         </Card>
 
         {/* Controls */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <Button
             size="lg"
             onClick={toggleRun}
@@ -381,7 +381,7 @@ export function PomodoroWidget() {
               عدّل مدة كل وضع بالدقائق (1-180 للتركيز، 1-60 للاستراحات)
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-2">
+          <div className="grid gap-2 py-2">
             <DurationField
               id="dur-focus"
               label="تركيز (دقائق)"

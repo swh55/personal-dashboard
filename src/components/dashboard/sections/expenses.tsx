@@ -254,11 +254,11 @@ export function ExpensesSection() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div className="flex h-full flex-col gap-2">
       {/* header */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">المصروفات</h1>
+          <h1 className="text-xl font-bold tracking-tight">المصروفات</h1>
           <p className="text-sm text-muted-foreground">
             {viewStats.count} مصروف · لهذا {dateRange === "week" ? "الأسبوع" : dateRange === "month" ? "الشهر" : "الكل"}
           </p>
@@ -276,7 +276,7 @@ export function ExpensesSection() {
       </div>
 
       {/* stats cards */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
         <StatCard
           icon={Banknote}
           label="مصروفات بالليرة"
@@ -306,7 +306,7 @@ export function ExpensesSection() {
 
       {/* filters */}
       <Card>
-        <CardContent className="flex flex-col gap-3 p-3 md:flex-row md:items-center md:flex-wrap">
+        <CardContent className="flex flex-col gap-2 p-2 md:flex-row md:items-center md:flex-wrap">
           <div className="flex items-center gap-2">
             <Filter className="size-4 text-muted-foreground" />
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
@@ -347,7 +347,7 @@ export function ExpensesSection() {
         </Alert>
       ) : null}
 
-      <div className="grid flex-1 min-h-0 gap-4 lg:grid-cols-[1fr_300px]">
+      <div className="grid flex-1 min-h-0 gap-2 lg:grid-cols-[1fr_300px]">
         {/* expense list */}
         <ScrollArea className="custom-scroll -mx-1 px-1 min-h-0">
           {loading ? (
@@ -361,9 +361,9 @@ export function ExpensesSection() {
                 const sypEq = toSYP(e.amount, e.currency);
                 return (
                   <Card key={e.id} className="group transition-shadow hover:shadow-md">
-                    <CardContent className="flex items-center gap-3 p-3">
+                    <CardContent className="flex items-center gap-2 p-2">
                       <div
-                        className="flex size-10 items-center justify-center rounded-md text-white shrink-0"
+                        className="flex size-8 items-center justify-center rounded-md text-white shrink-0"
                         style={{ backgroundColor: CATEGORY_COLORS[e.category] || "#64748b" }}
                       >
                         <Receipt className="size-5" />
@@ -402,7 +402,7 @@ export function ExpensesSection() {
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
-              <Receipt className="size-10 text-muted-foreground/40" />
+              <Receipt className="size-8 text-muted-foreground/40" />
               <p className="text-sm font-medium">لا مصروفات</p>
               <p className="text-xs text-muted-foreground">لم تُسجَّل مصروفات ضمن الفلتر الحالي</p>
               <Button size="sm" variant="outline" className="mt-1" onClick={openAdd}>
@@ -478,7 +478,7 @@ export function ExpensesSection() {
             <DialogTitle>{editing ? "تعديل المصروف" : "إضافة مصروف"}</DialogTitle>
             <DialogDescription>سجّل تفاصيل المصروف.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-3 max-h-[60vh] overflow-y-auto custom-scroll py-1">
+          <div className="grid gap-2 max-h-[60vh] overflow-y-auto custom-scroll py-1">
             <div className="grid grid-cols-2 gap-2">
               <div className="grid gap-1.5">
                 <Label htmlFor="e-amount">المبلغ *</Label>
@@ -575,7 +575,7 @@ function StatCard({
   const accentClass = accent === "emerald" ? "text-emerald-glow bg-emerald-glow/10" : "text-amber-glow bg-amber-glow/10";
   return (
     <Card>
-      <CardContent className="flex items-center gap-3 p-3">
+      <CardContent className="flex items-center gap-2 p-2">
         <div className={`flex size-9 items-center justify-center rounded-md shrink-0 ${accentClass}`}>
           <Icon className="size-4" />
         </div>

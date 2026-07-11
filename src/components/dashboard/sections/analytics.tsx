@@ -157,10 +157,10 @@ export function AnalyticsSection() {
   }, [data]);
 
   return (
-    <div className="flex h-full flex-col gap-4">
-      <header className="flex flex-wrap items-center justify-between gap-3">
+    <div className="flex h-full flex-col gap-2">
+      <header className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">التحليلات</h2>
+          <h2 className="text-xl font-bold tracking-tight">التحليلات</h2>
           <p className="text-sm text-muted-foreground">
             نظرة شاملة على الإنفاق والمهام والسعادة
           </p>
@@ -191,14 +191,14 @@ export function AnalyticsSection() {
 
       <ScrollArea className="flex-1 custom-scroll -mx-1 px-1">
         {loading ? (
-          <div className="grid gap-4">
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          <div className="grid gap-2">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
               {Array.from({ length: 6 }).map((_, i) => (
                 <Skeleton key={i} className="h-24 rounded-xl" />
               ))}
             </div>
             <Skeleton className="h-64 w-full rounded-xl" />
-            <div className="grid gap-4 lg:grid-cols-2">
+            <div className="grid gap-2 lg:grid-cols-2">
               <Skeleton className="h-64 rounded-xl" />
               <Skeleton className="h-64 rounded-xl" />
             </div>
@@ -222,9 +222,9 @@ export function AnalyticsSection() {
             <AlertDescription>لم يتم العثور على بيانات تحليلية.</AlertDescription>
           </Alert>
         ) : (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
             {/* Overview stat cards */}
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
               <OverviewTile
                 icon={Wallet}
                 label="إجمالي الإنفاق"
@@ -319,7 +319,7 @@ export function AnalyticsSection() {
               </CardContent>
             </Card>
 
-            <div className="grid gap-4 lg:grid-cols-2">
+            <div className="grid gap-2 lg:grid-cols-2">
               {/* Category breakdown */}
               <Card className="border-border/60">
                 <CardHeader className="pb-2">
@@ -378,7 +378,7 @@ export function AnalyticsSection() {
                     <StatPill label="قيد التنفيذ" value={data.taskStats.doing} tone="amber" />
                     <StatPill label="معلّقة" value={data.taskStats.todo} tone="muted" />
                   </div>
-                  <div className="mt-4">
+                  <div className="mt-2">
                     <div className="mb-1.5 flex items-center justify-between text-xs">
                       <span className="text-muted-foreground">نسبة الإنجاز</span>
                       <span className="font-semibold text-emerald-glow">
@@ -391,11 +391,11 @@ export function AnalyticsSection() {
                     />
                   </div>
                   {taskByCatList.length === 0 ? (
-                    <p className="mt-4 text-center text-xs text-muted-foreground">
+                    <p className="mt-2 text-center text-xs text-muted-foreground">
                       لا توجد مهام مصنّفة
                     </p>
                   ) : (
-                    <div className="mt-4 flex flex-col gap-2">
+                    <div className="mt-2 flex flex-col gap-2">
                       {taskByCatList.map((c) => (
                         <div key={c.category} className="flex flex-col gap-1">
                           <div className="flex items-center justify-between text-xs">
@@ -486,7 +486,7 @@ function OverviewTile({
 }) {
   return (
     <Card className="border-border/60">
-      <CardContent className="flex flex-col gap-1 p-3">
+      <CardContent className="flex flex-col gap-1 p-2">
         <div className="flex items-center justify-between">
           <Icon className={`size-4 ${accent}`} />
         </div>

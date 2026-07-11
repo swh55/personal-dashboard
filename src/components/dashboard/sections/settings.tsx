@@ -188,7 +188,7 @@ export function SettingsSection() {
 
   if (!mounted) {
     return (
-      <div className="flex h-full flex-col gap-4">
+      <div className="flex h-full flex-col gap-2">
         <div>
           <Skeleton className="h-8 w-48" />
           <Skeleton className="mt-2 h-4 w-64" />
@@ -201,17 +201,17 @@ export function SettingsSection() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div className="flex h-full flex-col gap-2">
       {/* header */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">الإعدادات</h1>
+          <h1 className="text-xl font-bold tracking-tight">الإعدادات</h1>
           <p className="text-sm text-muted-foreground">الملف الشخصي، الأمان، المظهر، والبيانات</p>
         </div>
       </div>
 
       <ScrollArea className="custom-scroll flex-1 min-h-0 -mx-1 px-1">
-        <div className="flex flex-col gap-4 pb-4 max-w-3xl">
+        <div className="flex flex-col gap-2 pb-4 max-w-3xl">
 
           {/* User profile */}
           <Card>
@@ -222,9 +222,9 @@ export function SettingsSection() {
               </CardTitle>
               <CardDescription className="text-xs">معلومات المستخدم الأساسية</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col gap-3">
-              <div className="flex items-center gap-3">
-                <div className="flex size-14 items-center justify-center rounded-full bg-gradient-to-br from-emerald-glow to-amber-glow text-background font-bold text-2xl shrink-0">
+            <CardContent className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <div className="flex size-14 items-center justify-center rounded-full bg-gradient-to-br from-emerald-glow to-amber-glow text-background font-bold text-xl shrink-0">
                   {(usernameInput || "ع").charAt(0)}
                 </div>
                 <div className="flex-1 grid gap-1.5">
@@ -254,9 +254,9 @@ export function SettingsSection() {
               </CardTitle>
               <CardDescription className="text-xs">قفل التطبيق برمز PIN</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col gap-3">
-              <div className="flex items-center justify-between rounded-lg border p-3">
-                <div className="flex items-start gap-3">
+            <CardContent className="flex flex-col gap-2">
+              <div className="flex items-center justify-between rounded-lg border p-2">
+                <div className="flex items-start gap-2">
                   <Lock className="size-5 text-muted-foreground mt-0.5" />
                   <div>
                     <div className="text-sm font-medium">قفل PIN</div>
@@ -269,7 +269,7 @@ export function SettingsSection() {
               </div>
 
               {settings.pinEnabled ? (
-                <div className="rounded-lg border border-emerald-glow/30 bg-emerald-glow/5 p-3">
+                <div className="rounded-lg border border-emerald-glow/30 bg-emerald-glow/5 p-2">
                   <Label htmlFor="pin" className="text-sm">
                     رمز PIN (4 أرقام)
                   </Label>
@@ -306,13 +306,13 @@ export function SettingsSection() {
               </CardTitle>
               <CardDescription className="text-xs">السمة واللون المميز</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col gap-4">
+            <CardContent className="flex flex-col gap-2">
               <div className="grid gap-2">
                 <Label>السمة</Label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => changeTheme("dark")}
-                    className={`flex items-center gap-3 rounded-lg border p-3 text-right transition ${renderedTheme === "dark" ? "border-emerald-glow bg-emerald-glow/5" : "border-border hover:bg-muted"}`}
+                    className={`flex items-center gap-2 rounded-lg border p-2 text-right transition ${renderedTheme === "dark" ? "border-emerald-glow bg-emerald-glow/5" : "border-border hover:bg-muted"}`}
                   >
                     <Moon className={`size-5 ${renderedTheme === "dark" ? "text-emerald-glow" : "text-muted-foreground"}`} />
                     <div className="flex-1">
@@ -323,7 +323,7 @@ export function SettingsSection() {
                   </button>
                   <button
                     onClick={() => changeTheme("light")}
-                    className={`flex items-center gap-3 rounded-lg border p-3 text-right transition ${renderedTheme === "light" ? "border-emerald-glow bg-emerald-glow/5" : "border-border hover:bg-muted"}`}
+                    className={`flex items-center gap-2 rounded-lg border p-2 text-right transition ${renderedTheme === "light" ? "border-emerald-glow bg-emerald-glow/5" : "border-border hover:bg-muted"}`}
                   >
                     <Sun className={`size-5 ${renderedTheme === "light" ? "text-emerald-glow" : "text-muted-foreground"}`} />
                     <div className="flex-1">
@@ -369,9 +369,9 @@ export function SettingsSection() {
               </CardTitle>
               <CardDescription className="text-xs">النسخ الاحتياطي وإدارة السجل</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col gap-3">
-              <div className="flex items-center justify-between gap-2 rounded-lg border p-3">
-                <div className="flex items-start gap-3 min-w-0">
+            <CardContent className="flex flex-col gap-2">
+              <div className="flex items-center justify-between gap-2 rounded-lg border p-2">
+                <div className="flex items-start gap-2 min-w-0">
                   <Download className="size-5 text-muted-foreground mt-0.5 shrink-0" />
                   <div className="min-w-0">
                     <div className="text-sm font-medium">تصدير نسخة احتياطية</div>
@@ -385,8 +385,8 @@ export function SettingsSection() {
                 </Button>
               </div>
               <Separator />
-              <div className="flex items-center justify-between gap-2 rounded-lg border border-destructive/30 p-3">
-                <div className="flex items-start gap-3 min-w-0">
+              <div className="flex items-center justify-between gap-2 rounded-lg border border-destructive/30 p-2">
+                <div className="flex items-start gap-2 min-w-0">
                   <Trash2 className="size-5 text-destructive mt-0.5 shrink-0" />
                   <div className="min-w-0">
                     <div className="text-sm font-medium">مسح سجل النشاط</div>

@@ -249,11 +249,11 @@ export function AutomationSection() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div className="flex h-full flex-col gap-2">
       {/* Header */}
-      <header className="flex flex-wrap items-center justify-between gap-3">
+      <header className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
+          <h2 className="flex items-center gap-2 text-xl font-bold tracking-tight">
             <Workflow className="size-6 text-emerald-glow" />
             الأتمتة
           </h2>
@@ -274,7 +274,7 @@ export function AutomationSection() {
       </header>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-1.5">
         <StatCard
           label="الإجمالي"
           value={stats.total}
@@ -298,7 +298,7 @@ export function AutomationSection() {
       {/* Body */}
       <ScrollArea className="flex-1 custom-scroll -mx-1 px-1">
         {loading ? (
-          <div className="grid gap-3">
+          <div className="grid gap-2">
             {Array.from({ length: 3 }).map((_, i) => (
               <Skeleton key={i} className="h-32 w-full rounded-xl" />
             ))}
@@ -316,7 +316,7 @@ export function AutomationSection() {
           </Alert>
         ) : rules.length === 0 ? (
           <Card className="border-dashed">
-            <CardContent className="flex flex-col items-center justify-center gap-3 p-10 text-center">
+            <CardContent className="flex flex-col items-center justify-center gap-2 p-10 text-center">
               <div className="flex size-14 items-center justify-center rounded-full bg-emerald-glow/10 text-emerald-glow">
                 <Inbox className="size-7" />
               </div>
@@ -333,7 +333,7 @@ export function AutomationSection() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-3">
+          <div className="grid gap-2">
             {rules.map((r) => {
               const tm = triggerMeta(r.trigger);
               const am = actionMeta(r.action);
@@ -351,11 +351,11 @@ export function AutomationSection() {
                       : "opacity-70 hover:opacity-100")
                   }
                 >
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
+                  <CardContent className="p-2">
+                    <div className="flex items-start gap-2">
                       <div
                         className={
-                          "flex size-10 shrink-0 items-center justify-center rounded-lg " +
+                          "flex size-8 shrink-0 items-center justify-center rounded-lg " +
                           (r.active
                             ? "bg-emerald-glow/15 text-emerald-glow"
                             : "bg-muted text-muted-foreground")
@@ -458,7 +458,7 @@ export function AutomationSection() {
               حدّد المحفّز والإجراء والإعدادات
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-2">
+          <div className="grid gap-2 py-2">
             <div className="grid gap-2">
               <Label htmlFor="name">اسم القاعدة *</Label>
               <Input
@@ -470,7 +470,7 @@ export function AutomationSection() {
                 placeholder="مثال: تنبيه عند تجاوز ميزانية الطعام"
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2">
               <div className="grid gap-2">
                 <Label htmlFor="trigger">المحفّز</Label>
                 <Select
@@ -541,7 +541,7 @@ export function AutomationSection() {
                 أدخل إعدادات إضافية بصيغة JSON صحيحة
               </p>
             </div>
-            <div className="flex items-center justify-between rounded-lg border border-border/60 p-3">
+            <div className="flex items-center justify-between rounded-lg border border-border/60 p-2">
               <div className="flex items-center gap-2">
                 <Power className="size-4 text-muted-foreground" />
                 <div>
@@ -614,12 +614,12 @@ function StatCard({
 }) {
   return (
     <Card className="border-border/60">
-      <CardContent className="flex items-center gap-3 p-4">
-        <div className={`flex size-10 items-center justify-center rounded-lg ${cls}`}>
+      <CardContent className="flex items-center gap-2 p-2">
+        <div className={`flex size-8 items-center justify-center rounded-lg ${cls}`}>
           {icon}
         </div>
         <div>
-          <div className="text-2xl font-bold leading-none">{value}</div>
+          <div className="text-xl font-bold leading-none">{value}</div>
           <div className="mt-1 text-xs text-muted-foreground">{label}</div>
         </div>
       </CardContent>

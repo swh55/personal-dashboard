@@ -258,10 +258,10 @@ export function CalendarSection() {
   // any SSR hydration mismatch from date/timezone differences.
   if (!cursor) {
     return (
-      <div className="flex h-full flex-col gap-4">
+      <div className="flex h-full flex-col gap-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">التقويم</h1>
+            <h1 className="text-xl font-bold tracking-tight">التقويم</h1>
             <p className="text-sm text-muted-foreground">إدارة الأحداث والمواعيد</p>
           </div>
         </div>
@@ -271,11 +271,11 @@ export function CalendarSection() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div className="flex h-full flex-col gap-2">
       {/* header */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">التقويم</h1>
+          <h1 className="text-xl font-bold tracking-tight">التقويم</h1>
           <p className="text-sm text-muted-foreground">إدارة الأحداث والمواعيد</p>
         </div>
         <div className="flex items-center gap-2">
@@ -303,7 +303,7 @@ export function CalendarSection() {
         </Alert>
       ) : null}
 
-      <div className="grid flex-1 grid-cols-1 gap-4 overflow-hidden lg:grid-cols-3">
+      <div className="grid flex-1 grid-cols-1 gap-2 overflow-hidden lg:grid-cols-3">
         {/* calendar grid */}
         <Card className="lg:col-span-2 flex flex-col overflow-hidden">
           <CardHeader className="border-b">
@@ -331,7 +331,7 @@ export function CalendarSection() {
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="flex-1 overflow-hidden p-3">
+          <CardContent className="flex-1 overflow-hidden p-2">
             <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-muted-foreground mb-1">
               {WEEKDAYS.map((d) => (
                 <div key={d} className="py-1">{d}</div>
@@ -393,7 +393,7 @@ export function CalendarSection() {
           </CardHeader>
           <CardContent className="flex-1 overflow-hidden p-0">
             <ScrollArea className="custom-scroll h-full">
-              <div className="p-3 space-y-2">
+              <div className="p-2 space-y-2">
                 {loading ? (
                   [0, 1].map((i) => <Skeleton key={i} className="h-20 w-full" />)
                 ) : selectedDayEvents.length > 0 ? (
@@ -428,11 +428,11 @@ export function CalendarSection() {
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
-            <div className="p-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="p-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {[0, 1, 2].map((i) => <Skeleton key={i} className="h-16 w-full" />)}
             </div>
           ) : upcoming.length > 0 ? (
-            <div className="grid gap-2 p-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-2 p-2 sm:grid-cols-2 lg:grid-cols-3">
               {upcoming.map((ev) => (
                 <EventCard key={ev.id} ev={ev} compact onEdit={() => openEdit(ev)} onDelete={() => setDeleteId(ev.id)} />
               ))}
@@ -453,7 +453,7 @@ export function CalendarSection() {
             <DialogTitle>{editing ? "تعديل حدث" : "إضافة حدث جديد"}</DialogTitle>
             <DialogDescription>أدخل تفاصيل الحدث ثم اضغط حفظ.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-3 max-h-[60vh] overflow-y-auto custom-scroll py-1">
+          <div className="grid gap-2 max-h-[60vh] overflow-y-auto custom-scroll py-1">
             <div className="grid gap-1.5">
               <Label htmlFor="ev-title">العنوان *</Label>
               <Input
@@ -578,7 +578,7 @@ function EventCard({
   onDelete: () => void;
 }) {
   return (
-    <div className={`group rounded-lg border p-3 ${compact ? "" : "bg-card"}`}>
+    <div className={`group rounded-lg border p-2 ${compact ? "" : "bg-card"}`}>
       <div className="flex items-start gap-2">
         <span className={`mt-1 size-2.5 shrink-0 rounded-full ${colorClass(ev.color)}`} />
         <div className="min-w-0 flex-1">

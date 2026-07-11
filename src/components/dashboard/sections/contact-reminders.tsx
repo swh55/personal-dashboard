@@ -238,11 +238,11 @@ export function ContactRemindersSection() {
   ];
 
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div className="flex h-full flex-col gap-2">
       {/* header */}
-      <header className="flex flex-wrap items-center justify-between gap-3">
+      <header className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">تذكيرات التواصل</h2>
+          <h2 className="text-xl font-bold tracking-tight">تذكيرات التواصل</h2>
           <p className="text-sm text-muted-foreground">
             نظّم تواصلك الدوري مع الأشخاص المهمين
           </p>
@@ -265,7 +265,7 @@ export function ContactRemindersSection() {
           const I = s.icon;
           return (
             <Card key={s.label} className="border-border/60">
-              <CardContent className="flex items-center gap-3 p-3">
+              <CardContent className="flex items-center gap-2 p-2">
                 <div className={`flex size-9 items-center justify-center rounded-md shrink-0 ${s.cls}`}>
                   <I className="size-4" />
                 </div>
@@ -327,8 +327,8 @@ export function ContactRemindersSection() {
                   key={r.id}
                   className={`group transition-shadow hover:shadow-md ${!r.active ? "opacity-60" : ""} ${isOverdue && r.active ? "border-rose-500/40 bg-rose-500/5" : ""}`}
                 >
-                  <CardContent className="flex flex-col gap-2 p-3">
-                    <div className="flex items-start gap-3">
+                  <CardContent className="flex flex-col gap-2 p-2">
+                    <div className="flex items-start gap-2">
                       <div className={`flex size-9 items-center justify-center rounded-md shrink-0 ${isOverdue && r.active ? "bg-rose-500/15 text-rose-500" : "bg-emerald-glow/15 text-emerald-glow"}`}>
                         <User className="size-4" />
                       </div>
@@ -420,7 +420,7 @@ export function ContactRemindersSection() {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
-            <Bell className="size-10 text-muted-foreground/40" />
+            <Bell className="size-8 text-muted-foreground/40" />
             <p className="text-sm font-medium">لا تذكيرات {tab === "due" ? "مستحقة" : "محفوظة"}</p>
             <p className="text-xs text-muted-foreground">أضف شخصاً لتذكيرك بالتواصل معه دورياً</p>
             <Button size="sm" variant="outline" className="mt-1" onClick={openAdd}>
@@ -438,7 +438,7 @@ export function ContactRemindersSection() {
             <DialogTitle>{editing ? "تعديل تذكير" : "إضافة تذكير تواصل"}</DialogTitle>
             <DialogDescription>سيتم تذكيرك بالتواصل مع هذا الشخص دورياً.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-3 py-1">
+          <div className="grid gap-2 py-1">
             <div className="grid gap-1.5">
               <Label htmlFor="cr-name">اسم جهة الاتصال *</Label>
               <Input

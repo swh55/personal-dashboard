@@ -232,11 +232,11 @@ export function MeetingsSection() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div className="flex h-full flex-col gap-2">
       {/* header */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">الاجتماعات</h1>
+          <h1 className="text-xl font-bold tracking-tight">الاجتماعات</h1>
           <p className="text-sm text-muted-foreground">{stats.total} اجتماع · {stats.upcoming} قادم</p>
         </div>
         <div className="flex items-center gap-2">
@@ -252,7 +252,7 @@ export function MeetingsSection() {
       </div>
 
       {/* stats */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
         <StatCard icon={CalendarDays} label="الإجمالي" value={stats.total} accent="emerald" />
         <StatCard icon={Clock} label="قادم" value={stats.upcoming} accent="amber" />
         <StatCard icon={CheckCircle2} label="مكتمل" value={stats.completed} accent="emerald" />
@@ -261,7 +261,7 @@ export function MeetingsSection() {
 
       {/* filter */}
       <Card>
-        <CardContent className="flex items-center gap-3 p-3">
+        <CardContent className="flex items-center gap-2 p-2">
           <Filter className="size-4 text-muted-foreground" />
           <Select value={filter} onValueChange={setFilter}>
             <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
@@ -289,11 +289,11 @@ export function MeetingsSection() {
 
       <ScrollArea className="custom-scroll flex-1 -mx-1 px-1">
         {loading ? (
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-44 rounded-xl" />)}
           </div>
         ) : filtered.length > 0 ? (
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3 pb-4">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3 pb-4">
             {filtered.map((m) => {
               const meta = STATUS_META[m.status] || STATUS_META.scheduled;
               const isUpcoming = m.status === "scheduled" && new Date(m.startDate) > new Date();
@@ -303,7 +303,7 @@ export function MeetingsSection() {
                   className="group cursor-pointer transition-shadow hover:shadow-md"
                   onClick={() => openDetail(m)}
                 >
-                  <CardContent className="flex flex-col gap-2 p-4">
+                  <CardContent className="flex flex-col gap-2 p-2">
                     <div className="flex items-start gap-2">
                       <div className="min-w-0 flex-1">
                         <div className="text-sm font-semibold truncate">{m.title}</div>
@@ -316,7 +316,7 @@ export function MeetingsSection() {
                         {meta.label}
                       </Badge>
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
                       <span className="flex items-center gap-1">
                         <CalendarClock className={`size-3 ${isUpcoming ? "text-emerald-glow" : ""}`} />
                         {formatDate(m.startDate, { day: "numeric", month: "short" })} · {formatTime(m.startDate)}
@@ -381,7 +381,7 @@ export function MeetingsSection() {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
-            <CalendarClock className="size-10 text-muted-foreground/40" />
+            <CalendarClock className="size-8 text-muted-foreground/40" />
             <p className="text-sm font-medium">لا اجتماعات</p>
             <p className="text-xs text-muted-foreground">ابدأ بجدولة اجتماع جديد</p>
             <Button size="sm" variant="outline" className="mt-1" onClick={openAdd}>
@@ -406,14 +406,14 @@ export function MeetingsSection() {
                 </DialogTitle>
                 <DialogDescription>{formatDateTime(detail.startDate)}</DialogDescription>
               </DialogHeader>
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2">
                 {detail.agenda ? (
                   <div>
                     <div className="text-xs text-muted-foreground mb-1">جدول الأعمال</div>
-                    <div className="rounded-lg bg-muted/40 p-3 text-sm whitespace-pre-wrap">{detail.agenda}</div>
+                    <div className="rounded-lg bg-muted/40 p-2 text-sm whitespace-pre-wrap">{detail.agenda}</div>
                   </div>
                 ) : null}
-                <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="grid grid-cols-2 gap-2 text-sm">
                   <div>
                     <div className="text-xs text-muted-foreground">الوقت</div>
                     <div>{formatTime(detail.startDate)}{detail.endDate ? ` - ${formatTime(detail.endDate)}` : ""}</div>
@@ -481,7 +481,7 @@ export function MeetingsSection() {
             <DialogTitle>{editing ? "تعديل الاجتماع" : "إضافة اجتماع"}</DialogTitle>
             <DialogDescription>أدخل تفاصيل الاجتماع.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-3 max-h-[60vh] overflow-y-auto custom-scroll py-1">
+          <div className="grid gap-2 max-h-[60vh] overflow-y-auto custom-scroll py-1">
             <div className="grid gap-1.5">
               <Label htmlFor="m-title">العنوان *</Label>
               <Input
@@ -607,7 +607,7 @@ function StatCard({
         : "text-rose-500 bg-rose-500/10";
   return (
     <Card>
-      <CardContent className="flex items-center gap-2.5 p-3">
+      <CardContent className="flex items-center gap-2.5 p-2">
         <div className={`flex size-9 items-center justify-center rounded-md shrink-0 ${accentClass}`}>
           <Icon className="size-4" />
         </div>

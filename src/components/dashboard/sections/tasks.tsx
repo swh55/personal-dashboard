@@ -236,11 +236,11 @@ export function TasksSection() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div className="flex h-full flex-col gap-2">
       {/* header */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">المهام</h1>
+          <h1 className="text-xl font-bold tracking-tight">المهام</h1>
           <p className="text-sm text-muted-foreground">{stats.total} مهمة · {stats.overdue} متأخرة · {stats.high} ذات أولوية عالية</p>
         </div>
         <div className="flex items-center gap-2">
@@ -256,7 +256,7 @@ export function TasksSection() {
       </div>
 
       {/* stats bar */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
         <StatBox label="الإجمالي" value={stats.total} icon={ListTodo} accent="emerald" />
         <StatBox label="مطلوب" value={stats.todo} icon={ListTodo} accent="amber" />
         <StatBox label="قيد التنفيذ" value={stats.doing} icon={Loader2} accent="emerald" />
@@ -267,7 +267,7 @@ export function TasksSection() {
 
       {/* filters */}
       <Card>
-        <CardContent className="flex flex-col gap-3 p-3 md:flex-row md:items-center">
+        <CardContent className="flex flex-col gap-2 p-2 md:flex-row md:items-center">
           <div className="flex items-center gap-2 flex-1">
             <Filter className="size-4 text-muted-foreground" />
             <span className="text-sm text-muted-foreground">تصفية:</span>
@@ -302,7 +302,7 @@ export function TasksSection() {
 
       {/* kanban columns */}
       <ScrollArea className="custom-scroll flex-1 -mx-1 px-1">
-        <div className="grid grid-cols-1 gap-3 pb-4 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-2 pb-4 md:grid-cols-3">
           {columns.map((col) => (
             <Card key={col.value} className="flex flex-col overflow-hidden">
               <CardHeader className="border-b py-3">
@@ -326,7 +326,7 @@ export function TasksSection() {
                     return (
                       <div
                         key={t.id}
-                        className="group rounded-lg border bg-card p-3 cursor-pointer hover:shadow-sm transition-shadow"
+                        className="group rounded-lg border bg-card p-2 cursor-pointer hover:shadow-sm transition-shadow"
                         onClick={() => openEdit(t)}
                       >
                         <div className="flex items-start justify-between gap-2">
@@ -391,7 +391,7 @@ export function TasksSection() {
             <DialogTitle>{editing ? "تعديل مهمة" : "إضافة مهمة جديدة"}</DialogTitle>
             <DialogDescription>أدخل تفاصيل المهمة.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-3 max-h-[60vh] overflow-y-auto custom-scroll py-1">
+          <div className="grid gap-2 max-h-[60vh] overflow-y-auto custom-scroll py-1">
             <div className="grid gap-1.5">
               <Label htmlFor="t-title">العنوان *</Label>
               <Input id="t-title" value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="ماذا تريد أن تنجز؟" />
@@ -484,7 +484,7 @@ function StatBox({
     : "text-rose-500 bg-rose-500/10";
   return (
     <Card>
-      <CardContent className="flex items-center gap-2 p-3">
+      <CardContent className="flex items-center gap-2 p-2">
         <div className={`flex size-8 items-center justify-center rounded-md ${accentClass}`}>
           <Icon className="size-4" />
         </div>

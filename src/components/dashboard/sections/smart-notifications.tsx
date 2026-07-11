@@ -135,10 +135,10 @@ export function SmartNotificationsSection() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-4">
-      <header className="flex flex-wrap items-center justify-between gap-3">
+    <div className="flex h-full flex-col gap-2">
+      <header className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
+          <h2 className="flex items-center gap-2 text-xl font-bold tracking-tight">
             <Bell className="size-6 text-emerald-glow" />
             الإشعارات الذكية
           </h2>
@@ -164,7 +164,7 @@ export function SmartNotificationsSection() {
       </header>
 
       {/* Stats row */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <StatCard label="الإجمالي" value={stats.total} icon={Bell} cls="text-foreground" />
         <StatCard
           label="حرجة"
@@ -222,7 +222,7 @@ export function SmartNotificationsSection() {
           </Alert>
         ) : filtered.length === 0 ? (
           <Card className="border-dashed">
-            <CardContent className="flex flex-col items-center justify-center gap-3 p-10 text-center">
+            <CardContent className="flex flex-col items-center justify-center gap-2 p-10 text-center">
               <div className="flex size-14 items-center justify-center rounded-full bg-emerald-glow/10 text-emerald-glow">
                 <Inbox className="size-7" />
               </div>
@@ -256,10 +256,10 @@ export function SmartNotificationsSection() {
                     " transition-colors hover:border-border"
                   }
                 >
-                  <CardContent className="flex items-start gap-3 p-3">
+                  <CardContent className="flex items-start gap-2 p-2">
                     <div
                       className={
-                        "flex size-10 shrink-0 items-center justify-center rounded-xl " +
+                        "flex size-8 shrink-0 items-center justify-center rounded-xl " +
                         meta.iconCls
                       }
                     >
@@ -311,7 +311,7 @@ function StatCard({
 }) {
   return (
     <Card className="border-border/60">
-      <CardContent className="flex items-center gap-3 p-3">
+      <CardContent className="flex items-center gap-2 p-2">
         <Icon className={"size-5 " + cls} />
         <div>
           <div className={"text-xl font-bold leading-none " + cls}>

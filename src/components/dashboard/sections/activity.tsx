@@ -139,11 +139,11 @@ export function ActivitySection() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div className="flex h-full flex-col gap-2">
       {/* header */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">سجل النشاط</h1>
+          <h1 className="text-xl font-bold tracking-tight">سجل النشاط</h1>
           <p className="text-sm text-muted-foreground">{stats.total} نشاط · آخر 200 سجل</p>
         </div>
         <div className="flex items-center gap-2">
@@ -159,7 +159,7 @@ export function ActivitySection() {
       </div>
 
       {/* stats */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-6">
         <StatCard label="إجمالي" value={stats.total} accent="emerald" />
         {Object.entries(ACTION_META).slice(0, 5).map(([key, m]) => (
           <StatCard
@@ -173,7 +173,7 @@ export function ActivitySection() {
 
       {/* filters */}
       <Card>
-        <CardContent className="flex flex-col gap-2 p-3 md:flex-row md:items-center">
+        <CardContent className="flex flex-col gap-2 p-2 md:flex-row md:items-center">
           <div className="flex items-center gap-2 flex-1">
             <Search className="size-4 text-muted-foreground shrink-0" />
             <Input
@@ -222,7 +222,7 @@ export function ActivitySection() {
               return (
                 <div
                   key={l.id}
-                  className="flex items-center gap-3 rounded-lg border p-2.5 transition-colors hover:bg-muted/40"
+                  className="flex items-center gap-2 rounded-lg border p-2.5 transition-colors hover:bg-muted/40"
                 >
                   <div className={`flex size-8 items-center justify-center rounded-md shrink-0 border ${m.color}`}>
                     <MIcon className="size-4" />
@@ -243,7 +243,7 @@ export function ActivitySection() {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
-            <History className="size-10 text-muted-foreground/40" />
+            <History className="size-8 text-muted-foreground/40" />
             <p className="text-sm font-medium">لا سجلات</p>
             <p className="text-xs text-muted-foreground">
               {search || entityFilter !== "all" ? "لا نتائج مطابقة" : "ستظهر هنا كل الأنشطة في النظام"}
@@ -295,7 +295,7 @@ function StatCard({
   };
   return (
     <Card>
-      <CardContent className="flex items-center gap-2 p-3">
+      <CardContent className="flex items-center gap-2 p-2">
         <div className={`flex size-7 items-center justify-center rounded-md shrink-0 ${accentClass[accent]}`}>
           <span className="text-xs font-bold">{value}</span>
         </div>

@@ -98,11 +98,11 @@ export function FinancesSection() {
   const { data: fin, loading, error, reload } = useApi<FinancesData>("/api/finances");
 
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div className="flex h-full flex-col gap-2">
       {/* header */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">الوضع المالي</h1>
+          <h1 className="text-xl font-bold tracking-tight">الوضع المالي</h1>
           <p className="text-sm text-muted-foreground">نظرة شاملة على الأصول والحسابات والديون</p>
         </div>
         <Button variant="outline" size="sm" onClick={() => reload()}>
@@ -124,28 +124,28 @@ export function FinancesSection() {
 
       <ScrollArea className="custom-scroll flex-1 -mx-1 px-1">
         {loading || !fin ? (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
             <Skeleton className="h-32 w-full rounded-2xl" />
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
               {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
             </div>
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
               {Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-64 rounded-xl" />)}
             </div>
           </div>
         ) : (
-          <div className="flex flex-col gap-4 pb-4">
+          <div className="flex flex-col gap-2 pb-4">
             {/* net worth hero */}
             <Card className="overflow-hidden border-emerald-glow/30">
-              <div className="bg-gradient-to-l from-emerald-glow/15 to-amber-glow/10 p-5">
-                <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="bg-gradient-to-l from-emerald-glow/15 to-amber-glow/10 p-3">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
                   <div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Scale className="size-4" />
                       صافي الثروة
                     </div>
                     <div
-                      className={`text-3xl font-bold mt-1 ${
+                      className={`text-xl font-bold mt-1 ${
                         fin.netWorth >= 0 ? "text-emerald-glow" : "text-rose-500"
                       }`}
                     >
@@ -163,7 +163,7 @@ export function FinancesSection() {
             </Card>
 
             {/* 4 stat cards */}
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
               <StatCard
                 icon={Coins}
                 label="إجمالي الأصول"
@@ -192,9 +192,9 @@ export function FinancesSection() {
 
             {/* monthly spend */}
             <Card>
-              <CardContent className="flex items-center justify-between gap-3 p-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex size-10 items-center justify-center rounded-md bg-amber-glow/10 text-amber-glow">
+              <CardContent className="flex items-center justify-between gap-2 p-2">
+                <div className="flex items-center gap-2">
+                  <div className="flex size-8 items-center justify-center rounded-md bg-amber-glow/10 text-amber-glow">
                     <TrendingDown className="size-5" />
                   </div>
                   <div>
@@ -207,7 +207,7 @@ export function FinancesSection() {
             </Card>
 
             {/* assets + accounts grid */}
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
               {/* assets */}
               <Card className="flex flex-col">
                 <CardHeader className="pb-2">
@@ -301,9 +301,9 @@ export function FinancesSection() {
               </CardHeader>
               <CardContent>
                 {fin.debts.length > 0 ? (
-                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                     {/* owed to me */}
-                    <div className="rounded-lg border border-emerald-glow/20 bg-emerald-glow/5 p-3">
+                    <div className="rounded-lg border border-emerald-glow/20 bg-emerald-glow/5 p-2">
                       <div className="flex items-center gap-2 text-xs font-semibold text-emerald-glow mb-2">
                         <TrendingUp className="size-4" />
                         ديون لي ({fin.debts.filter((d) => d.type === "owed").length})
@@ -321,7 +321,7 @@ export function FinancesSection() {
                       </div>
                     </div>
                     {/* owe */}
-                    <div className="rounded-lg border border-rose-500/20 bg-rose-500/5 p-3">
+                    <div className="rounded-lg border border-rose-500/20 bg-rose-500/5 p-2">
                       <div className="flex items-center gap-2 text-xs font-semibold text-rose-500 mb-2">
                         <TrendingDown className="size-4" />
                         ديون عليّ ({fin.debts.filter((d) => d.type === "owe").length})
@@ -370,7 +370,7 @@ function StatCard({
         : "text-rose-500 bg-rose-500/10";
   return (
     <Card>
-      <CardContent className="flex items-center gap-2.5 p-3">
+      <CardContent className="flex items-center gap-2.5 p-2">
         <div className={`flex size-9 items-center justify-center rounded-md shrink-0 ${accentClass}`}>
           <Icon className="size-4" />
         </div>

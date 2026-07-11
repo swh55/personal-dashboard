@@ -301,11 +301,11 @@ export function HealthSection() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div className="flex h-full flex-col gap-2">
       {/* header */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">الصحة</h1>
+          <h1 className="text-xl font-bold tracking-tight">الصحة</h1>
           <p className="text-sm text-muted-foreground">الأدوية، النوم، والمتابعة الصحية</p>
         </div>
         <div className="flex items-center gap-2">
@@ -325,7 +325,7 @@ export function HealthSection() {
       </div>
 
       {/* stats */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
         <StatCard icon={Pill} label="أدوية نشطة" value={`${stats.medicationsActive}`} sub={`${medications.length} إجمالي`} accent="emerald" />
         <StatCard icon={Moon} label="متوسط النوم" value={`${stats.avgSleepHours} س`} sub={minutesToHours(stats.avgSleepMinutes)} accent="amber" />
         <StatCard icon={Star} label="متوسط الجودة" value={`${stats.avgQuality} / 4`} sub={`${stats.sleepLogsCount} سجل`} accent="emerald" />
@@ -342,7 +342,7 @@ export function HealthSection() {
         </Alert>
       ) : null}
 
-      <div className="grid flex-1 min-h-0 gap-4 lg:grid-cols-[1fr_1fr]">
+      <div className="grid flex-1 min-h-0 gap-2 lg:grid-cols-[1fr_1fr]">
         {/* medications */}
         <Card className="flex flex-col min-h-0">
           <CardHeader className="pb-2">
@@ -362,7 +362,7 @@ export function HealthSection() {
                   {medications.map((m) => (
                     <div
                       key={m.id}
-                      className={`group rounded-xl border p-3 transition-shadow hover:shadow-md ${m.active ? "border-emerald-glow/30 bg-emerald-glow/5" : "border-border opacity-70"}`}
+                      className={`group rounded-xl border p-2 transition-shadow hover:shadow-md ${m.active ? "border-emerald-glow/30 bg-emerald-glow/5" : "border-border opacity-70"}`}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2 min-w-0">
@@ -431,7 +431,7 @@ export function HealthSection() {
               جديد
             </Button>
           </CardHeader>
-          <CardContent className="flex-1 min-h-0 flex flex-col gap-3">
+          <CardContent className="flex-1 min-h-0 flex flex-col gap-2">
             {/* chart */}
             <div className="h-32 shrink-0">
               {loading ? (
@@ -537,7 +537,7 @@ export function HealthSection() {
             <DialogTitle>{editingMed ? "تعديل دواء" : "إضافة دواء"}</DialogTitle>
             <DialogDescription>أدخل تفاصيل الدواء والمتابعة.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-3 max-h-[60vh] overflow-y-auto custom-scroll py-1">
+          <div className="grid gap-2 max-h-[60vh] overflow-y-auto custom-scroll py-1">
             <div className="grid gap-1.5">
               <Label htmlFor="m-name">اسم الدواء *</Label>
               <Input id="m-name" value={medForm.name} onChange={(e) => setMedForm((f) => ({ ...f, name: e.target.value }))} placeholder="مثال: باراسيتامول" />
@@ -588,7 +588,7 @@ export function HealthSection() {
             <DialogTitle>إضافة سجل نوم</DialogTitle>
             <DialogDescription>سجّل ساعات نومك وجودتها.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-3 py-1">
+          <div className="grid gap-2 py-1">
             <div className="grid gap-1.5">
               <Label htmlFor="s-date">التاريخ</Label>
               <Input id="s-date" type="date" value={sleepForm.date} onChange={(e) => setSleepForm((f) => ({ ...f, date: e.target.value }))} />
@@ -687,7 +687,7 @@ function StatCard({
   const accentClass = accent === "emerald" ? "text-emerald-glow bg-emerald-glow/10" : "text-amber-glow bg-amber-glow/10";
   return (
     <Card>
-      <CardContent className="flex items-center gap-3 p-3">
+      <CardContent className="flex items-center gap-2 p-2">
         <div className={`flex size-9 items-center justify-center rounded-md shrink-0 ${accentClass}`}>
           <Icon className="size-4" />
         </div>
@@ -714,7 +714,7 @@ function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
-      <Icon className="size-10 text-muted-foreground/40" />
+      <Icon className="size-8 text-muted-foreground/40" />
       <p className="text-sm font-medium">{title}</p>
       <p className="text-xs text-muted-foreground">{desc}</p>
       {action}

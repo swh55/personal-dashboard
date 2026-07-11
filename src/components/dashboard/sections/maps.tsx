@@ -187,11 +187,11 @@ export function MapsSection() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div className="flex h-full flex-col gap-2">
       {/* Header */}
-      <header className="flex flex-wrap items-center justify-between gap-3">
+      <header className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">الأماكن المحفوظة</h2>
+          <h2 className="text-xl font-bold tracking-tight">الأماكن المحفوظة</h2>
           <p className="text-sm text-muted-foreground">
             خريطة المواقع الهامة حولك
           </p>
@@ -209,7 +209,7 @@ export function MapsSection() {
       </header>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         <StatCard
           label="إجمالي الأماكن"
           value={locations.length}
@@ -233,7 +233,7 @@ export function MapsSection() {
 
       {/* Body */}
       {loading ? (
-        <div className="grid flex-1 gap-4 lg:grid-cols-[1fr_320px]">
+        <div className="grid flex-1 gap-2 lg:grid-cols-[1fr_320px]">
           <Skeleton className="h-[420px] w-full rounded-xl" />
           <div className="grid gap-2">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -253,11 +253,11 @@ export function MapsSection() {
           </AlertDescription>
         </Alert>
       ) : (
-        <div className="grid flex-1 gap-4 lg:grid-cols-[1fr_340px] min-h-0">
+        <div className="grid flex-1 gap-2 lg:grid-cols-[1fr_340px] min-h-0">
           {/* Map */}
           <Card className="overflow-hidden border-border/60 min-h-[300px]">
             <CardContent className="p-0 h-full">
-              <div className="flex items-center justify-between gap-2 border-b border-border/60 bg-muted/30 px-4 py-2">
+              <div className="flex items-center justify-between gap-2 border-b border-border/60 bg-muted/30 px-2 py-1">
                 <div className="flex items-center gap-2 text-sm">
                   <MapIcon className="size-4 text-emerald-glow" />
                   <span className="font-medium">
@@ -293,12 +293,12 @@ export function MapsSection() {
           {/* Locations list */}
           <Card className="flex flex-col border-border/60 min-h-0">
             <CardContent className="p-0 flex-1 min-h-0 flex flex-col">
-              <div className="border-b border-border/60 px-4 py-2.5">
+              <div className="border-b border-border/60 px-2 py-1.5">
                 <h3 className="text-sm font-semibold">قائمة الأماكن</h3>
               </div>
               {locations.length === 0 ? (
-                <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
-                  <div className="flex size-12 items-center justify-center rounded-full bg-emerald-glow/10 text-emerald-glow">
+                <div className="flex flex-1 flex-col items-center justify-center gap-2 p-3 text-center">
+                  <div className="flex size-9 items-center justify-center rounded-full bg-emerald-glow/10 text-emerald-glow">
                     <Inbox className="size-6" />
                   </div>
                   <div>
@@ -323,7 +323,7 @@ export function MapsSection() {
                           key={loc.id}
                           onClick={() => setSelected(loc)}
                           className={
-                            "group flex items-start gap-3 rounded-lg border p-3 text-right transition-colors " +
+                            "group flex items-start gap-2 rounded-lg border p-2 text-right transition-colors " +
                             (isSelected
                               ? "border-emerald-glow/60 bg-emerald-glow/10"
                               : "border-transparent hover:bg-muted/40")
@@ -403,7 +403,7 @@ export function MapsSection() {
               احفظ موقعاً هاماً لعرضه على الخريطة
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-2">
+          <div className="grid gap-2 py-2">
             <div className="grid gap-2">
               <Label htmlFor="name">الاسم *</Label>
               <Input
@@ -426,7 +426,7 @@ export function MapsSection() {
                 placeholder="الحي، الشارع..."
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2">
               <div className="grid gap-2">
                 <Label htmlFor="lat">خط العرض (lat)</Label>
                 <Input
@@ -559,12 +559,12 @@ function StatCard({
 }) {
   return (
     <Card className="border-border/60">
-      <CardContent className="flex items-center gap-3 p-4">
-        <div className={`flex size-10 items-center justify-center rounded-lg ${cls}`}>
+      <CardContent className="flex items-center gap-2 p-2">
+        <div className={`flex size-8 items-center justify-center rounded-lg ${cls}`}>
           {icon}
         </div>
         <div>
-          <div className={"font-bold leading-none " + (text ? "text-base" : "text-2xl")}>
+          <div className={"font-bold leading-none " + (text ? "text-base" : "text-xl")}>
             {value}
           </div>
           <div className="mt-1 text-xs text-muted-foreground">{label}</div>

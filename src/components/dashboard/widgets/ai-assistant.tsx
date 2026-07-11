@@ -133,10 +133,10 @@ export function AIAssistantWidget() {
     messages.length > 0 && messages[messages.length - 1].error === true;
 
   return (
-    <div className="flex h-full flex-col gap-3">
-      <header className="flex flex-wrap items-center justify-between gap-3">
+    <div className="flex h-full flex-col gap-2">
+      <header className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
+          <h2 className="flex items-center gap-2 text-xl font-bold tracking-tight">
             <Sparkles className="size-6 text-emerald-glow" />
             المساعد الذكي
           </h2>
@@ -144,7 +144,7 @@ export function AIAssistantWidget() {
             اسأل عن جدولك ومهامك ومصروفاتك
           </p>
         </div>
-        <div className="flex items-center gap-3 rounded-lg border border-border/60 bg-muted/20 px-3 py-1.5">
+        <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/20 px-3 py-1.5">
           <div className="flex items-center gap-2">
             <Database className="size-4 text-emerald-glow" />
             <Label htmlFor="include-data" className="cursor-pointer text-xs">
@@ -161,9 +161,9 @@ export function AIAssistantWidget() {
 
       {/* Chat window */}
       <Card className="flex min-h-0 flex-1 flex-col border-border/60">
-        <CardContent className="flex min-h-0 flex-1 flex-col gap-2 p-3">
+        <CardContent className="flex min-h-0 flex-1 flex-col gap-2 p-2">
           <ScrollArea className="custom-scroll min-h-0 flex-1">
-            <div ref={scrollRef} className="flex flex-col gap-3 p-1">
+            <div ref={scrollRef} className="flex flex-col gap-2 p-1">
               {messages.map((m) => (
                 <MessageBubble key={m.id} msg={m} />
               ))}
@@ -248,7 +248,7 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
       </Avatar>
       <div
         className={
-          "max-w-[80%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed " +
+          "max-w-[80%] rounded-2xl px-3.5 py-1.5 text-sm leading-relaxed " +
           (isUser
             ? "rounded-tr-sm bg-emerald-glow/15 text-foreground"
             : msg.error
@@ -270,7 +270,7 @@ function TypingIndicator() {
           <Sparkles className="size-4" />
         </AvatarFallback>
       </Avatar>
-      <div className="flex items-center gap-1 rounded-2xl rounded-tl-sm bg-muted px-4 py-3">
+      <div className="flex items-center gap-1 rounded-2xl rounded-tl-sm bg-muted px-2 py-3">
         <span className="size-2 animate-bounce rounded-full bg-muted-foreground/60 [animation-delay:-0.3s]" />
         <span className="size-2 animate-bounce rounded-full bg-muted-foreground/60 [animation-delay:-0.15s]" />
         <span className="size-2 animate-bounce rounded-full bg-muted-foreground/60" />

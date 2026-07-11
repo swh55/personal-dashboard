@@ -132,11 +132,11 @@ export function AiInsightsSection() {
   const meta = raw?.meta;
 
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div className="flex h-full flex-col gap-2">
       {/* Header */}
-      <header className="flex flex-wrap items-center justify-between gap-3">
+      <header className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
+          <h2 className="flex items-center gap-2 text-xl font-bold tracking-tight">
             <Brain className="size-6 text-emerald-glow" />
             التحليلات الذكية
           </h2>
@@ -153,7 +153,7 @@ export function AiInsightsSection() {
       {/* Meta info */}
       {meta && !loading && !error && (
         <Card className="border-emerald-glow/30 bg-emerald-glow/5">
-          <CardContent className="flex flex-wrap items-center gap-x-6 gap-y-2 p-3 text-xs">
+          <CardContent className="flex flex-wrap items-center gap-x-6 gap-y-2 p-2 text-xs">
             <span className="flex items-center gap-1.5">
               <Sparkles className="size-3.5 text-emerald-glow" />
               <span className="text-muted-foreground">توليد:</span>
@@ -188,7 +188,7 @@ export function AiInsightsSection() {
       {/* Body */}
       <ScrollArea className="flex-1 custom-scroll -mx-1 px-1">
         {loading ? (
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid gap-2 lg:grid-cols-2">
             {Array.from({ length: 4 }).map((_, i) => (
               <Skeleton key={i} className="h-64 w-full rounded-xl" />
             ))}
@@ -207,7 +207,7 @@ export function AiInsightsSection() {
         ) : !insights ? (
           <EmptyState />
         ) : (
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid gap-2 lg:grid-cols-2">
             {/* Spending Patterns */}
             <Card className="border-border/60">
               <CardHeader className="pb-3">
@@ -227,11 +227,11 @@ export function AiInsightsSection() {
                     لا توجد بيانات إنفاق في آخر 30 يوماً
                   </p>
                 ) : (
-                  <div className="flex flex-col gap-3 max-h-80 overflow-y-auto custom-scroll pr-1">
+                  <div className="flex flex-col gap-2 max-h-80 overflow-y-auto custom-scroll pr-1">
                     {insights.spendingPatterns.map((p) => (
                       <div
                         key={p.category}
-                        className="rounded-lg border border-border/60 p-3"
+                        className="rounded-lg border border-border/60 p-2"
                       >
                         <div className="flex items-center justify-between gap-2">
                           <span className="font-medium">
@@ -324,7 +324,7 @@ export function AiInsightsSection() {
                       return (
                         <div
                           key={i}
-                          className="rounded-lg border border-border/60 p-3"
+                          className="rounded-lg border border-border/60 p-2"
                         >
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1 min-w-0">
@@ -378,7 +378,7 @@ export function AiInsightsSection() {
                       return (
                         <div
                           key={i}
-                          className="flex items-center gap-3 rounded-lg border border-border/60 p-3"
+                          className="flex items-center gap-2 rounded-lg border border-border/60 p-2"
                         >
                           <div className="flex size-9 items-center justify-center rounded-lg bg-blue-500/15 text-blue-500">
                             <Icon className="size-4" />
@@ -420,7 +420,7 @@ export function AiInsightsSection() {
               <CardContent>
                 {insights.predictiveAlerts.length === 0 ? (
                   <div className="flex flex-col items-center gap-2 py-6 text-center">
-                    <div className="flex size-10 items-center justify-center rounded-full bg-emerald-glow/10 text-emerald-glow">
+                    <div className="flex size-8 items-center justify-center rounded-full bg-emerald-glow/10 text-emerald-glow">
                       <Info className="size-5" />
                     </div>
                     <p className="text-sm text-muted-foreground">
@@ -436,7 +436,7 @@ export function AiInsightsSection() {
                         <div
                           key={i}
                           className={
-                            "rounded-lg border p-3 " + am.cls
+                            "rounded-lg border p-2 " + am.cls
                           }
                         >
                           <div className="flex items-start gap-2">
@@ -475,7 +475,7 @@ function TrendIcon({ trend }: { trend: "up" | "down" | "stable" }) {
 function EmptyState() {
   return (
     <Card className="border-dashed">
-      <CardContent className="flex flex-col items-center justify-center gap-3 p-10 text-center">
+      <CardContent className="flex flex-col items-center justify-center gap-2 p-10 text-center">
         <div className="flex size-14 items-center justify-center rounded-full bg-emerald-glow/10 text-emerald-glow">
           <Brain className="size-7" />
         </div>

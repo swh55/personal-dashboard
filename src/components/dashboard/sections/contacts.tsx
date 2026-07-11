@@ -251,11 +251,11 @@ export function ContactsSection() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div className="flex h-full flex-col gap-2">
       {/* header */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">جهات الاتصال</h1>
+          <h1 className="text-xl font-bold tracking-tight">جهات الاتصال</h1>
           <p className="text-sm text-muted-foreground">{stats.total} جهة · {stats.favorites} مفضلة</p>
         </div>
         <div className="flex items-center gap-2">
@@ -314,7 +314,7 @@ export function ContactsSection() {
       </div>
 
       {/* stats */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5">
         <StatPill icon={Users} label="الإجمالي" value={stats.total} accent="emerald" />
         <StatPill icon={Heart} label="المفضلة" value={stats.favorites} accent="amber" />
         {RELATION_TYPES.map((r) => (
@@ -324,7 +324,7 @@ export function ContactsSection() {
 
       {/* filters */}
       <Card>
-        <CardContent className="flex flex-col gap-3 p-3 md:flex-row md:items-center">
+        <CardContent className="flex flex-col gap-2 p-2 md:flex-row md:items-center">
           <div className="relative flex-1">
             <Search className="absolute right-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="بحث بالاسم أو الهاتف أو البريد" className="pr-8" />
@@ -360,15 +360,15 @@ export function ContactsSection() {
 
       <ScrollArea className="custom-scroll flex-1 -mx-1 px-1">
         {loading ? (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-32 w-full rounded-xl" />)}
           </div>
         ) : filtered.length > 0 ? (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 pb-4">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 pb-4">
             {filtered.map((c) => (
               <Card key={c.id} className="group cursor-pointer transition-shadow hover:shadow-md" onClick={() => setDetail(c)}>
-                <CardContent className="flex items-start gap-3 p-4">
-                  <Avatar className="size-12">
+                <CardContent className="flex items-start gap-2 p-2">
+                  <Avatar className="size-9">
                     {c.avatar ? <AvatarImage src={c.avatar} alt={c.name} /> : null}
                     <AvatarFallback className={`text-sm font-bold ${colorForName(c.name)}`}>
                       {c.name.charAt(0)}
@@ -402,7 +402,7 @@ export function ContactsSection() {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
-            <Users className="size-10 text-muted-foreground/40" />
+            <Users className="size-8 text-muted-foreground/40" />
             <p className="text-sm font-medium">لا جهات اتصال</p>
             <p className="text-xs text-muted-foreground">ابدأ بإضافة جهة جديدة</p>
             <Button size="sm" variant="outline" className="mt-1" onClick={openAdd}>
@@ -422,7 +422,7 @@ export function ContactsSection() {
                 <DialogTitle>تفاصيل جهة الاتصال</DialogTitle>
                 <DialogDescription>{relationLabel(detail.relation)} {detail.category ? `· ${detail.category}` : ""}</DialogDescription>
               </DialogHeader>
-              <div className="flex items-center gap-3 py-2">
+              <div className="flex items-center gap-2 py-2">
                 <Avatar className="size-16">
                   {detail.avatar ? <AvatarImage src={detail.avatar} alt={detail.name} /> : null}
                   <AvatarFallback className={`text-xl font-bold ${colorForName(detail.name)}`}>
@@ -459,7 +459,7 @@ export function ContactsSection() {
                 <div className="text-sm"><span className="text-muted-foreground">واتساب: </span><span dir="ltr">{detail.whatsapp}</span></div>
               ) : null}
               {detail.note ? (
-                <div className="rounded-lg bg-muted/40 p-3 text-sm">{detail.note}</div>
+                <div className="rounded-lg bg-muted/40 p-2 text-sm">{detail.note}</div>
               ) : null}
               <DialogFooter>
                 <Button variant="outline" onClick={() => toggleFavorite(detail)}>
@@ -487,7 +487,7 @@ export function ContactsSection() {
             <DialogTitle>{editing ? "تعديل جهة اتصال" : "إضافة جهة اتصال"}</DialogTitle>
             <DialogDescription>أدخل البيانات المطلوبة.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-3 max-h-[60vh] overflow-y-auto custom-scroll py-1">
+          <div className="grid gap-2 max-h-[60vh] overflow-y-auto custom-scroll py-1">
             <div className="grid gap-1.5">
               <Label htmlFor="n-name">الاسم *</Label>
               <Input id="n-name" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
@@ -574,7 +574,7 @@ function StatPill({
   const accentClass = accent === "emerald" ? "text-emerald-glow bg-emerald-glow/10" : "text-amber-glow bg-amber-glow/10";
   return (
     <Card>
-      <CardContent className="flex items-center gap-2 p-3">
+      <CardContent className="flex items-center gap-2 p-2">
         {Icon ? <div className={`flex size-8 items-center justify-center rounded-md ${accentClass}`}><Icon className="size-4" /></div> : null}
         <div className="min-w-0">
           <div className="text-xs text-muted-foreground truncate">{label}</div>

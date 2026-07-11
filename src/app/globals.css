@@ -196,4 +196,13 @@
     background-color: var(--muted-foreground);
     border-radius: 3px;
   }
+
+  /* Hide scrollbar entirely (for horizontal dock) */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }

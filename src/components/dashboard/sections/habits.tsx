@@ -250,11 +250,11 @@ export function HabitsSection() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div className="flex h-full flex-col gap-2">
       {/* header */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">متعقب العادات</h1>
+          <h1 className="text-xl font-bold tracking-tight">متعقب العادات</h1>
           <p className="text-sm text-muted-foreground">تابع تقدمك اليومي</p>
         </div>
         <div className="flex items-center gap-2">
@@ -270,7 +270,7 @@ export function HabitsSection() {
       </div>
 
       {/* stats */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-1.5">
         <StatBox icon={Activity} label="إجمالي العادات" value={stats.total} accent="emerald" />
         <StatBox icon={CheckCircle2} label="منجزة اليوم" value={stats.doneToday} accent="amber" />
         <StatBox icon={Flame} label="أطول سلسلة" value={stats.bestStreak} accent="emerald" />
@@ -289,19 +289,19 @@ export function HabitsSection() {
 
       <ScrollArea className="custom-scroll flex-1 -mx-1 px-1">
         {loading ? (
-          <div className="grid grid-cols-1 gap-3 pb-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-2 pb-4 md:grid-cols-2">
             {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-40 w-full rounded-xl" />)}
           </div>
         ) : (data || []).length > 0 ? (
-          <div className="grid grid-cols-1 gap-3 pb-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-2 pb-4 md:grid-cols-2">
             {data!.map((h) => {
               const Icon = ICON_MAP[h.icon] || CheckCircle2;
               const cells = last7DaysCells(h);
               return (
                 <Card key={h.id} className="group overflow-hidden">
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <div className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${softClass(h.color)}`}>
+                  <CardContent className="p-2">
+                    <div className="flex items-start gap-2">
+                      <div className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${softClass(h.color)}`}>
                         <Icon className="size-5" />
                       </div>
                       <div className="min-w-0 flex-1">
@@ -373,7 +373,7 @@ export function HabitsSection() {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
-            <Activity className="size-10 text-muted-foreground/40" />
+            <Activity className="size-8 text-muted-foreground/40" />
             <p className="text-sm font-medium">لا عادات بعد</p>
             <p className="text-xs text-muted-foreground">ابدأ ببناء عادة جديدة اليوم</p>
             <Button size="sm" variant="outline" className="mt-1" onClick={openAdd}>
@@ -391,7 +391,7 @@ export function HabitsSection() {
             <DialogTitle>{editing ? "تعديل عادة" : "إضافة عادة جديدة"}</DialogTitle>
             <DialogDescription>حدد اسم العادة وتكرارها.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-3 py-1">
+          <div className="grid gap-2 py-1">
             <div className="grid gap-1.5">
               <Label htmlFor="h-name">اسم العادة *</Label>
               <Input id="h-name" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="مثال: شرب 8 أكواب ماء" />
@@ -487,13 +487,13 @@ function StatBox({
   const accentClass = accent === "emerald" ? "text-emerald-glow bg-emerald-glow/10" : "text-amber-glow bg-amber-glow/10";
   return (
     <Card>
-      <CardContent className="flex items-center gap-3 p-4">
-        <div className={`flex size-10 items-center justify-center rounded-lg ${accentClass}`}>
+      <CardContent className="flex items-center gap-2 p-2">
+        <div className={`flex size-8 items-center justify-center rounded-lg ${accentClass}`}>
           <Icon className="size-5" />
         </div>
         <div className="min-w-0">
           <div className="text-xs text-muted-foreground truncate">{label}</div>
-          <div className="text-2xl font-bold">{value}</div>
+          <div className="text-xl font-bold">{value}</div>
         </div>
       </CardContent>
     </Card>

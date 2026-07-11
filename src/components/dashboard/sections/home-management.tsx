@@ -267,11 +267,11 @@ export function HomeManagementSection() {
   const topWaiting = React.useMemo(() => waitingList.slice(0, 3), [waitingList]);
 
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div className="flex h-full flex-col gap-2">
       {/* header */}
-      <header className="flex flex-wrap items-center justify-between gap-3">
+      <header className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">إدارة المنزل</h2>
+          <h2 className="text-xl font-bold tracking-tight">إدارة المنزل</h2>
           <p className="text-sm text-muted-foreground">
             مخزون المطبخ وقائمة الانتظار — كل ما يخص البيت في مكان واحد
           </p>
@@ -294,7 +294,7 @@ export function HomeManagementSection() {
           const I = s.icon;
           return (
             <Card key={s.label} className="border-border/60">
-              <CardContent className="flex items-center gap-3 p-3">
+              <CardContent className="flex items-center gap-2 p-2">
                 <div className={`flex size-9 items-center justify-center rounded-md shrink-0 ${s.cls}`}>
                   <I className="size-4" />
                 </div>
@@ -321,7 +321,7 @@ export function HomeManagementSection() {
 
       <ScrollArea className="custom-scroll flex-1 min-h-0 -mx-1 px-1">
         {loading ? (
-          <div className="flex flex-col gap-4 pb-4">
+          <div className="flex flex-col gap-2 pb-4">
             <Skeleton className="h-12 w-full rounded-xl" />
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
               {Array.from({ length: 6 }).map((_, i) => (
@@ -331,7 +331,7 @@ export function HomeManagementSection() {
             <Skeleton className="h-32 w-full rounded-xl" />
           </div>
         ) : (
-          <div className="flex flex-col gap-4 pb-4">
+          <div className="flex flex-col gap-2 pb-4">
 
             {/* Pantry section */}
             <div>
@@ -345,7 +345,7 @@ export function HomeManagementSection() {
 
               {/* filter card */}
               <Card className="border-border/60 mb-2">
-                <CardContent className="flex flex-wrap items-center gap-3 p-3">
+                <CardContent className="flex flex-wrap items-center gap-2 p-2">
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <Package className="size-3.5" />
                     تصفية:
@@ -379,7 +379,7 @@ export function HomeManagementSection() {
                         key={it.id}
                         className={`group transition-shadow hover:shadow-md ${isLow ? "border-rose-500/40 bg-rose-500/5" : ""}`}
                       >
-                        <CardContent className="flex flex-col gap-2 p-3">
+                        <CardContent className="flex flex-col gap-2 p-2">
                           <div className="flex items-start gap-2">
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-1.5 flex-wrap">
@@ -477,7 +477,7 @@ export function HomeManagementSection() {
                         <button
                           key={w.id}
                           onClick={() => setPanel("waitinglist")}
-                          className="flex items-center gap-3 p-3 text-right hover:bg-muted/50 transition"
+                          className="flex items-center gap-2 p-2 text-right hover:bg-muted/50 transition"
                         >
                           <div className="flex items-center gap-0.5 shrink-0">
                             {priorityStars(w.priority, w.priority >= 4 ? "text-rose-500" : "text-amber-500")}
@@ -529,7 +529,7 @@ export function HomeManagementSection() {
             <DialogTitle>{editing ? "تعديل عنصر المخزون" : "إضافة عنصر للمخزون"}</DialogTitle>
             <DialogDescription>سجّل اسم العنصر والكمية والفئة وحدّ المخزون المنخفض.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-3 py-1">
+          <div className="grid gap-2 py-1">
             <div className="grid gap-1.5">
               <Label htmlFor="hm-name">الاسم *</Label>
               <Input

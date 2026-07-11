@@ -185,11 +185,11 @@ export function CallPadSection() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div className="flex h-full flex-col gap-2">
       {/* header */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">لوحة الاتصال</h1>
+          <h1 className="text-xl font-bold tracking-tight">لوحة الاتصال</h1>
           <p className="text-sm text-muted-foreground">اتصال سريع وإدارة المكالمات</p>
         </div>
         <div className="flex items-center gap-2">
@@ -247,7 +247,7 @@ export function CallPadSection() {
         </div>
       </div>
 
-      <div className="grid flex-1 grid-cols-1 gap-4 overflow-hidden lg:grid-cols-3">
+      <div className="grid flex-1 grid-cols-1 gap-2 overflow-hidden lg:grid-cols-3">
         {/* dialpad */}
         <Card className="flex flex-col overflow-hidden">
           <CardHeader className="border-b">
@@ -256,10 +256,10 @@ export function CallPadSection() {
               لوحة الأرقام
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-1 flex-col gap-3 p-4">
+          <CardContent className="flex flex-1 flex-col gap-2 p-2">
             {/* display */}
             <div className="min-h-[3.5rem] rounded-lg border bg-muted/30 px-3 py-2 text-center">
-              <div dir="ltr" className="text-2xl font-mono font-semibold tracking-wider break-all min-h-[2rem]">
+              <div dir="ltr" className="text-xl font-mono font-semibold tracking-wider break-all min-h-[2rem]">
                 {dialed || <span className="text-muted-foreground/50 text-base">اكتب رقماً...</span>}
               </div>
               {dialed ? (
@@ -354,7 +354,7 @@ export function CallPadSection() {
                   <AlertDescription>{contactsError}</AlertDescription>
                 </Alert>
               ) : contactsLoading ? (
-                <div className="space-y-2 p-3">
+                <div className="space-y-2 p-2">
                   {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-14 w-full" />)}
                 </div>
               ) : filteredContacts.length > 0 ? (
@@ -415,7 +415,7 @@ export function CallPadSection() {
                   <AlertDescription>{logsError}</AlertDescription>
                 </Alert>
               ) : logsLoading ? (
-                <div className="space-y-2 p-3">
+                <div className="space-y-2 p-2">
                   {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
                 </div>
               ) : (logs || []).length > 0 ? (
@@ -460,7 +460,7 @@ export function CallPadSection() {
             <DialogTitle>إضافة جهة اتصال سريعة</DialogTitle>
             <DialogDescription>أدخل الاسم ورقم الهاتف. يمكنك تعديل التفاصيل لاحقاً.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-3 py-1">
+          <div className="grid gap-2 py-1">
             <div className="grid gap-1.5">
               <Label htmlFor="c-name">الاسم *</Label>
               <Input id="c-name" value={newContact.name} onChange={(e) => setNewContact((c) => ({ ...c, name: e.target.value }))} placeholder="الاسم الكامل" />

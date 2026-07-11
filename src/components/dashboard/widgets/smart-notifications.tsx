@@ -105,9 +105,9 @@ export function SmartNotificationsWidget() {
   const unreadCount = stats.total;
 
   return (
-    <div className="flex h-full flex-col gap-3">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
+    <div className="flex h-full flex-col gap-2">
+      <header className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
           <div className="relative">
             <div className="flex size-11 items-center justify-center rounded-xl bg-emerald-glow/15 text-emerald-glow">
               <Bell className="size-5" />
@@ -163,7 +163,7 @@ export function SmartNotificationsWidget() {
               </Alert>
             ) : notifications.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-2 p-8 text-center">
-                <div className="flex size-12 items-center justify-center rounded-full bg-emerald-glow/10 text-emerald-glow">
+                <div className="flex size-9 items-center justify-center rounded-full bg-emerald-glow/10 text-emerald-glow">
                   <Inbox className="size-6" />
                 </div>
                 <p className="text-sm font-medium">لا إشعارات</p>
