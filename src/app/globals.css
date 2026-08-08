@@ -125,7 +125,7 @@
 :root {
   --emerald-glow: oklch(0.78 0.18 152);
   --amber-glow: oklch(0.82 0.16 75);
-  --font-arabic: var(--font-cairo), system-ui, sans-serif;
+  --font-arabic: "Cairo", "Segoe UI", "Tahoma", "Arial", system-ui, sans-serif;
 }
 
 .dark {
