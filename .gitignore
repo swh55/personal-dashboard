@@ -61,9 +61,6 @@ server.log
 *.apk
 *.exe
 
-# lock files
-bun.lock
-
 # database
 *.db
 *.db-journal

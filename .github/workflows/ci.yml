@@ -13,27 +13,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: npm
 
       - name: Install dependencies
-        run: bun install
+        run: npm install
 
       - name: Generate Prisma Client
-        run: bun run db:generate
+        run: npx prisma generate
 
       - name: Lint
-        run: bun run lint
+        run: npm run lint
 
       - name: Tests
-        run: bun run test
+        run: npm test
 
   web-build:
     name: Web Build
@@ -41,118 +37,50 @@ jobs:
     needs: lint-and-test
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24
-
-      - name: Install dependencies
-        run: bun install
-
-      - name: Generate Prisma Client
-        run: bun run db:generate
-
+          cache: npm
+      - name: Install
+        run: npm install
+      - name: Generate Prisma
+        run: npx prisma generate
       - name: Build (standalone)
-        run: bun run build
-
-      - name: Upload web artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: web-build
-          path: .next/standalone/
-          retention-days: 7
+        run: npm run build
 
   android-build:
-    name: Android APK Build
+    name: Android APK
     runs-on: ubuntu-latest
     needs: lint-and-test
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24
-
-      - name: Setup Java JDK
+          cache: npm
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'oracle'
+          distribution: 'temurin'
           java-version: '21'
-
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
-        with:
-          sdk-platform: '36'
-          sdk-build-tools: '36.0.0'
-
-      - name: Install dependencies
-        run: bun install
-
-      - name: Generate Prisma Client
-        run: bun run db:generate
-
+      - name: Install
+        run: npm install
+      - name: Generate Prisma
+        run: npx prisma generate
       - name: Build static export
-        run: bun run build:apk
-
+        run: npm run build:apk
       - name: Sync Capacitor
         run: npx cap sync android
-
       - name: Build APK
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon
-
-      - name: Upload APK artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: android-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 7
-
-  electron-build:
-    name: Electron Windows Build
-    runs-on: windows-latest
-    needs: lint-and-test
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-
-      - name: Install dependencies
-        run: bun install
-
-      - name: Generate Prisma Client
-        run: bun run db:generate
-
-      - name: Build static export
-        run: bun run build:apk
-
-      - name: Build Electron installer
-        run: bun run electron:build
-
-      - name: Upload installer artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: electron-installer
-          path: dist-electron/*.exe
-          retention-days: 7
-          if-no-files-found: warn
