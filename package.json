@@ -1,6 +1,6 @@
 {
   "name": "nextjs_tailwind_shadcn_ts",
-  "version": "0.9.0-beta.4",
+  "version": "0.9.0-beta.5",
   "private": true,
   "main": "electron/main.js",
   "scripts": {
@@ -15,7 +15,7 @@
     "db:reset": "prisma migrate reset",
     "seed": "bun prisma/seed.ts",
     "electron:dev": "node scripts/build-apk.js && electron electron/main.js",
-    "electron:build": "node scripts/build-apk.js && electron-builder --config electron-builder.json",
+    "electron:build": "node scripts/build-apk.js && electron-builder --config electron-builder.json --publish never",
     "android:build": "NEXT_PUBLIC_APK_MODE=true next build && cap sync android && cd android && ./gradlew assembleDebug",
     "android:release": "NEXT_PUBLIC_APK_MODE=true next build && cap sync android && cd android && ./gradlew assembleRelease",
     "test": "vitest run",
