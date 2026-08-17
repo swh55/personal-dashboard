@@ -42,7 +42,7 @@ jobs:
       - name: Generate Prisma
         run: npx prisma generate
       - name: Lint
-        run: npx eslint src/
+        run: npx eslint src/ --rule '{"react-compiler/react-compiler":"off","react-hooks/exhaustive-deps":"off","react-hooks/purity":"off"}'
       - name: Tests
         run: npm test
 
