@@ -48,6 +48,7 @@ import {
   UsersRound,
   DollarSign,
   BookHeart,
+  LayoutGrid,
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";

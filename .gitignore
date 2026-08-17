@@ -10,10 +10,12 @@ build/
 
 # production
 dist/
+dist-electron/
 
 # misc
 .DS_Store
 *.pem
+tool-results/
 
 # debug
 npm-debug.log*
@@ -38,6 +40,10 @@ android/build/
 android/local.properties
 android/captures/
 android/app/src/main/assets/public/
+android/.kotlin/
+
+# electron
+electron/dist/
 
 # IDE
 .vscode/
@@ -46,6 +52,18 @@ android/app/src/main/assets/public/
 # logs
 dev.log
 server.log
+*.log
 
 # screenshots
 *.png
+
+# apk / exe
+*.apk
+*.exe
+
+# lock files
+bun.lock
+
+# database
+*.db
+*.db-journal

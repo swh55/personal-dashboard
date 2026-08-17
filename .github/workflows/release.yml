@@ -1,0 +1,164 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  validate:
+    name: Validate Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+
+      - name: Verify package.json version matches
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          PKG_VERSION=$(jq -r '.version' package.json)
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "Version mismatch: tag=$TAG_VERSION package.json=$PKG_VERSION"
+            exit 1
+          fi
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    needs: validate
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install
+        run: bun install
+      - name: Generate Prisma
+        run: bun run db:generate
+      - name: Lint
+        run: bun run lint
+      - name: Tests
+        run: bun run test
+
+  android:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'oracle'
+          java-version: '21'
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          sdk-platform: '36'
+          sdk-build-tools: '36.0.0'
+      - name: Install
+        run: bun install
+      - name: Generate Prisma
+        run: bun run db:generate
+      - name: Build static export
+        run: bun run build:apk
+      - name: Sync Capacitor
+        run: npx cap sync android
+      - name: Build APK
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+      - name: Rename APK
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk \
+             "Dashboard-${{ needs.validate.outputs.version }}.apk"
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-apk
+          path: "Dashboard-${{ needs.validate.outputs.version }}.apk"
+
+  electron:
+    name: Build Windows Installer
+    runs-on: windows-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install
+        run: bun install
+      - name: Generate Prisma
+        run: bun run db:generate
+      - name: Build static export
+        run: bun run build:apk
+      - name: Build Electron
+        run: bun run electron:build
+        continue-on-error: true
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-exe
+          path: dist-electron/*.exe
+          if-no-files-found: warn
+
+  release:
+    name: GitHub Release
+    runs-on: ubuntu-latest
+    needs: [validate, android, electron]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download APK
+        uses: actions/download-artifact@v4
+        with:
+          name: dashboard-apk
+          path: release-assets/
+      - name: Download EXE
+        uses: actions/download-artifact@v4
+        with:
+          name: dashboard-exe
+          path: release-assets/
+        continue-on-error: true
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Dashboard ${{ needs.validate.outputs.version }}
+          body: |
+            ## Release ${{ needs.validate.outputs.version }}
+
+            ### Downloads
+            - Android APK: `Dashboard-${{ needs.validate.outputs.version }}.apk`
+            - Windows Installer: check assets below (if available)
+
+            ### Notes
+            - APK is debug-signed (for testing)
+            - Windows installer may not be available if Electron build failed
+          draft: true
+          prerelease: true
+          files: release-assets/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -3,23 +3,58 @@ apply plugin: 'com.android.application'
 android {
     namespace = "com.abdullah.dashboard"
     compileSdk = rootProject.ext.compileSdkVersion
+
     defaultConfig {
         applicationId "com.abdullah.dashboard"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName "1.0"
+        versionName "0.9.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
-             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
-             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
-    buildTypes {
+
+    // Release signing config — reads from environment variables or
+    // a keystore.properties file (not committed to git).
+    // In CI, these come from GitHub Secrets.
+    signingConfigs {
         release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            def keystoreProperties = new Properties()
+            def keystorePropsFile = rootProject.file("keystore.properties")
+            if (keystorePropsFile.exists()) {
+                keystoreProperties.load(new FileInputStream(keystorePropsFile))
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+            } else if (System.getenv("ANDROID_KEYSTORE_BASE64")) {
+                // CI mode — decode keystore from base64 secret
+                def keystoreFile = file("${rootProject.buildDir}/release.keystore")
+                keystoreFile.parentFile.mkdirs()
+                keystoreFile.bytes = Base64.getDecoder().decode(System.getenv("ANDROID_KEYSTORE_BASE64"))
+                storeFile keystoreFile
+                storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("ANDROID_KEY_ALIAS")
+                keyPassword System.getenv("ANDROID_KEY_PASSWORD")
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            debuggable true
+            applicationIdSuffix ".debug"
+        }
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            // Only apply signing config if keystore is available
+            if (rootProject.file("keystore.properties").exists() || System.getenv("ANDROID_KEYSTORE_BASE64")) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 }

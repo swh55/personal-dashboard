@@ -724,3 +724,26 @@ Stage Summary:
 - AI assistant makes real API calls to Z.AI (verified with 401 response on fake key)
 - App is now an Android Home Launcher (CATEGORY_HOME intent filter)
 - Top bar has a "تطبيقات الهاتف" button to open the app drawer
+
+---
+Task ID: 4-platform
+Agent: platform-abstracter
+Task: Create platform abstraction layer (PlatformAdapter + 3 adapters)
+
+Work Log:
+- Read worklog.md, existing src/lib/native/bridge.ts (698 lines importing 11 Capacitor plugins), package.json, and consumers (calendar-section, settings, device, callpad, single-screen-shell, maps, permissions-manager, widgets/pomodoro, contacts) to enumerate every export that must be preserved
+- Created /src/lib/platform/ directory with 5 files:
+  1. platform-adapter.ts — defines Platform type, PlatformAdapter interface (40+ methods across phone/SMS, location, camera, haptics, notifications, network, share, filesystem, device-info, motion, toast, app-lifecycle, preferences, permissions), getPlatform() runtime detector (SSR-safe; checks window.electronAPI.isElectron / window.capacitor.isNative), getPlatformAdapter() factory using DYNAMIC import() so the Capacitor adapter is only loaded on Android, plus isNative/isElectron/isWeb convenience helpers
+  2. capacitor-adapter.ts — CapacitorAdapter class implementing PlatformAdapter; ports all logic from bridge.ts as class methods; imports the 11 Capacitor plugins (these imports are now isolated to this file and only loaded on Android); also includes 5 Capacitor-only extras (getDeviceContacts, requestContactsPermission, checkContactsPermission, requestLocationPermission, requestCameraPermission) as additional methods not in the interface
+  3. electron-adapter.ts — ElectronAdapter class implementing PlatformAdapter; uses window.electronAPI IPC bridge (fs/device/app/notifications/preferences namespaces); does NOT import Capacitor or Electron; falls back to web-style behavior (UA parsing, localStorage, navigator.onLine, document.visibilitychange, Web Notification API + setTimeout) when electronAPI is unavailable; haptics and accelerometer are no-ops on desktop
+  4. web-adapter.ts — WebAdapter class implementing PlatformAdapter; pure browser fallback (navigator.geolocation, navigator.vibrate, file input for image picker, navigator.onLine, Web Share API → clipboard fallback, localStorage for preferences, browser download for exportBackup); does NOT import Capacitor or Electron
+- Rewrote src/lib/native/bridge.ts as a backwards-compat re-export layer: re-exports getPlatformAdapter, getPlatform, isNative, isWeb, isElectron, Platform, PlatformAdapter from platform-adapter; preserves all 7 named types (DeviceContact, LocationData, PhotoResult, NetworkStatus, DeviceInfo, SensorData, PermissionStatus); preserves all 41 exported wrapper functions with same names/signatures — each delegates to (await getPlatformAdapter()).method(); the 5 Capacitor-only contacts/permission helpers use a callNativeOnly() duck-typing helper that returns the web default (false / []) on non-Android platforms
+- Verified: npx eslint src/lib/platform/ src/lib/native/bridge.ts → zero errors; npx eslint src/ → zero errors (all consumer files still resolve bridge.ts exports correctly); dev.log shows clean GET / 200 OK responses with no compile errors
+- Only pre-existing errors remain: scripts/post-build.js has 2 @typescript-eslint/no-require-imports errors (not touched); Open-Meteo 429 weather rate-limit errors and EADDRINUSE startup noise are unrelated
+
+Stage Summary:
+- Platform abstraction layer delivered: 4 new files in src/lib/platform/ (interface + 3 adapters) and bridge.ts rewritten as a backwards-compat re-export
+- Capacitor plugin imports are now isolated to capacitor-adapter.ts, which is only dynamically imported when getPlatform() === "android" — bundle is safe on every platform (Electron no longer crashes on Capacitor's missing native bridge)
+- Electron runtime supported via window.electronAPI IPC bridge (preload script exposing this is Phase 5's scope)
+- Zero breakage: every existing consumer of @/lib/native/bridge (9 files: calendar-section, settings, device, callpad, single-screen-shell, maps, permissions-manager, pomodoro widget, contacts) keeps working without any changes — all 41 exported function names and 7 named types preserved
+- All 5 files have "use client" at the top; TypeScript strict-clean; electron-adapter.ts and web-adapter.ts do NOT import Capacitor or Electron
