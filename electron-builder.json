@@ -1,7 +1,7 @@
 {
   "appId": "com.abdullah.dashboard",
-  "productName": "لوحة التحكم الشخصية",
-  "copyright": "Copyright © 2025",
+  "productName": "Personal Dashboard",
+  "copyright": "Copyright 2025",
   "directories": {
     "output": "dist-electron"
   },
@@ -16,8 +16,7 @@
         "target": "nsis",
         "arch": ["x64"]
       }
-    ],
-    "icon": "public/logo.svg"
+    ]
   },
   "nsis": {
     "oneClick": false,
@@ -25,15 +24,6 @@
     "allowToChangeInstallationDirectory": true,
     "createDesktopShortcut": true,
     "createStartMenuShortcut": true,
-    "shortcutName": "لوحة التحكم",
-    "installerIcon": "public/logo.svg",
-    "uninstallerIcon": "public/logo.svg",
-    "installerHeaderIcon": "public/logo.svg"
-  },
-  "publish": {
-    "provider": "github",
-    "owner": "swh55",
-    "repo": "personal-dashboard",
-    "releaseType": "draft"
+    "shortcutName": "Dashboard"
   }
 }
