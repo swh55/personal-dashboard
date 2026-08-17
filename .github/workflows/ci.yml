@@ -2,13 +2,15 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
-    branches: [main]
+    branches:
+      - main
 
 jobs:
   lint-and-test:
-    name: Lint + Tests
+    name: Lint and Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,7 +19,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: npm
 
       - name: Install dependencies
         run: npm install
@@ -41,12 +42,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: npm
       - name: Install
         run: npm install
       - name: Generate Prisma
         run: npx prisma generate
-      - name: Build (standalone)
+      - name: Build
         run: npm run build
 
   android-build:
@@ -59,12 +59,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: npm
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '21'
+          distribution: temurin
+          java-version: 21
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
       - name: Install

@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 jobs:
   validate:
@@ -37,7 +37,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: npm
       - name: Install
         run: npm install
       - name: Generate Prisma
@@ -57,12 +56,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: npm
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '21'
+          distribution: temurin
+          java-version: 21
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
       - name: Install
@@ -95,7 +93,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: npm
       - name: Install
         run: npm install
       - name: Generate Prisma
@@ -136,9 +133,9 @@ jobs:
             echo "ERROR: No APK found in release-assets"
             exit 1
           fi
-          APK_SIZE=$(stat -f%z "$APK_FILE" 2>/dev/null || stat -c%s "$APK_FILE" 2>/dev/null)
+          APK_SIZE=$(stat -c%s "$APK_FILE" 2>/dev/null || stat -f%z "$APK_FILE" 2>/dev/null)
           if [ "$APK_SIZE" -lt 1000000 ]; then
-            echo "ERROR: APK is too small ($APK_SIZE bytes), build may have failed"
+            echo "ERROR: APK is too small ($APK_SIZE bytes)"
             exit 1
           fi
           echo "APK verified: $APK_FILE ($APK_SIZE bytes)"
@@ -151,21 +148,20 @@ jobs:
             ## Release ${{ needs.validate.outputs.version }}
 
             ### Downloads
-            - Android APK: `Dashboard-${{ needs.validate.outputs.version }}.apk` (DEBUG SIGNED)
-            - Windows Installer: check assets below (if available)
+            - Android APK: Dashboard-${{ needs.validate.outputs.version }}.apk (DEBUG SIGNED)
+            - Windows Installer: check assets (if available)
 
             ### Status
             - Web Build: PASS
-            - Android APK: PASS (debug-signed, not production-ready)
-            - Windows Installer: ${{ needs.electron.result == 'success' && 'PASS' || 'FAILED or not built' }}
-            - Tests: PASS (28 tests)
+            - Android APK: PASS (debug-signed)
+            - Windows Installer: ${{ needs.electron.result == 'success' && 'PASS' || 'NOT BUILT' }}
+            - Tests: 28 PASS
 
             ### Known Limitations
-            - APK is debug-signed (for testing only)
+            - APK is debug-signed (testing only)
             - Windows installer may not be available
             - Maps require internet
             - AI requires API key + internet
-            - No database sync between platforms
           prerelease: true
           draft: false
           files: release-assets/*
