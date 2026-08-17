@@ -42,7 +42,7 @@ jobs:
       - name: Generate Prisma
         run: npx prisma generate
       - name: Lint
-        run: npm run lint
+        run: npx eslint src/
       - name: Tests
         run: npm test
 
