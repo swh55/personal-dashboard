@@ -836,3 +836,28 @@ Stage Summary:
 - Browser verification: guest mode, login, CRUD, multi-tenant, returning user — all verified
 - Commit: 054d951 (local; not pushed — no GitHub creds in sandbox)
 - Report: IMPLEMENTATION_REPORT.md
+
+---
+Task ID: 21-vercel-hosting
+Agent: main (Vercel hosting + Google OAuth activation)
+Task: Fix project structure for Vercel deployment + activate real Google OAuth credentials
+
+Work Log:
+- Audited current config: next.config.ts used output: "standalone" by default (self-hosting, NOT Vercel-compatible); build script ran post-build.js (copies to .next/standalone/ — unnecessary for Vercel); no postinstall script (Prisma Client not generated on Vercel install → build would fail); .env had empty GOOGLE_CLIENT_ID/SECRET placeholders.
+- Updated .env: filled real Google OAuth credentials (GOOGLE_CLIENT_ID=945302170757-...apps.googleusercontent.com, GOOGLE_CLIENT_SECRET=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). Cloudinary + Neon + AUTH_SECRET already present from Task 20.
+- Rewrote next.config.ts: output is now conditional — "export" for APK builds (NEXT_PUBLIC_APK_MODE=true), "standalone" only when BUILD_TARGET=standalone (Electron), undefined (default) for Vercel. This lets Vercel build natively without the standalone serverless-incompatible output.
+- Updated package.json: added "postinstall": "prisma generate || echo skip" — CRITICAL for Vercel (generates Prisma Client after bun install so next build can import @prisma/client). Split build scripts: "build": "next build" (Vercel-compatible), "build:standalone": "BUILD_TARGET=standalone next build && node scripts/post-build.js" (Electron self-hosting). Updated electron:dev + electron:build to use build:standalone. android:build unchanged (uses NEXT_PUBLIC_APK_MODE=true).
+- Created vercel.json: framework=nextjs, buildCommand=next build, installCommand=bun install, regions=iad1 (close to Neon US-East-2), security headers (X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy), github.silent=true.
+- Created DEPLOY_VERCEL.md: complete deployment guide with env vars table (all 8 vars with values + environment scope), Google OAuth redirect URIs (localhost + Vercel prod + Vercel preview), build config notes, troubleshooting, verification steps.
+- Tested production build: DATABASE_URL + DIRECT_URL + GOOGLE creds + AUTH_SECRET set → bun run build → SUCCESS. Output verified: .next/BUILD_ID exists, NO .next/standalone folder (Vercel-compatible), all 41 API routes compiled as ƒ Dynamic (server-rendered on demand). No build errors or warnings.
+- Verified Google OAuth activation: restarted dev server → GET /api/auth/providers now returns BOTH "google" (oauth type, signinUrl + callbackUrl) AND "credentials" (Dev Login). Sign-in page renders "Sign in with Google" button + Dev Login form.
+- Verified existing functionality preserved: lint clean (0 errors), 37 tests pass, dev server HTTP 200, guest mode returns empty data, multi-tenant isolation intact.
+
+Stage Summary:
+- Google OAuth: ACTIVATED with real credentials (sign-in page shows "Sign in with Google")
+- Build: Vercel-ready (output: undefined → native Vercel build, no standalone interference)
+- postinstall: prisma generate → Prisma Client available on Vercel install
+- Build scripts: split into build (Vercel), build:standalone (Electron), android:build (APK)
+- vercel.json: explicit framework + security headers + region config
+- DEPLOY_VERCEL.md: complete deployment guide with env vars + redirect URIs
+- Commit: 511e4ea (local; user must push to GitHub + import to Vercel)
