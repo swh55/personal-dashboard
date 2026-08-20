@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth-helpers";
 
 // All keys we know about. Unknown keys are silently ignored to prevent abuse.
 const ALLOWED_KEYS = [
@@ -21,7 +22,12 @@ const ALLOWED_KEYS = [
 // GET: appearance settings (from AppSetting table + localStorage defaults)
 export async function GET() {
   try {
-    const settings = await db.appSetting.findMany();
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: true, data: {} });
+    }
+    const userId = user.id;
+    const settings = await db.appSetting.findMany({ where: { userId } });
     const map: Record<string, string> = {};
     for (const s of settings) map[s.key] = s.value;
 
@@ -51,23 +57,24 @@ export async function GET() {
 
 export async function PUT(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: "يلزم تسجيل الدخول" }, { status: 401 });
+    }
+    const userId = user.id;
     const body = await req.json();
 
-    const updates: Array<[string, string]> = [];
     for (const key of ALLOWED_KEYS) {
       if (body[key] === undefined) continue;
       // Store as string. Numbers/booleans get coerced.
       const v = body[key];
-      updates.push([key, typeof v === "string" ? v : String(v)]);
-    }
-
-    for (const [key, value] of updates) {
-      const existing = await db.appSetting.findUnique({ where: { key } });
-      if (existing) {
-        await db.appSetting.update({ where: { id: existing.id }, data: { value } });
-      } else {
-        await db.appSetting.create({ data: { key, value } });
-      }
+      const value = typeof v === "string" ? v : String(v);
+      // upsert by (userId, key) — multi-tenant unique constraint
+      await db.appSetting.upsert({
+        where: { userId_key: { userId, key } },
+        update: { value },
+        create: { userId, key, value },
+      });
     }
 
     return NextResponse.json({ success: true });

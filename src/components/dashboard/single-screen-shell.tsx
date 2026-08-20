@@ -58,6 +58,7 @@ import {
 } from "@/store/use-floating-panel";
 import { cn } from "@/lib/utils";
 import { isNative } from "@/lib/native/bridge";
+import { AuthButton } from "@/components/dashboard/auth-button";
 import AppDrawer from "@/lib/native/app-drawer";
 import {
   Dialog,
@@ -388,6 +389,7 @@ export function SingleScreenShell({
               <LayoutGrid className="size-4" />
             </Button>
           )}
+          <AuthButton />
         </div>
       </header>
 

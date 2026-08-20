@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getUpcomingHolidays, isHoliday } from "@/lib/holidays";
+import { getCurrentUser } from "@/lib/auth-helpers";
 
 export async function GET() {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: true, data: { todayEvents: [], taskStats: { pending: 0, done: 0, total: 0, byCategory: [] }, contactStats: { total: 0, favorites: 0 }, assets: [], totalAssetsValue: 0, occasions: [], upcomingHolidays: getUpcomingHolidays(5), todayHoliday: isHoliday(new Date()), recentCalls: [] } });
+    }
+    const userId = user.id;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
@@ -15,30 +21,31 @@ export async function GET() {
 
     const todayEvents = await db.event.findMany({
       where: {
+        userId,
         startDate: { gte: today, lte: todayEnd },
       },
       orderBy: { startDate: "asc" },
     });
 
     // المهام المعلقة
-    const pendingTasks = await db.task.count({ where: { status: { not: "done" } } });
-    const doneTasks = await db.task.count({ where: { status: "done" } });
+    const pendingTasks = await db.task.count({ where: { userId, status: { not: "done" } } });
+    const doneTasks = await db.task.count({ where: { userId, status: "done" } });
     const tasksByCategory = await db.task.groupBy({
       by: ["category"],
       _count: true,
-      where: { status: { not: "done" } },
+      where: { userId, status: { not: "done" } },
     });
 
     // جهات الاتصال
-    const totalContacts = await db.contact.count();
-    const favoriteContacts = await db.contact.count({ where: { favorite: true } });
+    const totalContacts = await db.contact.count({ where: { userId } });
+    const favoriteContacts = await db.contact.count({ where: { userId, favorite: true } });
 
     // الأصول
-    const assets = await db.asset.findMany();
+    const assets = await db.asset.findMany({ where: { userId } });
     const totalAssetsValue = assets.reduce((acc, a) => acc + a.amount, 0);
 
     // المناسبات القادمة
-    const occasions = await db.occasion.findMany({ orderBy: { date: "asc" } });
+    const occasions = await db.occasion.findMany({ where: { userId }, orderBy: { date: "asc" } });
 
     // العطل القادمة
     const upcomingHolidays = getUpcomingHolidays(5);
@@ -48,6 +55,7 @@ export async function GET() {
 
     // آخر المكالمات
     const recentCalls = await db.callLog.findMany({
+      where: { userId },
       orderBy: { createdAt: "desc" },
       take: 5,
     });

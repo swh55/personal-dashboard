@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth-helpers";
 
 export async function GET() {
   try {
-    const occasions = await db.occasion.findMany({ orderBy: { date: "asc" } });
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: true, data: [] });
+    }
+    const userId = user.id;
+    const occasions = await db.occasion.findMany({ where: { userId }, orderBy: { date: "asc" } });
     return NextResponse.json({ success: true, data: occasions });
   } catch (error) {
     console.error("GET occasions error:", error);
@@ -13,6 +19,11 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: "يلزم تسجيل الدخول" }, { status: 401 });
+    }
+    const userId = user.id;
     const body = await req.json();
     const { title, date, type, recurring, note } = body;
 
@@ -27,6 +38,7 @@ export async function POST(req: NextRequest) {
         type: type || "birthday",
         recurring: recurring !== undefined ? recurring : true,
         note: note || null,
+        userId,
       },
     });
 
@@ -39,11 +51,21 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: "يلزم تسجيل الدخول" }, { status: 401 });
+    }
+    const userId = user.id;
     const body = await req.json();
     const { id, ...data } = body;
 
     if (!id) {
       return NextResponse.json({ success: false, error: "المعرف مطلوب" }, { status: 400 });
+    }
+
+    const existing = await db.occasion.findUnique({ where: { id } });
+    if (!existing || existing.userId !== userId) {
+      return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 403 });
     }
 
     if (data.date) data.date = new Date(data.date);
@@ -58,11 +80,21 @@ export async function PUT(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: "يلزم تسجيل الدخول" }, { status: 401 });
+    }
+    const userId = user.id;
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
 
     if (!id) {
       return NextResponse.json({ success: false, error: "المعرف مطلوب" }, { status: 400 });
+    }
+
+    const existing = await db.occasion.findUnique({ where: { id } });
+    if (!existing || existing.userId !== userId) {
+      return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 403 });
     }
 
     await db.occasion.delete({ where: { id } });

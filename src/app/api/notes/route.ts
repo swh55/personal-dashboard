@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { logActivity } from "@/lib/activity";
+import { getCurrentUser } from "@/lib/auth-helpers";
 
 export async function GET() {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: true, data: [] });
+    }
+    const userId = user.id;
     const notes = await db.note.findMany({
-      where: { deletedAt: null },
+      where: { userId, deletedAt: null },
       orderBy: [{ pinned: "desc" }, { createdAt: "desc" }],
     });
     return NextResponse.json({ success: true, data: notes });
@@ -17,6 +23,11 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: "يلزم تسجيل الدخول" }, { status: 401 });
+    }
+    const userId = user.id;
     const body = await req.json();
     const { title, content, color, pinned } = body;
 
@@ -30,10 +41,11 @@ export async function POST(req: NextRequest) {
         content,
         color: color || "default",
         pinned: pinned || false,
+        userId,
       },
     });
 
-    await logActivity("create", "note", `أضيف ملاحظة: ${title}`);
+    await logActivity("create", "note", `أضيف ملاحظة: ${title}`, userId);
     return NextResponse.json({ success: true, data: note }, { status: 201 });
   } catch (error) {
     console.error("POST note error:", error);
@@ -43,11 +55,21 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: "يلزم تسجيل الدخول" }, { status: 401 });
+    }
+    const userId = user.id;
     const body = await req.json();
     const { id, ...data } = body;
 
     if (!id) {
       return NextResponse.json({ success: false, error: "المعرف مطلوب" }, { status: 400 });
+    }
+
+    const existing = await db.note.findUnique({ where: { id } });
+    if (!existing || existing.userId !== userId) {
+      return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 403 });
     }
 
     const note = await db.note.update({ where: { id }, data });
@@ -60,12 +82,22 @@ export async function PUT(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: "يلزم تسجيل الدخول" }, { status: 401 });
+    }
+    const userId = user.id;
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
     const force = searchParams.get("force") === "true";
 
     if (!id) {
       return NextResponse.json({ success: false, error: "المعرف مطلوب" }, { status: 400 });
+    }
+
+    const existing = await db.note.findUnique({ where: { id } });
+    if (!existing || existing.userId !== userId) {
+      return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 403 });
     }
 
     if (force) {

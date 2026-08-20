@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth-helpers";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -25,10 +26,10 @@ interface AISettings {
   baseUrl: string;
 }
 
-async function readAISettings(): Promise<AISettings> {
+async function readAISettings(userId: string): Promise<AISettings> {
   try {
     const rows = await db.appSetting.findMany({
-      where: { key: { in: ["aiApiKey", "aiModel", "aiBaseUrl"] } },
+      where: { userId, key: { in: ["aiApiKey", "aiModel", "aiBaseUrl"] } },
     });
     const map: Record<string, string> = {};
     for (const r of rows) map[r.key] = r.value;
@@ -48,6 +49,11 @@ async function readAISettings(): Promise<AISettings> {
 
 export async function POST(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: "يلزم تسجيل الدخول" }, { status: 401 });
+    }
+    const userId = user.id;
     const body = await req.json();
     const { message, context } = body;
 
@@ -55,7 +61,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "الرسالة مطلوبة" }, { status: 400 });
     }
 
-    const ai = await readAISettings();
+    const ai = await readAISettings(userId);
 
     // If no API key is set, prompt the user to configure one in Settings.
     if (!ai.apiKey) {
@@ -76,10 +82,10 @@ export async function POST(req: NextRequest) {
       todayEnd.setHours(23, 59, 59, 999);
 
       const [todayEvents, pendingTasks, recentExpenses, occasions] = await Promise.all([
-        db.event.findMany({ where: { startDate: { gte: today, lte: todayEnd } }, orderBy: { startDate: "asc" } }),
-        db.task.findMany({ where: { status: { not: "done" } }, orderBy: { priority: "desc" }, take: 10 }),
-        db.expense.findMany({ orderBy: { date: "desc" }, take: 5 }),
-        db.occasion.findMany({ orderBy: { date: "asc" } }),
+        db.event.findMany({ where: { userId, startDate: { gte: today, lte: todayEnd } }, orderBy: { startDate: "asc" } }),
+        db.task.findMany({ where: { userId, status: { not: "done" } }, orderBy: { priority: "desc" }, take: 10 }),
+        db.expense.findMany({ where: { userId }, orderBy: { date: "desc" }, take: 5 }),
+        db.occasion.findMany({ where: { userId }, orderBy: { date: "asc" } }),
       ]);
 
       dataContext = `\n\n--- بياناتك الحالية ---

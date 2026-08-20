@@ -2691,6 +2691,19 @@ export function getOriginalFetch(): typeof window.fetch {
   return originalFetch || window.fetch.bind(window);
 }
 
+/**
+ * Check for the NextAuth session cookie. When present, the user is
+ * authenticated and we must NOT intercept /api/* (let them hit the cloud).
+ * When absent (guest), we route /api/* to localStorage for offline-first.
+ */
+function hasSessionCookie(): boolean {
+  if (typeof document === "undefined" || !document.cookie) return false;
+  return (
+    document.cookie.includes("next-auth.session-token") ||
+    document.cookie.includes("__Secure-next-auth.session-token")
+  );
+}
+
 function shouldIntercept(): boolean {
   if (typeof window === "undefined") return false;
   // APK build: NEXT_PUBLIC_APK_MODE is baked into the bundle as "true"
@@ -2706,7 +2719,11 @@ function shouldIntercept(): boolean {
   } catch {
     // localStorage not available
   }
-  return isApkMode || isNative || forceLocal;
+  // APK / native / forced → always intercept (offline-first shell)
+  if (isApkMode || isNative || forceLocal) return true;
+  // Normal web: intercept ONLY for guests (no session cookie).
+  // Authenticated users get real cloud data.
+  return !hasSessionCookie();
 }
 
 /** Install the fetch interceptor. Safe to call multiple times. */
@@ -2726,6 +2743,17 @@ export function installFetchInterceptor(): void {
     if (input instanceof Request) urlStr = input.url;
     else if (input instanceof URL) urlStr = input.toString();
     else urlStr = input as string;
+
+    // SECURITY: Never intercept auth routes — let NextAuth handle them.
+    if (urlStr.startsWith("/api/auth/")) {
+      return originalFetch!(input as RequestInfo, init);
+    }
+
+    // If the user just authenticated mid-session (cookie appeared after
+    // install), stop intercepting app data so writes go to the cloud.
+    if (hasSessionCookie()) {
+      return originalFetch!(input as RequestInfo, init);
+    }
 
     // SIMPLE RULE: Only intercept if the URL is RELATIVE (starts with /)
     // AND starts with /api/. Everything else (full URLs with protocol)

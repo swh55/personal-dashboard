@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { logActivity } from "@/lib/activity";
+import { getCurrentUser } from "@/lib/auth-helpers";
 
 const VALID_FREQUENCIES = ["daily", "weekly", "monthly"];
 
@@ -30,11 +31,16 @@ function computeNextReminder(
 // GET: returns active reminders (optionally filtered to those due now)
 export async function GET(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: true, data: [], meta: { count: 0, overdue: 0 } });
+    }
+    const userId = user.id;
     const searchParams = req.nextUrl.searchParams;
     const activeOnly = searchParams.get("active") !== "false";
     const dueOnly = searchParams.get("due") === "true";
 
-    const where: Record<string, unknown> = {};
+    const where: Record<string, unknown> = { userId };
     if (activeOnly) {
       where.active = true;
     }
@@ -78,6 +84,14 @@ export async function GET(req: NextRequest) {
 // POST: create a new contact reminder
 export async function POST(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: "يلزم تسجيل الدخول" },
+        { status: 401 }
+      );
+    }
+    const userId = user.id;
     const body = await req.json();
     const { contactId, contactName, frequency, lastContacted, nextReminder, active } = body;
 
@@ -105,13 +119,15 @@ export async function POST(req: NextRequest) {
         lastContacted: lastContactedDate,
         nextReminder: nextReminderDate,
         active: active !== undefined ? Boolean(active) : true,
+        userId,
       },
     });
 
     await logActivity(
       "create",
       "contact_reminder",
-      `تمت إضافة تذكير تواصل لـ: ${contactName}`
+      `تمت إضافة تذكير تواصل لـ: ${contactName}`,
+      userId
     );
     return NextResponse.json({ success: true, data: reminder }, { status: 201 });
   } catch (error) {
@@ -126,6 +142,14 @@ export async function POST(req: NextRequest) {
 // PUT: update lastContacted (and recompute nextReminder) or other fields
 export async function PUT(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: "يلزم تسجيل الدخول" },
+        { status: 401 }
+      );
+    }
+    const userId = user.id;
     const body = await req.json();
     const { id, lastContacted, frequency, nextReminder, active, ...rest } = body;
 
@@ -133,6 +157,15 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json(
         { success: false, error: "المعرف مطلوب" },
         { status: 400 }
+      );
+    }
+
+    // Ownership check
+    const existingRec = await db.contactReminder.findUnique({ where: { id } });
+    if (!existingRec || existingRec.userId !== userId) {
+      return NextResponse.json(
+        { success: false, error: "غير مصرح" },
+        { status: 403 }
       );
     }
 
@@ -151,14 +184,13 @@ export async function PUT(req: NextRequest) {
       // Recompute nextReminder based on the new lastContacted date and frequency
       const freq =
         typeof data.frequency === "string" ? data.frequency : undefined;
-      const existing = await db.contactReminder.findUnique({ where: { id } });
-      const effectiveFreq = freq || existing?.frequency || "weekly";
+      const effectiveFreq = freq || existingRec?.frequency || "weekly";
       data.nextReminder = nextReminder
         ? new Date(nextReminder)
         : computeNextReminder(
             data.lastContacted instanceof Date
               ? (data.lastContacted as Date)
-              : existing?.lastContacted || null,
+              : existingRec?.lastContacted || null,
             effectiveFreq
           );
     } else if (nextReminder !== undefined) {
@@ -174,13 +206,15 @@ export async function PUT(req: NextRequest) {
       await logActivity(
         "update",
         "contact_reminder",
-        `تم تحديث آخر تواصل مع: ${updated.contactName}`
+        `تم تحديث آخر تواصل مع: ${updated.contactName}`,
+        userId
       );
     } else if (active !== undefined) {
       await logActivity(
         "toggle",
         "contact_reminder",
-        `${active ? "تفعيل" : "تعطيل"} تذكير: ${updated.contactName}`
+        `${active ? "تفعيل" : "تعطيل"} تذكير: ${updated.contactName}`,
+        userId
       );
     }
 
@@ -197,6 +231,14 @@ export async function PUT(req: NextRequest) {
 // DELETE: remove a contact reminder by id
 export async function DELETE(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: "يلزم تسجيل الدخول" },
+        { status: 401 }
+      );
+    }
+    const userId = user.id;
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
     if (!id) {
@@ -206,11 +248,20 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
+    const existing = await db.contactReminder.findUnique({ where: { id } });
+    if (!existing || existing.userId !== userId) {
+      return NextResponse.json(
+        { success: false, error: "غير مصرح" },
+        { status: 403 }
+      );
+    }
+
     const reminder = await db.contactReminder.delete({ where: { id } });
     await logActivity(
       "delete",
       "contact_reminder",
-      `تم حذف تذكير تواصل لـ: ${reminder.contactName}`
+      `تم حذف تذكير تواصل لـ: ${reminder.contactName}`,
+      userId
     );
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { logActivity } from "@/lib/activity";
+import { getCurrentUser } from "@/lib/auth-helpers";
 
 const VALID_SERVICES = [
   "google_calendar",
@@ -15,7 +16,13 @@ const VALID_SERVICES = [
 // GET: returns all integrations
 export async function GET() {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: true, data: [], meta: { count: 0, connected: 0, availableServices: VALID_SERVICES } });
+    }
+    const userId = user.id;
     const integrations = await db.integration.findMany({
+      where: { userId },
       orderBy: { service: "asc" },
     });
 
@@ -40,6 +47,14 @@ export async function GET() {
 // POST: create or update an integration (upsert by service)
 export async function POST(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: "يلزم تسجيل الدخول" },
+        { status: 401 }
+      );
+    }
+    const userId = user.id;
     const body = await req.json();
     const { id, service, name, connected, config, lastSync } = body;
 
@@ -69,8 +84,15 @@ export async function POST(req: NextRequest) {
 
     const lastSyncDate = lastSync ? new Date(lastSync) : null;
 
-    // If id is provided, update that specific integration
+    // If id is provided, update that specific integration (ownership-checked)
     if (id) {
+      const existing = await db.integration.findUnique({ where: { id } });
+      if (!existing || existing.userId !== userId) {
+        return NextResponse.json(
+          { success: false, error: "غير مصرح" },
+          { status: 403 }
+        );
+      }
       const updated = await db.integration.update({
         where: { id },
         data: {
@@ -84,48 +106,36 @@ export async function POST(req: NextRequest) {
       await logActivity(
         "update",
         "integration",
-        `تم تحديث تكامل: ${updated.name} (${service})`
+        `تم تحديث تكامل: ${updated.name} (${service})`,
+        userId
       );
       return NextResponse.json({ success: true, data: updated });
     }
 
-    // Otherwise upsert by service
-    const existing = await db.integration.findFirst({
-      where: { service },
+    // Otherwise upsert by (userId, service) — multi-tenant unique
+    const integration = await db.integration.upsert({
+      where: { userId_service: { userId, service } },
+      update: {
+        name: name || service,
+        connected: connected !== undefined ? Boolean(connected) : undefined,
+        config: configString !== null ? configString : undefined,
+        lastSync: lastSyncDate || undefined,
+      },
+      create: {
+        userId,
+        service,
+        name: name || service,
+        connected: connected !== undefined ? Boolean(connected) : false,
+        config: configString,
+        lastSync: lastSyncDate,
+      },
     });
-
-    let integration;
-    if (existing) {
-      integration = await db.integration.update({
-        where: { id: existing.id },
-        data: {
-          name: name || existing.name,
-          connected: connected !== undefined ? Boolean(connected) : existing.connected,
-          config: configString !== null ? configString : existing.config,
-          lastSync: lastSyncDate || existing.lastSync,
-        },
-      });
-      await logActivity(
-        "update",
-        "integration",
-        `تم تحديث تكامل: ${integration.name} (${service})`
-      );
-    } else {
-      integration = await db.integration.create({
-        data: {
-          service,
-          name: name || service,
-          connected: connected !== undefined ? Boolean(connected) : false,
-          config: configString,
-          lastSync: lastSyncDate,
-        },
-      });
-      await logActivity(
-        "create",
-        "integration",
-        `تمت إضافة تكامل: ${integration.name} (${service})`
-      );
-    }
+    await logActivity(
+      "upsert",
+      "integration",
+      `تم حفظ تكامل: ${integration.name} (${service})`,
+      userId
+    );
 
     return NextResponse.json(
       { success: true, data: integration },
@@ -143,6 +153,14 @@ export async function POST(req: NextRequest) {
 // PUT: toggle the connected state (and optionally update lastSync)
 export async function PUT(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: "يلزم تسجيل الدخول" },
+        { status: 401 }
+      );
+    }
+    const userId = user.id;
     const body = await req.json();
     const { id, connected, lastSync } = body;
 
@@ -150,6 +168,15 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json(
         { success: false, error: "المعرف مطلوب" },
         { status: 400 }
+      );
+    }
+
+    // Ownership check
+    const existing = await db.integration.findUnique({ where: { id } });
+    if (!existing || existing.userId !== userId) {
+      return NextResponse.json(
+        { success: false, error: "غير مصرح" },
+        { status: 403 }
       );
     }
 
@@ -172,7 +199,8 @@ export async function PUT(req: NextRequest) {
     await logActivity(
       "toggle",
       "integration",
-      `${updated.connected ? "ربط" : "فصل"} تكامل: ${updated.name} (${updated.service})`
+      `${updated.connected ? "ربط" : "فصل"} تكامل: ${updated.name} (${updated.service})`,
+      userId
     );
 
     return NextResponse.json({ success: true, data: updated });
@@ -188,6 +216,14 @@ export async function PUT(req: NextRequest) {
 // DELETE: remove an integration by id
 export async function DELETE(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: "يلزم تسجيل الدخول" },
+        { status: 401 }
+      );
+    }
+    const userId = user.id;
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
     if (!id) {
@@ -197,11 +233,20 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
+    const existing = await db.integration.findUnique({ where: { id } });
+    if (!existing || existing.userId !== userId) {
+      return NextResponse.json(
+        { success: false, error: "غير مصرح" },
+        { status: 403 }
+      );
+    }
+
     const integration = await db.integration.delete({ where: { id } });
     await logActivity(
       "delete",
       "integration",
-      `تم حذف تكامل: ${integration.name} (${integration.service})`
+      `تم حذف تكامل: ${integration.name} (${integration.service})`,
+      userId
     );
     return NextResponse.json({ success: true });
   } catch (error) {

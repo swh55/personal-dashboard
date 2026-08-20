@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth-helpers";
 
 // 11. مؤشر السعادة اليومي
 // POST: تسجيل درجة سعادة يومية (1-10) — upsert حسب التاريخ
@@ -13,13 +14,18 @@ function startOfToday(): Date {
 
 export async function GET() {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: true, data: [], stats: { count: 0, average: 0, max: 0, min: 0, factorAverages: {} } });
+    }
+    const userId = user.id;
     const now = new Date();
     const startDate = new Date(now);
     startDate.setDate(startDate.getDate() - 6); // آخر 7 أيام
     startDate.setHours(0, 0, 0, 0);
 
     const logs = await db.happinessLog.findMany({
-      where: { date: { gte: startDate } },
+      where: { userId, date: { gte: startDate } },
       orderBy: { date: "desc" },
     });
 
@@ -72,6 +78,14 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: "يلزم تسجيل الدخول" },
+        { status: 401 }
+      );
+    }
+    const userId = user.id;
     const body = await req.json();
     const { score, factors, note, date } = body;
 
@@ -91,15 +105,16 @@ export async function POST(req: NextRequest) {
         ? JSON.stringify(factors)
         : factors || null;
 
-    // upsert حسب التاريخ (نتيجة واحدة لكل يوم)
+    // upsert حسب (userId, date) — multi-tenant unique
     const log = await db.happinessLog.upsert({
-      where: { date: targetDate },
+      where: { userId_date: { userId, date: targetDate } },
       update: {
         score: finalScore,
         factors: factorsStr,
         note: note || null,
       },
       create: {
+        userId,
         date: targetDate,
         score: finalScore,
         factors: factorsStr,

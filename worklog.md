@@ -747,3 +747,57 @@ Stage Summary:
 - Electron runtime supported via window.electronAPI IPC bridge (preload script exposing this is Phase 5's scope)
 - Zero breakage: every existing consumer of @/lib/native/bridge (9 files: calendar-section, settings, device, callpad, single-screen-shell, maps, permissions-manager, pomodoro widget, contacts) keeps working without any changes — all 41 exported function names and 7 named types preserved
 - All 5 files have "use client" at the top; TypeScript strict-clean; electron-adapter.ts and web-adapter.ts do NOT import Capacitor or Electron
+
+---
+Task ID: 20-db-migration
+Agent: main (multi-user cloud migration)
+Task: Migrate SQLite → Neon PostgreSQL + add User model + multi-tenant userId on all data models
+
+Work Log:
+- Phase 1 audit: project is Next.js 16 + React 19 + TS 5 + Tailwind 4 + shadcn/ui. Prisma 6 + SQLite. 30 models, 41 API routes, NONE multi-tenant. next-auth v4 in deps but completely unconfigured. Existing offline-first via 2758-line fetch interceptor (localStorage-backed). Repo at github.com/swh55/personal-dashboard is PUBLIC.
+- Rewrote prisma/schema.prisma: provider sqlite → postgresql, url+directUrl env vars. Added User model (id/email/name/image/provider/timestamps). Added userId String + user relation + @@index([userId]) to ALL 30 data models. Adjusted unique constraints for multi-tenancy: AppSetting key@unique → @@unique([userId,key]); Budget → @@unique([userId,category,month,year]); HappinessLog date@unique → @@unique([userId,date]); Integration service@unique → @@unique([userId,service]). Added SyncQueue model (userId/entity/entityId/operation/payload/status/attempts/lastError). Did NOT add NextAuth Account/Session/VerificationToken tables — using JWT strategy instead (avoids name collision with financial Account model).
+- Created .env with real Neon DATABASE_URL (pooler) + DIRECT_URL, real Cloudinary cloud/key/secret, generated AUTH_SECRET (openssl rand -base64 32), empty GOOGLE_CLIENT_ID/SECRET placeholders (user must fill), NEXTAUTH_URL.
+- Created .env.example with placeholder names only, no real secrets.
+- Strengthened .gitignore: explicit .env / .env.* / !.env.example rule + agent-ctx/ + .zscripts/ ignores.
+- Ran `bunx prisma db push` → SUCCESS. 32 tables created on Neon (30 data models + User + SyncQueue).
+- Wrote scripts/verify-neon.ts: confirmed all 32 tables present, User.count() works, created test user + contact, verified userId filtering returns only the owner's records, cleanup succeeded. Multi-tenant schema VERIFIED end-to-end.
+
+Stage Summary:
+- Database: SQLite → Neon PostgreSQL (32 tables, multi-tenant, verified)
+- Schema: every data model now scoped by userId with cascade-delete to User
+- Env: .env (real, gitignored) + .env.example (placeholders) + .gitignore hardened
+- Pending: Google OAuth creds must be filled in .env by user (GOOGLE_CLIENT_ID/SECRET are empty placeholders)
+
+---
+Task ID: 5-a
+Agent: multi-tenant-routes
+Task: Update all API routes for multi-tenant userId filtering + ownership checks
+
+Work Log:
+- Read worklog.md (Task 20-db-migration schema), src/lib/auth-helpers.ts (getCurrentUser / requireUser), src/lib/auth.ts (NextAuth JWT), src/lib/activity.ts (now accepts 4th userId param) to understand the existing multi-tenant scaffolding before touching routes.
+- Audited all 41 routes under src/app/api/ and the Prisma schema: every data model now has userId + @@index([userId]); AppSetting unique is @@unique([userId, key]); Budget unique is @@unique([userId, category, month, year]); HappinessLog unique is @@unique([userId, date]); Integration unique is @@unique([userId, service]).
+- For every list GET handler: added `const user = await getCurrentUser()`; if guest, returns `{ success: true, data: [] }` (or empty-shape stub) so the client-side fetch interceptor falls back to local storage; if signed in, derives `userId` from the session and adds it to EVERY Prisma `where` clause (including count/groupBy/aggregate/findMany).
+- For every POST/create: added the 401 auth gate, derived `userId` from the session, added `userId` to the Prisma `data` object so the new row is always attached to the authenticated user — the client can no longer inject another user's id.
+- For every PUT/update with an `id`: added a `findUnique({ where: { id } })` ownership check before the update; returns 403 ("غير مصرح") if the row does not exist or belongs to a different user. This prevents cross-tenant writes via guessed/leaked IDs.
+- For every DELETE: added the same ownership check BEFORE the soft/hard delete. Routes that support `?force=true` hard-delete (contacts, events, notes, tasks, projects, meetings, expenses, debts via recycle-bin, scheduled-messages, recycle-bin) now verify ownership in both branches.
+- Updated every `logActivity(action, entity, message)` call to `logActivity(action, entity, message, userId)` — the function now silently no-ops on guests (no cloud row).
+- Routes converted (all 37 in the manifest): accounts, activity, ai-insights, ai/chat, analytics, appearance, automation, budget, calllogs, contact-reminders, contacts, dashboard, debts, diary, events, expenses, finances, gamification, habits, happiness, health, home, integrations, locations, meetings, notes, occasions, pantry, projects, quran, recycle-bin, scheduled-messages, smart-notifications, suggestions, tasks, waiting-list, weather.
+- Special handling for aggregation routes (dashboard, analytics, finances, ai-insights, gamification, home, smart-notifications): added `userId` to every sub-query (count/findMany/groupBy/aggregate) inside the Promise.all — a single leaky sub-query would have leaked another tenant's data, so each was hand-audited.
+- Special handling for compound-unique routes:
+  • budget POST: switched from `findUnique({ where: { category_month_year } })` to `db.budget.upsert({ where: { userId_category_month_year: { userId, category, month, year } } })`.
+  • happiness POST: switched `db.happinessLog.upsert({ where: { date } })` → `where: { userId_date: { userId, date: targetDate } }` to match the new @@unique([userId, date]).
+  • integrations POST (when no `id`): switched `findFirst + update/create` to `db.integration.upsert({ where: { userId_service: { userId, service } } })` matching @@unique([userId, service]).
+  • appearance PUT: rewrote the bulk update to iterate ALLOWED_KEYS and `db.appSetting.upsert({ where: { userId_key: { userId, key } }, ... })` for each.
+  • weather + ai/chat: changed the AppSetting `findMany({ where: { key: { in: [...] } } })` to also filter by `userId` so each user reads only their own settings.
+- Special handling for sync/* routes (calendar, contacts, drive): these previously called `getValidAccessToken()` and did real Google API work using a global integration row keyed only by service (which is no longer unique in the multi-tenant schema). To avoid leaking another user's Google token, they now (1) call `getCurrentUser()` and return 401 for guests, (2) return 501 "غير متاحة حالياً" with a TODO comment to wire per-user OAuth tokens stored in the new userId-scoped Integration table. The old implementation is removed to prevent cross-tenant token reuse.
+- Did NOT touch the explicitly excluded routes: api/auth/[...nextauth], api/migrate-guest (already uses getCurrentUser + per-record userId), api/upload/sign (already uses getCurrentUser), api/route.ts (root health check), and the upload/dashboard-extracted/... mirror copy (pre-migration reference).
+- Verified clean: `bunx eslint src/app/api/ --max-warnings=0` exits 0; `bunx tsc --noEmit` reports ZERO errors in src/app/api/* (the only TS errors are in the upload/dashboard-extracted/... mirror copy which is intentionally left as the pre-migration reference).
+
+Stage Summary:
+- 37 API routes converted to multi-tenant mode (every Prisma read/write is now scoped by userId derived from the NextAuth session; never trusted from request body/query).
+- Ownership checks added to all PUT and DELETE handlers (findUnique + verify `existing.userId === userId` → 403 on mismatch); force=true hard-deletes also gated.
+- All `logActivity` calls now pass the session userId as the 4th argument.
+- Compound-unique constraints updated to match the new multi-tenant schema: Budget (userId_category_month_year), HappinessLog (userId_date), Integration (userId_service), AppSetting (userId_key).
+- sync/{calendar,contacts,drive} routes gated with 401 + 501 stubs pending per-user OAuth wiring.
+- Guest users get empty-array responses (no 401 on GETs) so the client-side fetch interceptor keeps working with localStorage; writes correctly reject with 401.
+- ESLint clean (--max-warnings=0) and TypeScript clean for src/app/api/*.

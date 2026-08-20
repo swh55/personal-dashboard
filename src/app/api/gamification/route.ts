@@ -1,15 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth-helpers";
 
 // GET: gamification stats — points, levels, achievements, streaks
 export async function GET() {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: true, data: { points: 0, level: 1, pointsInLevel: 0, pointsToNext: 100, achievements: [], habitStreaks: [], stats: { doneTasks: 0, totalTasks: 0, habitLogs: 0, contacts: 0, events: 0, notes: 0 } } });
+    }
+    const userId = user.id;
     const [tasks, habits, contacts, events, notes] = await Promise.all([
-      db.task.findMany({ where: { deletedAt: null } }),
-      db.habit.findMany({ include: { logs: true } }),
-      db.contact.count({ where: { deletedAt: null } }),
-      db.event.count({ where: { deletedAt: null } }),
-      db.note.count({ where: { deletedAt: null } }),
+      db.task.findMany({ where: { userId, deletedAt: null } }),
+      db.habit.findMany({ where: { userId }, include: { logs: true } }),
+      db.contact.count({ where: { userId, deletedAt: null } }),
+      db.event.count({ where: { userId, deletedAt: null } }),
+      db.note.count({ where: { userId, deletedAt: null } }),
     ]);
 
     const doneTasks = tasks.filter((t) => t.status === "done").length;

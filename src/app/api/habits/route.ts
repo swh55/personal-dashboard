@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { logActivity } from "@/lib/activity";
+import { getCurrentUser } from "@/lib/auth-helpers";
 
 export async function GET() {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: true, data: [], stats: { total: 0, active: 0, doneToday: 0, bestStreak: 0 } });
+    }
+    const userId = user.id;
     const habits = await db.habit.findMany({
+      where: { userId },
       include: { logs: { orderBy: { date: "desc" }, take: 30 } },
       orderBy: { createdAt: "asc" },
     });
@@ -73,6 +80,11 @@ function computeStreak(logs: Array<{ date: Date }>): number {
 
 export async function POST(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: "يلزم تسجيل الدخول" }, { status: 401 });
+    }
+    const userId = user.id;
     const body = await req.json();
     const { name, description, frequency, target, color, icon } = body;
     if (!name) return NextResponse.json({ success: false, error: "الاسم مطلوب" }, { status: 400 });
@@ -84,9 +96,10 @@ export async function POST(req: NextRequest) {
         target: Number(target) || 1,
         color: color || "emerald",
         icon: icon || "CheckCircle",
+        userId,
       },
     });
-    await logActivity("create", "habit", `أضيف عادة: ${name}`);
+    await logActivity("create", "habit", `أضيف عادة: ${name}`, userId);
     return NextResponse.json({ success: true, data: habit }, { status: 201 });
   } catch (error) {
     console.error("POST habit error:", error);
@@ -96,9 +109,20 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: "يلزم تسجيل الدخول" }, { status: 401 });
+    }
+    const userId = user.id;
     const body = await req.json();
     const { id, log, ...data } = body;
     if (!id) return NextResponse.json({ success: false, error: "المعرف مطلوب" }, { status: 400 });
+
+    // Ownership check — the habit must belong to this user
+    const existingHabit = await db.habit.findUnique({ where: { id } });
+    if (!existingHabit || existingHabit.userId !== userId) {
+      return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 403 });
+    }
 
     // Toggle today's log
     if (log !== undefined) {
@@ -124,9 +148,18 @@ export async function PUT(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: "يلزم تسجيل الدخول" }, { status: 401 });
+    }
+    const userId = user.id;
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
     if (!id) return NextResponse.json({ success: false, error: "المعرف مطلوب" }, { status: 400 });
+    const existing = await db.habit.findUnique({ where: { id } });
+    if (!existing || existing.userId !== userId) {
+      return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 403 });
+    }
     await db.habit.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (error) {

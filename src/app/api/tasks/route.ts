@@ -1,15 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { logActivity } from "@/lib/activity";
+import { getCurrentUser } from "@/lib/auth-helpers";
 
 export async function GET(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: true, data: [], stats: { total: 0, todo: 0, doing: 0, done: 0, high: 0, overdue: 0 } });
+    }
+    const userId = user.id;
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status");
     const category = searchParams.get("category");
     const priority = searchParams.get("priority");
 
-    const where: any = { deletedAt: null };
+    const where: any = { userId, deletedAt: null };
     if (status) where.status = status;
     if (category) where.category = category;
     if (priority) where.priority = priority;
@@ -40,6 +46,11 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: "يلزم تسجيل الدخول" }, { status: 401 });
+    }
+    const userId = user.id;
     const body = await req.json();
     const { title, description, status, priority, category, dueDate, projectId } = body;
 
@@ -56,10 +67,11 @@ export async function POST(req: NextRequest) {
         category: category || "general",
         dueDate: dueDate ? new Date(dueDate) : null,
         projectId: projectId || null,
+        userId,
       },
     });
 
-    await logActivity("create", "task", `أضيف مهمة: ${title}`);
+    await logActivity("create", "task", `أضيف مهمة: ${title}`, userId);
     return NextResponse.json({ success: true, data: task }, { status: 201 });
   } catch (error) {
     console.error("POST task error:", error);
@@ -69,10 +81,19 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: "يلزم تسجيل الدخول" }, { status: 401 });
+    }
+    const userId = user.id;
     const body = await req.json();
     const { id, ...data } = body;
     if (!id) return NextResponse.json({ success: false, error: "المعرف مطلوب" }, { status: 400 });
     if (data.dueDate) data.dueDate = new Date(data.dueDate);
+    const existing = await db.task.findUnique({ where: { id } });
+    if (!existing || existing.userId !== userId) {
+      return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 403 });
+    }
     const task = await db.task.update({ where: { id }, data });
     return NextResponse.json({ success: true, data: task });
   } catch (error) {
@@ -83,10 +104,19 @@ export async function PUT(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: "يلزم تسجيل الدخول" }, { status: 401 });
+    }
+    const userId = user.id;
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
     const force = searchParams.get("force") === "true";
     if (!id) return NextResponse.json({ success: false, error: "المعرف مطلوب" }, { status: 400 });
+    const existing = await db.task.findUnique({ where: { id } });
+    if (!existing || existing.userId !== userId) {
+      return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 403 });
+    }
     if (force) {
       await db.task.delete({ where: { id } });
     } else {

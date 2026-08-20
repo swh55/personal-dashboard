@@ -1,16 +1,22 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { USD_TO_SYP } from "@/lib/constants";
+import { getCurrentUser } from "@/lib/auth-helpers";
 
 // GET: full financial overview
 export async function GET() {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: true, data: { assets: [], accounts: [], debts: [], budgets: [], totalAssets: 0, totalAccounts: 0, totalOwed: 0, totalOwe: 0, netWorth: 0, monthSpend: 0, monthExpenseCount: 0 } });
+    }
+    const userId = user.id;
     const [assets, accounts, debts, expenses, budgets] = await Promise.all([
-      db.asset.findMany(),
-      db.account.findMany(),
-      db.debt.findMany({ where: { settled: false, deletedAt: null } }),
-      db.expense.findMany({ where: { deletedAt: null } }),
-      db.budget.findMany(),
+      db.asset.findMany({ where: { userId } }),
+      db.account.findMany({ where: { userId } }),
+      db.debt.findMany({ where: { userId, settled: false, deletedAt: null } }),
+      db.expense.findMany({ where: { userId, deletedAt: null } }),
+      db.budget.findMany({ where: { userId } }),
     ]);
 
     const toSYP = (amount: number, currency: string) =>

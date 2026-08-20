@@ -1,15 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { logActivity } from "@/lib/activity";
+import { getCurrentUser } from "@/lib/auth-helpers";
 
 export async function GET(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: true, data: [] });
+    }
+    const userId = user.id;
     const searchParams = req.nextUrl.searchParams;
     const relation = searchParams.get("relation");
     const favorite = searchParams.get("favorite");
 
-    const where: Record<string, unknown> = {};
-    where.deletedAt = null;
+    const where: Record<string, unknown> = { userId, deletedAt: null };
     if (relation) where.relation = relation;
     if (favorite === "true") where.favorite = true;
 
@@ -28,6 +33,11 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: "يلزم تسجيل الدخول" }, { status: 401 });
+    }
+    const userId = user.id;
     const body = await req.json();
     const { name, phone, whatsapp, email, relation, category, note, favorite, avatar } = body;
 
@@ -46,10 +56,11 @@ export async function POST(req: NextRequest) {
         note: note || null,
         favorite: favorite || false,
         avatar: avatar || null,
+        userId,
       },
     });
 
-    await logActivity("create", "contact", `أضيف جهة اتصال: ${name}`);
+    await logActivity("create", "contact", `أضيف جهة اتصال: ${name}`, userId);
     return NextResponse.json({ success: true, data: contact }, { status: 201 });
   } catch (error) {
     console.error("POST contact error:", error);
@@ -59,11 +70,22 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: "يلزم تسجيل الدخول" }, { status: 401 });
+    }
+    const userId = user.id;
     const body = await req.json();
     const { id, ...data } = body;
 
     if (!id) {
       return NextResponse.json({ success: false, error: "المعرف مطلوب" }, { status: 400 });
+    }
+
+    // Ownership check
+    const existing = await db.contact.findUnique({ where: { id } });
+    if (!existing || existing.userId !== userId) {
+      return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 403 });
     }
 
     const contact = await db.contact.update({
@@ -80,12 +102,23 @@ export async function PUT(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: "يلزم تسجيل الدخول" }, { status: 401 });
+    }
+    const userId = user.id;
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
     const force = searchParams.get("force") === "true";
 
     if (!id) {
       return NextResponse.json({ success: false, error: "المعرف مطلوب" }, { status: 400 });
+    }
+
+    // Ownership check — applies to both soft and hard delete
+    const existing = await db.contact.findUnique({ where: { id } });
+    if (!existing || existing.userId !== userId) {
+      return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 403 });
     }
 
     if (force) {

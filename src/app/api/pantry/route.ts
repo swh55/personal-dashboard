@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth-helpers";
 
 // 3. مخزون المطبخ
 // GET: جلب كل عناصر المخزون
@@ -9,10 +10,16 @@ import { db } from "@/lib/db";
 
 export async function GET(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: true, data: [], stats: { count: 0, totalItems: 0, lowStockCount: 0 } });
+    }
+    const userId = user.id;
     const { searchParams } = new URL(req.url);
     const lowOnly = searchParams.get("low") === "true";
 
     const items = await db.pantryItem.findMany({
+      where: { userId },
       orderBy: [{ category: "asc" }, { name: "asc" }],
     });
 
@@ -40,6 +47,14 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: "يلزم تسجيل الدخول" },
+        { status: 401 }
+      );
+    }
+    const userId = user.id;
     const body = await req.json();
     const { name, quantity, unit, lowStock, category } = body;
 
@@ -57,6 +72,7 @@ export async function POST(req: NextRequest) {
         unit: unit || "piece",
         lowStock: Number(lowStock) || 1,
         category: category || "other",
+        userId,
       },
     });
 
@@ -72,6 +88,14 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: "يلزم تسجيل الدخول" },
+        { status: 401 }
+      );
+    }
+    const userId = user.id;
     const body = await req.json();
     const { id, quantity, ...rest } = body;
 
@@ -79,6 +103,14 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json(
         { success: false, error: "المعرف مطلوب" },
         { status: 400 }
+      );
+    }
+
+    const existing = await db.pantryItem.findUnique({ where: { id } });
+    if (!existing || existing.userId !== userId) {
+      return NextResponse.json(
+        { success: false, error: "غير مصرح" },
+        { status: 403 }
       );
     }
 
@@ -99,6 +131,14 @@ export async function PUT(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: "يلزم تسجيل الدخول" },
+        { status: 401 }
+      );
+    }
+    const userId = user.id;
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
 
@@ -106,6 +146,14 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json(
         { success: false, error: "المعرف مطلوب" },
         { status: 400 }
+      );
+    }
+
+    const existing = await db.pantryItem.findUnique({ where: { id } });
+    if (!existing || existing.userId !== userId) {
+      return NextResponse.json(
+        { success: false, error: "غير مصرح" },
+        { status: 403 }
       );
     }
 

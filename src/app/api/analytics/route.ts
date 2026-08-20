@@ -1,23 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { USD_TO_SYP } from "@/lib/constants";
+import { getCurrentUser } from "@/lib/auth-helpers";
 
 // GET: aggregated analytics across all entities
 export async function GET(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: true, data: { spendingTrend: [], categoryBreakdown: [], taskStats: { total: 0, done: 0, doing: 0, todo: 0, completionRate: 0 }, taskByCategory: {}, happinessTrend: [], overview: { totalExpenses: 0, totalSpend: 0, contacts: 0, events: 0, callLogs: 0, diary: 0, avgHappiness: 0 } } });
+    }
+    const userId = user.id;
     const { searchParams } = new URL(req.url);
     const days = Number(searchParams.get("days") || 30);
     const since = new Date();
     since.setDate(since.getDate() - days);
 
     const [expenses, tasks, contacts, events, callLogs, diary, happiness] = await Promise.all([
-      db.expense.findMany({ where: { date: { gte: since }, deletedAt: null } }),
-      db.task.findMany({ where: { deletedAt: null } }),
-      db.contact.count({ where: { deletedAt: null } }),
-      db.event.count({ where: { deletedAt: null } }),
-      db.callLog.count(),
-      db.diaryEntry.count({ where: { deletedAt: null } }),
-      db.happinessLog.findMany({ where: { date: { gte: since } } }),
+      db.expense.findMany({ where: { userId, date: { gte: since }, deletedAt: null } }),
+      db.task.findMany({ where: { userId, deletedAt: null } }),
+      db.contact.count({ where: { userId, deletedAt: null } }),
+      db.event.count({ where: { userId, deletedAt: null } }),
+      db.callLog.count({ where: { userId } }),
+      db.diaryEntry.count({ where: { userId, deletedAt: null } }),
+      db.happinessLog.findMany({ where: { userId, date: { gte: since } } }),
     ]);
 
     const toSYP = (amount: number, currency: string) =>

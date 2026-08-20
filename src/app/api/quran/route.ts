@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth-helpers";
 
 // أسماء السور
 export const SURAHS = [
@@ -19,7 +20,12 @@ export const SURAHS = [
 
 export async function GET() {
   try {
-    const logs = await db.quranLog.findMany({ orderBy: { date: "desc" } });
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: true, data: [], stats: { totalAyahs: 0, surahsRead: 0, sessions: 0, surahNames: SURAHS } });
+    }
+    const userId = user.id;
+    const logs = await db.quranLog.findMany({ where: { userId }, orderBy: { date: "desc" } });
     const totalAyahs = logs.reduce((s, l) => s + (l.toAyah - l.fromAyah + 1), 0);
     const surahsRead = new Set(logs.map(l => l.surah)).size;
     return NextResponse.json({ success: true, data: logs, stats: { totalAyahs, surahsRead, sessions: logs.length, surahNames: SURAHS } });
@@ -31,9 +37,14 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: "يلزم تسجيل الدخول" }, { status: 401 });
+    }
+    const userId = user.id;
     const { surah, fromAyah, toAyah, juz, note } = await req.json();
     if (!surah || !fromAyah || !toAyah) return NextResponse.json({ success: false, error: "السورة والآيات مطلوبة" }, { status: 400 });
-    const log = await db.quranLog.create({ data: { surah: Number(surah), fromAyah: Number(fromAyah), toAyah: Number(toAyah), juz: juz ? Number(juz) : null, note } });
+    const log = await db.quranLog.create({ data: { surah: Number(surah), fromAyah: Number(fromAyah), toAyah: Number(toAyah), juz: juz ? Number(juz) : null, note, userId } });
     return NextResponse.json({ success: true, data: log }, { status: 201 });
   } catch (error) {
     console.error("POST quran error:", error);
@@ -43,9 +54,18 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: "يلزم تسجيل الدخول" }, { status: 401 });
+    }
+    const userId = user.id;
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
     if (!id) return NextResponse.json({ success: false, error: "المعرف مطلوب" }, { status: 400 });
+    const existing = await db.quranLog.findUnique({ where: { id } });
+    if (!existing || existing.userId !== userId) {
+      return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 403 });
+    }
     await db.quranLog.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -1,20 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth-helpers";
 
 // GET: returns soft-deleted items grouped by type
 export async function GET() {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: true, data: { contacts: [], notes: [], tasks: [], events: [], expenses: [], debts: [], projects: [], meetings: [], diary: [], medications: [] }, total: 0 });
+    }
+    const userId = user.id;
     const [contacts, notes, tasks, events, expenses, debts, projects, meetings, diary, medications] = await Promise.all([
-      db.contact.findMany({ where: { deletedAt: { not: null } }, orderBy: { deletedAt: "desc" } }),
-      db.note.findMany({ where: { deletedAt: { not: null } }, orderBy: { deletedAt: "desc" } }),
-      db.task.findMany({ where: { deletedAt: { not: null } }, orderBy: { updatedAt: "desc" } }),
-      db.event.findMany({ where: { deletedAt: { not: null } }, orderBy: { updatedAt: "desc" } }),
-      db.expense.findMany({ where: { deletedAt: { not: null } }, orderBy: { updatedAt: "desc" } }),
-      db.debt.findMany({ where: { deletedAt: { not: null } }, orderBy: { updatedAt: "desc" } }),
-      db.project.findMany({ where: { deletedAt: { not: null } }, orderBy: { updatedAt: "desc" } }),
-      db.meeting.findMany({ where: { deletedAt: { not: null } }, orderBy: { updatedAt: "desc" } }),
-      db.diaryEntry.findMany({ where: { deletedAt: { not: null } }, orderBy: { updatedAt: "desc" } }),
-      db.medication.findMany({ where: { deletedAt: { not: null } }, orderBy: { updatedAt: "desc" } }),
+      db.contact.findMany({ where: { userId, deletedAt: { not: null } }, orderBy: { deletedAt: "desc" } }),
+      db.note.findMany({ where: { userId, deletedAt: { not: null } }, orderBy: { deletedAt: "desc" } }),
+      db.task.findMany({ where: { userId, deletedAt: { not: null } }, orderBy: { updatedAt: "desc" } }),
+      db.event.findMany({ where: { userId, deletedAt: { not: null } }, orderBy: { updatedAt: "desc" } }),
+      db.expense.findMany({ where: { userId, deletedAt: { not: null } }, orderBy: { updatedAt: "desc" } }),
+      db.debt.findMany({ where: { userId, deletedAt: { not: null } }, orderBy: { updatedAt: "desc" } }),
+      db.project.findMany({ where: { userId, deletedAt: { not: null } }, orderBy: { updatedAt: "desc" } }),
+      db.meeting.findMany({ where: { userId, deletedAt: { not: null } }, orderBy: { updatedAt: "desc" } }),
+      db.diaryEntry.findMany({ where: { userId, deletedAt: { not: null } }, orderBy: { updatedAt: "desc" } }),
+      db.medication.findMany({ where: { userId, deletedAt: { not: null } }, orderBy: { updatedAt: "desc" } }),
     ]);
 
     const total =
@@ -35,6 +41,11 @@ export async function GET() {
 // PUT: restore a deleted item
 export async function PUT(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: "يلزم تسجيل الدخول" }, { status: 401 });
+    }
+    const userId = user.id;
     const { type, id } = await req.json();
     if (!type || !id) return NextResponse.json({ success: false, error: "النوع والمعرف مطلوبان" }, { status: 400 });
 
@@ -52,6 +63,13 @@ export async function PUT(req: NextRequest) {
     };
     const model = modelMap[type];
     if (!model) return NextResponse.json({ success: false, error: "نوع غير معروف" }, { status: 400 });
+
+    // Ownership check — verify the record belongs to this user
+    const existing = await model.findUnique({ where: { id } });
+    if (!existing || existing.userId !== userId) {
+      return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 403 });
+    }
+
     await model.update({ where: { id }, data: { deletedAt: null } });
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -63,6 +81,11 @@ export async function PUT(req: NextRequest) {
 // DELETE: permanently delete
 export async function DELETE(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: "يلزم تسجيل الدخول" }, { status: 401 });
+    }
+    const userId = user.id;
     const { searchParams } = new URL(req.url);
     const type = searchParams.get("type");
     const id = searchParams.get("id");
@@ -82,6 +105,13 @@ export async function DELETE(req: NextRequest) {
     };
     const model = modelMap[type];
     if (!model) return NextResponse.json({ success: false, error: "نوع غير معروف" }, { status: 400 });
+
+    // Ownership check before hard delete
+    const existing = await model.findUnique({ where: { id } });
+    if (!existing || existing.userId !== userId) {
+      return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 403 });
+    }
+
     await model.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (error) {

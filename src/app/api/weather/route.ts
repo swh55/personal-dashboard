@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { USER_PROFILE } from "@/lib/constants";
+import { getCurrentUser } from "@/lib/auth-helpers";
 
 interface LocSettings {
   city: string;
@@ -9,10 +10,10 @@ interface LocSettings {
   timezone: string;
 }
 
-async function readLocationSettings(): Promise<LocSettings> {
+async function readLocationSettings(userId: string | null): Promise<LocSettings> {
   try {
     const rows = await db.appSetting.findMany({
-      where: { key: { in: ["city", "lat", "lng", "timezone"] } },
+      where: userId ? { userId, key: { in: ["city", "lat", "lng", "timezone"] } } : { key: { in: [] } },
     });
     const map: Record<string, string> = {};
     for (const r of rows) map[r.key] = r.value;
@@ -33,7 +34,9 @@ async function readLocationSettings(): Promise<LocSettings> {
 }
 
 export async function GET() {
-  const loc = await readLocationSettings();
+  const user = await getCurrentUser();
+  // Guests fall back to default location (no per-user settings stored)
+  const loc = await readLocationSettings(user?.id ?? null);
   try {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lng}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,pressure_msl&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset&timezone=${encodeURIComponent(loc.timezone)}&forecast_days=5`;
 

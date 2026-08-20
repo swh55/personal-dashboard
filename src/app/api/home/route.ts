@@ -1,12 +1,18 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth-helpers";
 
 // GET: home management — pantry, waiting list, shopping list overview
 export async function GET() {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: true, data: { pantry: [], waitingList: [], lowStock: [], stats: { totalItems: 0, lowStockCount: 0, waitingReady: 0, waitingPending: 0, byCategory: {} } } });
+    }
+    const userId = user.id;
     const [pantry, waitingList] = await Promise.all([
-      db.pantryItem.findMany({ orderBy: [{ category: "asc" }, { name: "asc" }] }),
-      db.waitingItem.findMany({ orderBy: [{ priority: "desc" }, { createdAt: "asc" }] }),
+      db.pantryItem.findMany({ where: { userId }, orderBy: [{ category: "asc" }, { name: "asc" }] }),
+      db.waitingItem.findMany({ where: { userId }, orderBy: [{ priority: "desc" }, { createdAt: "asc" }] }),
     ]);
 
     const lowStock = pantry.filter((p) => p.quantity <= p.lowStock);

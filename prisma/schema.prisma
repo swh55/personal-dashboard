@@ -1,18 +1,68 @@
 // Prisma schema for the Personal Business Dashboard
-// SQLite database
+// PostgreSQL (Neon) — Multi-tenant: every data row is scoped to a userId.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
-// ---------- Core: Contacts & Calls ----------
+// ----------------------------------------------------------------------------
+// USER MODEL (Multi-tenant root)
+// ----------------------------------------------------------------------------
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  image         String?
+  provider      String?   // "google", "credentials", ...
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations — every collection a user owns
+  contacts          Contact[]
+  callLogs          CallLog[]
+  notes             Note[]
+  events            Event[]
+  tasks             Task[]
+  expenses          Expense[]
+  budgets           Budget[]
+  assets            Asset[]
+  accounts          Account[]
+  debts             Debt[]
+  projects          Project[]
+  meetings          Meeting[]
+  occasions         Occasion[]
+  diaryEntries      DiaryEntry[]
+  habits            Habit[]
+  medications       Medication[]
+  sleepLogs         SleepLog[]
+  pantryItems       PantryItem[]
+  waitingItems      WaitingItem[]
+  savedLocations    SavedLocation[]
+  contactReminders  ContactReminder[]
+  happinessLogs     HappinessLog[]
+  quranLogs         QuranLog[]
+  integrations      Integration[]
+  activityLogs      ActivityLog[]
+  scheduledMessages ScheduledMessage[]
+  automationRules   AutomationRule[]
+  suggestions       Suggestion[]
+  appSettings       AppSetting[]
+  syncQueue         SyncQueue[]
+}
+
+// ----------------------------------------------------------------------------
+// Core: Contacts & Calls
+// ----------------------------------------------------------------------------
 model Contact {
   id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name      String
   phone     String
   whatsapp  String?
@@ -28,10 +78,14 @@ model Contact {
 
   calls     CallLog[]
   reminders ContactReminder[]
+
+  @@index([userId])
 }
 
 model CallLog {
   id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   contactId  String?
   contact    Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
   name       String
@@ -40,11 +94,17 @@ model CallLog {
   direction  String   @default("outgoing") // incoming, outgoing, missed
   note       String?
   createdAt  DateTime @default(now())
+
+  @@index([userId])
 }
 
-// ---------- Notes ----------
+// ----------------------------------------------------------------------------
+// Notes
+// ----------------------------------------------------------------------------
 model Note {
   id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   title     String
   content   String
   color     String   @default("default") // default, yellow, green, blue, red, purple
@@ -52,11 +112,17 @@ model Note {
   deletedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
-// ---------- Calendar / Events ----------
+// ----------------------------------------------------------------------------
+// Calendar / Events
+// ----------------------------------------------------------------------------
 model Event {
   id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   title       String
   description String?
   startDate   DateTime
@@ -68,11 +134,17 @@ model Event {
   deletedAt   DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([userId])
 }
 
-// ---------- Tasks ----------
+// ----------------------------------------------------------------------------
+// Tasks
+// ----------------------------------------------------------------------------
 model Task {
   id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   title       String
   description String?
   status      String   @default("todo") // todo, doing, done
@@ -84,11 +156,17 @@ model Task {
   deletedAt   DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([userId])
 }
 
-// ---------- Expenses ----------
+// ----------------------------------------------------------------------------
+// Expenses
+// ----------------------------------------------------------------------------
 model Expense {
   id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   amount      Float
   currency    String   @default("syp") // syp, usd
   category    String   @default("general")
@@ -97,11 +175,17 @@ model Expense {
   deletedAt   DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([userId])
 }
 
-// ---------- Budgets ----------
+// ----------------------------------------------------------------------------
+// Budgets
+// ----------------------------------------------------------------------------
 model Budget {
   id        String @id @default(cuid())
+  userId    String
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   category  String
   limit     Float
   month     Int // 1-12
@@ -109,12 +193,17 @@ model Budget {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([category, month, year])
+  @@unique([userId, category, month, year])
+  @@index([userId])
 }
 
-// ---------- Assets & Accounts ----------
+// ----------------------------------------------------------------------------
+// Assets & Accounts
+// ----------------------------------------------------------------------------
 model Asset {
   id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name        String
   amount      Float
   currency    String   @default("syp")
@@ -122,10 +211,14 @@ model Asset {
   description String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model Account {
   id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name          String
   balance       Float
   currency      String   @default("syp")
@@ -133,11 +226,17 @@ model Account {
   institution   String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  @@index([userId])
 }
 
-// ---------- Debts ----------
+// ----------------------------------------------------------------------------
+// Debts
+// ----------------------------------------------------------------------------
 model Debt {
   id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   personName  String
   amount      Float
   currency    String   @default("syp") // syp, usd
@@ -147,13 +246,19 @@ model Debt {
   settled     Boolean  @default(false)
   settledAt   DateTime?
   deletedAt   DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
 }
 
-// ---------- Projects ----------
+// ----------------------------------------------------------------------------
+// Projects
+// ----------------------------------------------------------------------------
 model Project {
   id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name        String
   description String?
   status      String   @default("active") // active, paused, completed, archived
@@ -165,27 +270,39 @@ model Project {
   deletedAt   DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([userId])
 }
 
-// ---------- Meetings ----------
+// ----------------------------------------------------------------------------
+// Meetings
+// ----------------------------------------------------------------------------
 model Meeting {
-  id          String   @id @default(cuid())
-  title       String
-  agenda      String?
-  notes       String?
-  location    String?
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title        String
+  agenda       String?
+  notes        String?
+  location     String?
   participants String? // comma separated names
-  startDate   DateTime
-  endDate     DateTime?
-  status      String   @default("scheduled") // scheduled, completed, cancelled
-  deletedAt   DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  startDate    DateTime
+  endDate      DateTime?
+  status       String   @default("scheduled") // scheduled, completed, cancelled
+  deletedAt    DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
 }
 
-// ---------- Occasions ----------
+// ----------------------------------------------------------------------------
+// Occasions
+// ----------------------------------------------------------------------------
 model Occasion {
   id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   title     String
   date      DateTime
   type      String   @default("birthday") // birthday, anniversary, holiday, other
@@ -193,11 +310,17 @@ model Occasion {
   note      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
-// ---------- Diary ----------
+// ----------------------------------------------------------------------------
+// Diary
+// ----------------------------------------------------------------------------
 model DiaryEntry {
   id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   title     String?
   content   String
   mood      String   @default("neutral") // happy, sad, neutral, angry, excited, anxious
@@ -206,11 +329,17 @@ model DiaryEntry {
   deletedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
-// ---------- Habits ----------
+// ----------------------------------------------------------------------------
+// Habits
+// ----------------------------------------------------------------------------
 model Habit {
   id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name        String
   description String?
   frequency   String   @default("daily") // daily, weekly
@@ -222,6 +351,8 @@ model Habit {
   updatedAt   DateTime @updatedAt
 
   logs        HabitLog[]
+
+  @@index([userId])
 }
 
 model HabitLog {
@@ -236,9 +367,13 @@ model HabitLog {
   @@unique([habitId, date])
 }
 
-// ---------- Health: Medications & Sleep ----------
+// ----------------------------------------------------------------------------
+// Health: Medications & Sleep
+// ----------------------------------------------------------------------------
 model Medication {
   id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name        String
   dosage      String?
   frequency   String   @default("daily")
@@ -249,10 +384,14 @@ model Medication {
   deletedAt   DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model SleepLog {
   id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   date      DateTime @default(now())
   bedtime   DateTime?
   wakeTime  DateTime?
@@ -260,11 +399,17 @@ model SleepLog {
   quality   String   @default("good") // poor, fair, good, excellent
   note      String?
   createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
-// ---------- Pantry / Home ----------
+// ----------------------------------------------------------------------------
+// Pantry / Home
+// ----------------------------------------------------------------------------
 model PantryItem {
   id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name      String
   quantity  Int      @default(1)
   unit      String   @default("piece") // piece, kg, g, l, ml, pack
@@ -272,22 +417,34 @@ model PantryItem {
   category  String   @default("other") // grains, dairy, meat, vegetables, fruits, beverages, cleaning, other
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
-// ---------- Waiting List ----------
+// ----------------------------------------------------------------------------
+// Waiting List
+// ----------------------------------------------------------------------------
 model WaitingItem {
   id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   title       String
   description String?
   priority    Int      @default(0)
   ready       Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([userId])
 }
 
-// ---------- Saved Locations ----------
+// ----------------------------------------------------------------------------
+// Saved Locations
+// ----------------------------------------------------------------------------
 model SavedLocation {
   id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name      String
   address   String   @default("")
   lat       Float
@@ -296,11 +453,17 @@ model SavedLocation {
   color     String   @default("blue")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
-// ---------- Contact Reminders ----------
+// ----------------------------------------------------------------------------
+// Contact Reminders
+// ----------------------------------------------------------------------------
 model ContactReminder {
   id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   contactId      String?
   contact        Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
   contactName    String
@@ -310,22 +473,35 @@ model ContactReminder {
   active         Boolean  @default(true)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+
+  @@index([userId])
 }
 
-// ---------- Happiness ----------
+// ----------------------------------------------------------------------------
+// Happiness
+// ----------------------------------------------------------------------------
 model HappinessLog {
   id        String   @id @default(cuid())
-  date      DateTime @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      DateTime
   score     Int // 1-10
   factors   String? // JSON
   note      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([userId, date])
+  @@index([userId])
 }
 
-// ---------- Quran ----------
+// ----------------------------------------------------------------------------
+// Quran
+// ----------------------------------------------------------------------------
 model QuranLog {
   id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   surah     Int
   fromAyah  Int
   toAyah    Int
@@ -333,46 +509,71 @@ model QuranLog {
   note      String?
   date      DateTime @default(now())
   createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
-// ---------- Integrations ----------
+// ----------------------------------------------------------------------------
+// Integrations
+// ----------------------------------------------------------------------------
 model Integration {
   id        String   @id @default(cuid())
-  service   String   @unique // google_calendar, google_drive, telegram, email, github, google_contacts, cloud_sync
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  service   String   // google_calendar, google_drive, telegram, email, github, google_contacts, cloud_sync
   name      String
   connected Boolean  @default(false)
   config    String? // JSON
   lastSync  DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([userId, service])
+  @@index([userId])
 }
 
-// ---------- Activity Log ----------
+// ----------------------------------------------------------------------------
+// Activity Log
+// ----------------------------------------------------------------------------
 model ActivityLog {
   id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   action    String // create, update, delete, toggle, export, import, sync
   entity    String // contact, note, task, ...
   message   String
   createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
-// ---------- Scheduled Messages ----------
+// ----------------------------------------------------------------------------
+// Scheduled Messages
+// ----------------------------------------------------------------------------
 model ScheduledMessage {
-  id        String   @id @default(cuid())
-  recipient String
-  message   String
-  channel   String   @default("whatsapp") // whatsapp, sms, telegram, email
-  scheduledAt DateTime
-  sent      Boolean  @default(false)
-  sentAt    DateTime?
-  deletedAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipient    String
+  message      String
+  channel      String   @default("whatsapp") // whatsapp, sms, telegram, email
+  scheduledAt  DateTime
+  sent         Boolean  @default(false)
+  sentAt       DateTime?
+  deletedAt    DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
 }
 
-// ---------- Automation ----------
+// ----------------------------------------------------------------------------
+// Automation
+// ----------------------------------------------------------------------------
 model AutomationRule {
   id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name      String
   trigger   String // event type
   action    String // action to perform
@@ -380,22 +581,62 @@ model AutomationRule {
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
-// ---------- Suggestions ----------
+// ----------------------------------------------------------------------------
+// Suggestions
+// ----------------------------------------------------------------------------
 model Suggestion {
   id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   title     String
   content   String
   category  String   @default("general")
   status    String   @default("pending") // pending, accepted, rejected
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
-// ---------- Settings (key-value store) ----------
+// ----------------------------------------------------------------------------
+// Settings (key-value store, per-user)
+// ----------------------------------------------------------------------------
 model AppSetting {
-  id    String @id @default(cuid())
-  key   String @unique
-  value String
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  key    String
+  value  String
+
+  @@unique([userId, key])
+  @@index([userId])
 }
+
+// ----------------------------------------------------------------------------
+// Sync Queue (server-side pending operations for offline-first sync)
+// ----------------------------------------------------------------------------
+model SyncQueue {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entity    String   // contact, note, task, ...
+  entityId  String   // client-side id
+  operation String   // create, update, delete
+  payload   String   // JSON of the record
+  status    String   @default("pending") // pending, syncing, failed, done
+  attempts  Int      @default(0)
+  lastError String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, status])
+}
+
+// NOTE: NextAuth uses the JWT session strategy (not the Prisma adapter), so
+// the standard Account/Session/VerificationToken tables are NOT required.
+// User records are upserted on first Google login via the signIn callback
+// in src/lib/auth.ts. The financial "Account" model above is unrelated.

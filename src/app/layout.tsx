@@ -3,6 +3,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
+import { AuthProvider } from "@/components/auth-provider";
 import { LocalModeInitializer } from "@/components/local-mode-initializer";
 
 export const metadata: Metadata = {
@@ -37,8 +38,10 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange
         >
-          <LocalModeInitializer />
-          {children}
+          <AuthProvider>
+            <LocalModeInitializer />
+            {children}
+          </AuthProvider>
           <Toaster />
           <SonnerToaster position="top-center" richColors closeButton style={{ zIndex: 9999 }} />
         </ThemeProvider>

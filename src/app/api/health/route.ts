@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { logActivity } from "@/lib/activity";
+import { getCurrentUser } from "@/lib/auth-helpers";
 
 // GET: returns medications + sleep logs + health stats
 export async function GET() {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: true, data: { medications: [], sleepLogs: [] }, stats: { medicationsActive: 0, avgSleepMinutes: 0, avgSleepHours: 0, avgQuality: 0, sleepLogsCount: 0 } });
+    }
+    const userId = user.id;
     const [medications, sleepLogs] = await Promise.all([
-      db.medication.findMany({ where: { deletedAt: null }, orderBy: { startDate: "desc" } }),
-      db.sleepLog.findMany({ orderBy: { date: "desc" }, take: 14 }),
+      db.medication.findMany({ where: { userId, deletedAt: null }, orderBy: { startDate: "desc" } }),
+      db.sleepLog.findMany({ where: { userId }, orderBy: { date: "desc" }, take: 14 }),
     ]);
 
     const avgSleep = sleepLogs.length
@@ -39,6 +45,11 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: "يلزم تسجيل الدخول" }, { status: 401 });
+    }
+    const userId = user.id;
     const body = await req.json();
     const { type, ...data } = body;
 
@@ -53,9 +64,10 @@ export async function POST(req: NextRequest) {
           startDate: startDate ? new Date(startDate) : new Date(),
           endDate: endDate ? new Date(endDate) : null,
           notes: notes || null,
+          userId,
         },
       });
-      await logActivity("create", "medication", `أضيف دواء: ${name}`);
+      await logActivity("create", "medication", `أضيف دواء: ${name}`, userId);
       return NextResponse.json({ success: true, data: med }, { status: 201 });
     }
 
@@ -67,7 +79,7 @@ export async function POST(req: NextRequest) {
       const wt = wakeTime ? new Date(wakeTime) : null;
       const duration = bt && wt ? Math.round((wt.getTime() - bt.getTime()) / 60000) : 0;
       const log = await db.sleepLog.create({
-        data: { date: d, bedtime: bt, wakeTime: wt, duration, quality: quality || "good", note: note || null },
+        data: { date: d, bedtime: bt, wakeTime: wt, duration, quality: quality || "good", note: note || null, userId },
       });
       return NextResponse.json({ success: true, data: log }, { status: 201 });
     }
@@ -81,11 +93,21 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: "يلزم تسجيل الدخول" }, { status: 401 });
+    }
+    const userId = user.id;
     const body = await req.json();
     const { type, id, ...data } = body;
     if (!id) return NextResponse.json({ success: false, error: "المعرف مطلوب" }, { status: 400 });
 
     if (type === "medication") {
+      // Ownership check
+      const existing = await db.medication.findUnique({ where: { id } });
+      if (!existing || existing.userId !== userId) {
+        return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 403 });
+      }
       if (data.startDate) data.startDate = new Date(data.startDate);
       if (data.endDate) data.endDate = new Date(data.endDate);
       const med = await db.medication.update({ where: { id }, data });
@@ -100,15 +122,30 @@ export async function PUT(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: "يلزم تسجيل الدخول" }, { status: 401 });
+    }
+    const userId = user.id;
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
     const type = searchParams.get("type");
     if (!id) return NextResponse.json({ success: false, error: "المعرف مطلوب" }, { status: 400 });
 
     if (type === "medication") {
+      const existing = await db.medication.findUnique({ where: { id } });
+      if (!existing || existing.userId !== userId) {
+        return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 403 });
+      }
       await db.medication.update({ where: { id }, data: { deletedAt: new Date() } });
     } else if (type === "sleep") {
+      const existing = await db.sleepLog.findUnique({ where: { id } });
+      if (!existing || existing.userId !== userId) {
+        return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 403 });
+      }
       await db.sleepLog.delete({ where: { id } });
+    } else {
+      return NextResponse.json({ success: false, error: "نوع غير معروف" }, { status: 400 });
     }
     return NextResponse.json({ success: true });
   } catch (error) {

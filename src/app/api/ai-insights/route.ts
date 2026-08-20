@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth-helpers";
 
 // GET: returns AI-powered insights computed from DB data (no external AI API)
 export async function GET(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: true, data: { spendingPatterns: [], taskSuggestions: [], bestTimes: [], predictiveAlerts: [] } });
+    }
+    const userId = user.id;
     const now = new Date();
     const thirtyDaysAgo = new Date(now);
     thirtyDaysAgo.setDate(now.getDate() - 30);
@@ -15,12 +21,12 @@ export async function GET(req: NextRequest) {
     // Fetch all required data in parallel
     const [expenses, tasks, budgets] = await Promise.all([
       db.expense.findMany({
-        where: { date: { gte: thirtyDaysAgo }, deletedAt: null },
+        where: { userId, date: { gte: thirtyDaysAgo }, deletedAt: null },
         orderBy: { date: "asc" },
       }),
-      db.task.findMany({ where: { deletedAt: null } }),
+      db.task.findMany({ where: { userId, deletedAt: null } }),
       db.budget.findMany({
-        where: { month: currentMonth, year: currentYear },
+        where: { userId, month: currentMonth, year: currentYear },
       }),
     ]);
 

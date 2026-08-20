@@ -3,33 +3,44 @@
 import * as React from "react";
 
 /**
- * If the local-mode interceptor is being installed (APK mode), wait for it
- * to be ready before any fetch fires. This prevents race conditions where
- * useApi fetches /api/notes before the interceptor has replaced fetch().
+ * If the local-mode interceptor is being installed (APK mode, native shell,
+ * forced, OR guest web user without a session cookie), wait for it to be
+ * ready before any fetch fires. This prevents race conditions where useApi
+ * fetches /api/notes before the interceptor has replaced fetch().
+ *
+ * Authenticated web users (session cookie present) skip the wait — their
+ * fetches go straight to the cloud server.
  */
 async function waitForLocalMode(): Promise<void> {
   if (typeof window === "undefined") return;
   const w = window as any;
-  // If local mode is not pending, no need to wait (normal dev/server mode)
-  if (!w.__localModePending && !w.__localModeReady) {
-    // Check if we should be in local mode (APK build or Capacitor native)
-    const isApkMode = process.env.NEXT_PUBLIC_APK_MODE === "true";
-    const isCapacitorNative =
-      w.capacitor?.isNative === true || w.capacitor?.platform === "android";
-    // Use try/catch to safely check localStorage (avoids minifier issues with typeof)
-    let isForced = false;
-    try {
-      isForced = localStorage.getItem("force-local-mode") === "true";
-    } catch {
-      // localStorage not available
-    }
-    if (isApkMode || isCapacitorNative || isForced) {
-      // Mark as pending so the initializer knows to set ready
-      w.__localModePending = true;
-    } else {
-      return; // Not in local mode, proceed immediately
-    }
+  // If local mode is already ready, no need to wait
+  if (w.__localModeReady) return;
+
+  // Determine whether local mode SHOULD be active for this client.
+  const isApkMode = process.env.NEXT_PUBLIC_APK_MODE === "true";
+  const isCapacitorNative =
+    w.capacitor?.isNative === true || w.capacitor?.platform === "android";
+  let isForced = false;
+  try {
+    isForced = localStorage.getItem("force-local-mode") === "true";
+  } catch {
+    // localStorage not available
   }
+  // Authenticated web users have a session cookie → skip local mode
+  const hasSessionCookie =
+    typeof document !== "undefined" &&
+    document.cookie &&
+    (document.cookie.includes("next-auth.session-token") ||
+      document.cookie.includes("__Secure-next-auth.session-token"));
+
+  const shouldUseLocalMode =
+    isApkMode || isCapacitorNative || isForced || !hasSessionCookie;
+
+  if (!shouldUseLocalMode) {
+    return; // Authenticated web user — fetch goes to cloud directly
+  }
+
   // Wait up to 3 seconds for the interceptor to be ready
   const deadline = Date.now() + 3000;
   while (!w.__localModeReady && Date.now() < deadline) {

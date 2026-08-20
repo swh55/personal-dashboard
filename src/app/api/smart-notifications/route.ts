@@ -1,10 +1,16 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getUpcomingHolidays, isHoliday } from "@/lib/holidays";
+import { getCurrentUser } from "@/lib/auth-helpers";
 
 // GET: aggregates smart notifications from various sources
 export async function GET() {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: true, data: [], stats: { total: 0, critical: 0, warning: 0, info: 0 } });
+    }
+    const userId = user.id;
     const now = new Date();
     const todayEnd = new Date(now);
     todayEnd.setHours(23, 59, 59, 999);
@@ -12,13 +18,13 @@ export async function GET() {
     next7Days.setDate(next7Days.getDate() + 7);
 
     const [todayEvents, overdueTasks, soonTasks, dueDebts, dueReminders, lowStockPantry, upcomingOccasions, todayHoliday] = await Promise.all([
-      db.event.findMany({ where: { startDate: { gte: now, lte: todayEnd }, deletedAt: null }, orderBy: { startDate: "asc" } }),
-      db.task.findMany({ where: { status: { not: "done" }, dueDate: { lt: now }, deletedAt: null }, orderBy: { dueDate: "asc" } }),
-      db.task.findMany({ where: { status: { not: "done" }, dueDate: { gte: now, lte: next7Days }, deletedAt: null }, orderBy: { dueDate: "asc" } }),
-      db.debt.findMany({ where: { settled: false, dueDate: { lte: next7Days }, deletedAt: null }, orderBy: { dueDate: "asc" } }),
-      db.contactReminder.findMany({ where: { active: true, nextReminder: { lte: next7Days } }, orderBy: { nextReminder: "asc" } }),
-      db.pantryItem.findMany(),
-      db.occasion.findMany({ where: { date: { gte: now, lte: next7Days } }, orderBy: { date: "asc" } }),
+      db.event.findMany({ where: { userId, startDate: { gte: now, lte: todayEnd }, deletedAt: null }, orderBy: { startDate: "asc" } }),
+      db.task.findMany({ where: { userId, status: { not: "done" }, dueDate: { lt: now }, deletedAt: null }, orderBy: { dueDate: "asc" } }),
+      db.task.findMany({ where: { userId, status: { not: "done" }, dueDate: { gte: now, lte: next7Days }, deletedAt: null }, orderBy: { dueDate: "asc" } }),
+      db.debt.findMany({ where: { userId, settled: false, dueDate: { lte: next7Days }, deletedAt: null }, orderBy: { dueDate: "asc" } }),
+      db.contactReminder.findMany({ where: { userId, active: true, nextReminder: { lte: next7Days } }, orderBy: { nextReminder: "asc" } }),
+      db.pantryItem.findMany({ where: { userId } }),
+      db.occasion.findMany({ where: { userId, date: { gte: now, lte: next7Days } }, orderBy: { date: "asc" } }),
       Promise.resolve(isHoliday(now)),
     ]);
 
