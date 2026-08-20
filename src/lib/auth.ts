@@ -1,22 +1,24 @@
 // =============================================================================
-// NextAuth v4 configuration — Google OAuth + JWT session strategy.
+// NextAuth v4 configuration — Google OAuth ONLY + JWT session strategy.
 // =============================================================================
 // We deliberately use the JWT strategy (NOT the Prisma adapter) so that:
 //   1. We avoid the NextAuth `Account`/`Session` model name collision with
 //      the existing financial `Account` model.
 //   2. Sessions are stateless and fast (no DB lookup per request).
-//   3. The same code works on serverless / edge.
+//   3. The same code works on serverless / edge (Vercel).
 //
 // On every successful Google sign-in, we UPSERT a row in our `User` table
 // keyed by email so subsequent requests can attach data to that user.
+//
+// NOTE: The Dev Login (Credentials) provider was REMOVED per user request.
+// Google OAuth is the ONLY sign-in method. To log in locally, add the
+// redirect URI `http://localhost:3000/api/auth/callback/google` to your
+// Google Cloud Console → Authorized redirect URIs.
 
 import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import Credentials from "next-auth/providers/credentials";
 import { db } from "@/lib/db";
 
-// Build the providers list synchronously. Google is included only if creds
-// are configured, so the app boots in pure-guest mode without OAuth creds.
 function buildProviders(): NextAuthOptions["providers"] {
   const providers: NextAuthOptions["providers"] = [];
 
@@ -28,43 +30,15 @@ function buildProviders(): NextAuthOptions["providers"] {
         allowDangerousEmailAccountLinking: true,
       })
     );
-  }
-
-  // Always-on dev credentials provider so the app is testable even without
-  // Google OAuth configured. Disabled in production via NODE_ENV check.
-  if (process.env.NODE_ENV !== "production") {
-    providers.push(
-      Credentials({
-        name: "Dev Login",
-        credentials: {
-          email: { label: "Email", type: "email", placeholder: "you@example.com" },
-          name: { label: "Name", type: "text", placeholder: "Your name" },
-        },
-        async authorize(input) {
-          if (!input?.email) return null;
-          try {
-            const user = await db.user.upsert({
-              where: { email: input.email },
-              update: { name: input.name || input.email.split("@")[0] },
-              create: {
-                email: input.email,
-                name: input.name || input.email.split("@")[0],
-                provider: "dev",
-              },
-            });
-            return {
-              id: user.id,
-              email: user.email,
-              name: user.name ?? undefined,
-              image: user.image ?? undefined,
-            };
-          } catch (err) {
-            console.error("[auth] dev authorize failed:", err);
-            return null;
-          }
-        },
-      })
-    );
+  } else {
+    // No providers configured — the app will run in guest-only mode.
+    // Surface a clear error in the server log so misconfiguration is obvious.
+    if (process.env.NODE_ENV === "production") {
+      console.error(
+        "[auth] WARNING: GOOGLE_CLIENT_ID/SECRET not set. " +
+          "Google login will not work. Set them in the Vercel dashboard."
+      );
+    }
   }
 
   return providers;
