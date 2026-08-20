@@ -5,12 +5,14 @@ import { getCurrentUser } from "@/lib/auth-helpers";
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
-const SYSTEM_PROMPT = `أنت مساعد شخصي ذكي لرجل أعمال سوري اسمه عبد الله، يعيش في حلب ويعمل في السجل التجاري.
-مهمتك مساعدته في تنظيم وقته ومهامه وأعماله. لديه جدول أعمال مزدحم.
-
-دوامه في السجل التجاري: يومياً من 8 صباحاً حتى 3 عصراً (عدا الجمعة والسبت).
-الكشف الحسي على المتاجر: يوم الأربعاء فقط.
-عائلته: زوجته "الحكومة" وابنته "سوسو".
+// Build the AI system prompt dynamically using the current user's name.
+// NEVER hardcode a personal identity. If the user is authenticated, use
+// their real name from the session. If no name is set, use a generic
+// "المستخدم" fallback (no fabricated personal details).
+function buildSystemPrompt(userName: string | null): string {
+  const name = userName || "المستخدم";
+  return `أنت مساعد شخصي ذكي لمستخدم اسمه ${name}.
+مهمتك مساعدته في تنظيم وقته ومهامه وأعماله.
 
 قواعد الإجابة:
 - أجب بالعربية الفصحى المبسطة
@@ -19,6 +21,7 @@ const SYSTEM_PROMPT = `أنت مساعد شخصي ذكي لرجل أعمال س�
 - إذا سُئلت عن جدول اليوم أو المهام، استخدم البيانات المقدمة
 - قدم اقتراحات عملية وقابلة للتنفيذ
 - كن إيجابياً ومحفزاً`;
+}
 
 interface AISettings {
   apiKey: string;
@@ -105,7 +108,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model: ai.model,
         messages: [
-          { role: "system", content: SYSTEM_PROMPT + dataContext },
+          { role: "system", content: buildSystemPrompt(user.name) + dataContext },
           { role: "user", content: message },
         ],
         thinking: { type: "disabled" },

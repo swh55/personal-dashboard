@@ -50,7 +50,7 @@ const defaultSettings: Settings = {
   pinCode: null,
   theme: "dark",
   accent: "emerald",
-  username: "عبد الله",
+  username: "",  // resolved dynamically from session, never hardcoded
   city: "حلب",
   lat: 36.2021,
   lng: 37.1343,

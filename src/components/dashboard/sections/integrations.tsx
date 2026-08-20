@@ -6,6 +6,7 @@ import {
   Trash2,
   RefreshCw,
   CircleAlert,
+  AlertCircle,
   Calendar,
   HardDrive,
   Send,
@@ -83,6 +84,10 @@ const SERVICE_META: Record<
     canSync?: boolean;
     syncEndpoint?: string;
     syncLabel?: string;
+    /** True if this integration requires a real OAuth flow with external scopes. */
+    requiresOAuth?: boolean;
+    /** Human-readable description of what's needed to activate this integration. */
+    requiredConfig?: string;
   }
 > = {
   google_calendar: {
@@ -93,6 +98,8 @@ const SERVICE_META: Record<
     canSync: true,
     syncEndpoint: "/api/sync/calendar",
     syncLabel: "مزامنة الأحداث",
+    requiresOAuth: true,
+    requiredConfig: "يتطلب نطاق OAuth مستقلاً (calendar.readonly) عبر Google Cloud Console — مختلف عن نطاق تسجيل الدخول.",
   },
   google_drive: {
     label: "Google Drive",
@@ -102,6 +109,8 @@ const SERVICE_META: Record<
     canSync: true,
     syncEndpoint: "/api/sync/drive",
     syncLabel: "نسخ احتياطي",
+    requiresOAuth: true,
+    requiredConfig: "يتطلب نطاق OAuth (drive.file) عبر Google Cloud Console.",
   },
   google_contacts: {
     label: "Google Contacts",
@@ -111,6 +120,8 @@ const SERVICE_META: Record<
     canSync: true,
     syncEndpoint: "/api/sync/contacts",
     syncLabel: "استيراد جهات الاتصال",
+    requiresOAuth: true,
+    requiredConfig: "يتطلب نطاق OAuth (contacts.readonly) عبر Google Cloud Console.",
   },
   telegram: {
     label: "تيليجرام",
@@ -129,6 +140,8 @@ const SERVICE_META: Record<
     icon: Github,
     color: "text-foreground",
     bg: "bg-muted",
+    requiresOAuth: true,
+    requiredConfig: "يتطلب GITHUB_CLIENT_ID و GITHUB_CLIENT_SECRET في متغيرات البيئة.",
   },
   cloud_sync: {
     label: "مزامنة سحابية",
@@ -214,6 +227,22 @@ export function IntegrationsSection() {
   }
 
   async function toggle(integration: Integration) {
+    const meta = serviceMeta(integration.service);
+
+    // If this integration requires a real OAuth flow AND is not currently
+    // connected, we must NOT pretend to "connect" it by flipping a boolean.
+    // Show the user what's needed instead.
+    if (meta.requiresOAuth && !integration.connected) {
+      toast.info(
+        `${meta.label}: ${meta.requiredConfig || "يتطلب إعداد OAuth"} — راجع DEPLOY_VERCEL.md للمتغيرات المطلوبة.`,
+        { duration: 6000 }
+      );
+      return;
+    }
+
+    // If already connected (and requires OAuth), allow disconnect — that's
+    // just clearing the flag (no token to revoke in this MVP).
+    // For non-OAuth integrations (telegram, email, cloud_sync), toggle is fine.
     setTogglingId(integration.id);
     try {
       const res = await fetch("/api/integrations", {
@@ -421,13 +450,20 @@ export function IntegrationsSection() {
                         className={
                           it.connected
                             ? "bg-emerald-glow/15 text-emerald-glow border-emerald-glow/30"
-                            : "bg-muted text-muted-foreground"
+                            : m.requiresOAuth
+                              ? "bg-amber-glow/10 text-amber-glow border-amber-glow/30"
+                              : "bg-muted text-muted-foreground"
                         }
                       >
                         {it.connected ? (
                           <>
                             <Check className="size-3" />
                             متصل
+                          </>
+                        ) : m.requiresOAuth ? (
+                          <>
+                            <AlertCircle className="size-3" />
+                            غير مهيأ
                           </>
                         ) : (
                           <>
@@ -437,9 +473,15 @@ export function IntegrationsSection() {
                         )}
                       </Badge>
                       <div className="flex items-center gap-1">
-                        <span className="text-[11px] text-muted-foreground">
-                          {it.connected ? "ربط" : "فصل"}
-                        </span>
+                        {m.requiresOAuth && !it.connected ? (
+                          <span className="text-[11px] text-muted-foreground">
+                            يتطلب OAuth
+                          </span>
+                        ) : (
+                          <span className="text-[11px] text-muted-foreground">
+                            {it.connected ? "ربط" : "فصل"}
+                          </span>
+                        )}
                         <Switch
                           checked={it.connected}
                           onCheckedChange={() => toggle(it)}
@@ -447,6 +489,12 @@ export function IntegrationsSection() {
                         />
                       </div>
                     </div>
+
+                    {m.requiresOAuth && !it.connected && (
+                      <p className="text-[10px] leading-relaxed text-amber-glow/80 bg-amber-glow/5 rounded p-1.5">
+                        {m.requiredConfig}
+                      </p>
+                    )}
 
                     {it.lastSync && (
                       <p className="text-[11px] text-muted-foreground">

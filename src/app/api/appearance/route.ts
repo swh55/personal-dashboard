@@ -36,7 +36,7 @@ export async function GET() {
       data: {
         theme: map.theme || "dark",
         accent: map.accent || "emerald",
-        username: map.username || "عبد الله",
+        username: map.username || "",
         pinEnabled: map.pinEnabled === "true",
         ...(map.pinCode ? { pinCode: map.pinCode } : {}),
         city: map.city || "حلب",

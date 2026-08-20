@@ -36,6 +36,8 @@ import {
   formatCurrency,
   formatNumber,
 } from "@/lib/constants";
+import { useSession } from "next-auth/react";
+import { useAppSettings } from "@/hooks/use-app-settings";
 import { useFloatingPanelStore } from "@/store/use-floating-panel";
 import { PermissionsManager } from "@/components/dashboard/permissions-manager";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -105,6 +107,15 @@ export function OverviewSection() {
   const { data: weather } = useApi<WeatherData>("/api/weather");
   const { data: notifications } = useApi<SmartNotification[]>("/api/smart-notifications");
   const setPanel = useFloatingPanelStore((s) => s.setPanel);
+  const { data: session } = useSession();
+  const { settings } = useAppSettings();
+
+  // Resolve the display name dynamically:
+  //   1. NextAuth session.user.name (Google login name) — highest priority
+  //   2. useAppSettings.settings.username (user-edited name in Settings)
+  //   3. Empty — show "مرحبا" with no name (guest / first visit)
+  // NEVER hardcode a personal identity.
+  const displayName = session?.user?.name || settings.username || "";
 
   // Compute date/greeting only on the client to avoid SSR hydration mismatch
   // (server timezone may differ from the user's browser timezone).
@@ -176,7 +187,7 @@ export function OverviewSection() {
                   {dateLabel}
                 </div>
                 <h2 className="text-lg font-bold">
-                  {greeting}، {USER_PROFILE.name} 👋
+                  {greeting}{displayName ? `، ${displayName}` : ""} 👋
                 </h2>
                 {data?.todayHoliday ? (
                   <div className="flex items-center gap-1 text-sm text-amber-glow">

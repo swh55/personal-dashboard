@@ -86,7 +86,7 @@ export function AppearanceSection() {
 
   async function saveProfile() {
     setSavingProfile(true);
-    const name = usernameInput.trim() || "عبد الله";
+    const name = usernameInput.trim() || "";
     setUsername(name);
     const ok = await persistAppearance({ username: name });
     if (ok) toast.success("تم حفظ اسم المستخدم");

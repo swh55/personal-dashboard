@@ -13,11 +13,14 @@
 import { installFetchInterceptor } from "@/lib/local/fetch-interceptor";
 import { db } from "@/lib/local/db";
 import { startGlobalPomodoroTicker } from "@/store/use-pomodoro";
+import { seedDemoDataOnFirstRun } from "@/hooks/use-first-run";
 
 // Module-level activation — runs once when this module is first imported.
 if (typeof window !== "undefined" && !(window as any).__localModeReady) {
   try {
     db.initDB();
+    // Seed demo data on first visit (only if no real data exists)
+    seedDemoDataOnFirstRun();
     // installFetchInterceptor() internally calls shouldIntercept() and returns
     // early if interception isn't needed (e.g. authenticated web user).
     installFetchInterceptor();

@@ -1,7 +1,10 @@
-// User profile and app-wide constants
+// User profile defaults — NOTE: `name` is intentionally empty. The actual
+// display name is resolved dynamically per-session in the UI (see
+// overview.tsx) — from the NextAuth session first, then the user's saved
+// settings, then empty ("مرحبا" only, no fake identity).
 
 export const USER_PROFILE = {
-  name: "عبد الله",
+  name: "",  // dynamically resolved from session — never hardcoded
   city: "حلب",
   country: "سوريا",
   lat: 36.2021,

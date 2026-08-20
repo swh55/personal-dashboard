@@ -18,6 +18,8 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { useSession } from "next-auth/react";
+import { useAppSettings } from "@/hooks/use-app-settings";
 
 interface ChatMessage {
   id: string;
@@ -34,16 +36,25 @@ const SUGGESTED_PROMPTS = [
   "ما المهام المتأخرة؟",
 ];
 
-const WELCOME: ChatMessage = {
-  id: "welcome",
-  role: "assistant",
-  content:
-    "مرحباً عبد الله 👋 أنا مساعدك الذكي. اسألني عن جدولك أو مهامك أو مصروفاتك، وسأساعدك في تنظيم يومك. يمكنك تفعيل «تضمين بياناتي» لإعطائي سياقاً أفضل.",
-  ts: Date.now(),
-};
+// Build a welcome message dynamically — never hardcode a personal name.
+function buildWelcome(displayName: string): ChatMessage {
+  const name = displayName ? ` ${displayName}` : "";
+  return {
+    id: "welcome",
+    role: "assistant",
+    content:
+      `مرحباً${name} 👋 أنا مساعدك الذكي. اسألني عن جدولك أو مهامك أو مصروفاتك، وسأساعدك في تنظيم يومك. يمكنك تفعيل «تضمين بياناتي» لإعطائي سياقاً أفضل.`,
+    ts: Date.now(),
+  };
+}
 
 export function AIAssistantWidget() {
-  const [messages, setMessages] = React.useState<ChatMessage[]>([WELCOME]);
+  const { data: session } = useSession();
+  const { settings } = useAppSettings();
+  const displayName = session?.user?.name || settings.username || "";
+  const [messages, setMessages] = React.useState<ChatMessage[]>(() => [
+    buildWelcome(displayName),
+  ]);
   const [input, setInput] = React.useState("");
   const [sending, setSending] = React.useState(false);
   const [includeData, setIncludeData] = React.useState(true);

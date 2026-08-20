@@ -2260,7 +2260,7 @@ async function appearanceRoute(req: ParsedRequest): Promise<Response> {
     return ok({
       theme: map.theme || "dark",
       accent: map.accent || "emerald",
-      username: map.username || "عبد الله",
+      username: map.username || "",
       pinEnabled: map.pinEnabled === "true",
       ...(map.pinCode ? { pinCode: map.pinCode } : {}),
       city: map.city || "حلب",
@@ -2415,8 +2415,11 @@ async function aiChatRoute(req: ParsedRequest): Promise<Response> {
   // If a real API key is set, attempt a real API call.
   if (apiKey) {
     try {
+      // Dynamic system prompt — use the user's saved name from settings,
+      // or a generic "المستخدم" if unset. Never hardcode a personal identity.
+      const userName = settingsMap.username || "المستخدم";
       const systemPrompt =
-        "أنت مساعد شخصي ذكي لرجل أعمال سوري اسمه عبد الله، يعيش في حلب. أجب بالعربية الفصحى المبسطة، كن مختصراً ومفيداً، واستخدم الرموز التعبيرية باعتدال.";
+        `أنت مساعد شخصي ذكي لمستخدم اسمه ${userName}. أجب بالعربية الفصحى المبسطة، كن مختصراً ومفيداً، واستخدم الرموز التعبيرية باعتدال.`;
       const realFetch = getOriginalFetch();
       const res = await realFetch(`${baseUrl}/chat/completions`, {
         method: "POST",

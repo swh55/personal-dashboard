@@ -12,7 +12,8 @@ describe("Settings Persistence (useAppSettings)", () => {
     const state = useAppSettings.getState();
     expect(state.settings.loaded).toBe(true);
     expect(state.settings.theme).toBe("dark");
-    expect(state.settings.username).toBeTruthy();
+    // username defaults to empty — resolved dynamically from session, never hardcoded
+    expect(state.settings.username).toBe("");
     expect(state.settings.city).toBeTruthy();
     expect(state.settings.exchangeRate).toBeGreaterThan(0);
   });

@@ -30,6 +30,7 @@ import { useTheme } from "next-themes";
 import { useAppSettings } from "@/hooks/use-app-settings";
 import { toast } from "@/lib/api";
 import { getCurrentLocation, isNative } from "@/lib/native/bridge";
+import { clearDemoData, hasDemoData } from "@/hooks/use-first-run";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -121,6 +122,13 @@ export function SettingsSection() {
   const [exporting, setExporting] = React.useState(false);
   const [clearOpen, setClearOpen] = React.useState(false);
   const [clearing, setClearing] = React.useState(false);
+  const [demoStatus, setDemoStatus] = React.useState<"present" | "absent" | "checking">("checking");
+  const [demoClearing, setDemoClearing] = React.useState(false);
+
+  // Check if demo data exists on mount
+  React.useEffect(() => {
+    setDemoStatus(hasDemoData() ? "present" : "absent");
+  }, []);
 
   // Location inputs
   const [cityInput, setCityInput] = React.useState(settings.city);
@@ -185,8 +193,8 @@ export function SettingsSection() {
 
   async function saveProfile() {
     setSavingProfile(true);
-    setUsername(usernameInput.trim() || "عبد الله");
-    const ok = await persistAppearance({ username: usernameInput.trim() || "عبد الله" });
+    setUsername(usernameInput.trim() || "");
+    const ok = await persistAppearance({ username: usernameInput.trim() || "" });
     if (ok) toast.success("تم حفظ اسم المستخدم");
     setSavingProfile(false);
   }
@@ -784,6 +792,55 @@ export function SettingsSection() {
                 صُنع بعناية
                 <Github className="size-3 me-1" />
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Demo Data Management */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-1 text-base">
+                <Database className="size-4 text-amber-glow" />
+                إدارة البيانات التجريبية
+              </CardTitle>
+              <CardDescription className="text-xs">
+                البيانات التجريبية تساعدك على استكشاف الموقع. يمكنك حذفها متى شئت مع الحفاظ على بياناتك الحقيقية.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-2">
+              {demoStatus === "present" ? (
+                <>
+                  <div className="flex items-center gap-2 rounded-lg bg-amber-glow/10 p-2 text-sm text-amber-glow">
+                    <Sparkles className="size-4" />
+                    البيانات التجريبية مفعّلة حالياً
+                  </div>
+                  <Button
+                    variant="outline"
+                    className="border-amber-glow/40 text-amber-glow hover:bg-amber-glow/10"
+                    disabled={demoClearing}
+                    onClick={() => {
+                      setDemoClearing(true);
+                      setTimeout(() => {
+                        const result = clearDemoData();
+                        setDemoClearing(false);
+                        setDemoStatus("absent");
+                        toast.success(`تم حذف ${result.cleared} عنصراً تجريبياً. بقيت ${result.remaining} من بياناتك الحقيقية.`);
+                        setTimeout(() => window.location.reload(), 600);
+                      }, 100);
+                    }}
+                  >
+                    <Trash2 className="ms-1 size-4" />
+                    {demoClearing ? "جارٍ المسح..." : "مسح البيانات التجريبية فقط"}
+                  </Button>
+                </>
+              ) : (
+                <div className="flex items-center gap-2 rounded-lg bg-muted/30 p-2 text-sm text-muted-foreground">
+                  <Check className="size-4 text-emerald-glow" />
+                  لا توجد بيانات تجريبية — الموقع جاهز لبياناتك الحقيقية
+                </div>
+              )}
+              <p className="text-[11px] text-muted-foreground pt-1">
+                ملاحظة: المسح يحذف فقط العناصر ذات المعرّف <code className="font-mono">demo-*</code> ولا يمسّ أي بيانات أضفتها بنفسك.
+              </p>
             </CardContent>
           </Card>
 
