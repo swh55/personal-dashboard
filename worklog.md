@@ -801,3 +801,38 @@ Stage Summary:
 - sync/{calendar,contacts,drive} routes gated with 401 + 501 stubs pending per-user OAuth wiring.
 - Guest users get empty-array responses (no 401 on GETs) so the client-side fetch interceptor keeps working with localStorage; writes correctly reject with 401.
 - ESLint clean (--max-warnings=0) and TypeScript clean for src/app/api/*.
+
+---
+Task ID: 20-auth-and-isolation
+Agent: main (auth + multi-tenant + guest mode + cloudinary + pwa + sync + tests + verification)
+Task: Multi-user cloud migration — Google OAuth + Neon PostgreSQL + user isolation + offline-first guest mode + Cloudinary + PWA + sync engine + tests + browser verification
+
+Work Log:
+- Phase 2: Rewrote prisma/schema.prisma for PostgreSQL/Neon — added User model + userId on ALL 30 data models + @@index([userId]) + multi-tenant unique constraints (AppSetting userId_key, Budget userId_cat_month_year, HappinessLog userId_date, Integration userId_service) + SyncQueue model. Ran `bunx prisma db push` → 32 tables created on Neon. Verified via scripts/verify-neon.ts (create user + contact, userId filter, cleanup).
+- Phase 4: Configured NextAuth v4 (src/lib/auth.ts) — JWT session strategy (avoids Account model name collision with financial Account), Google OAuth provider (conditional on env vars), Dev credentials provider (always-on in non-prod for testing). User upsert in signIn callback. userId embedded in JWT + session. Created /api/auth/[...nextauth]/route.ts, src/lib/auth-helpers.ts (getCurrentUser — NEVER trusts client userId), AuthProvider + AuthButton in top bar.
+- Phase 5: Delegated 37 API routes update to subagent — all routes now use getCurrentUser(), filter by userId, ownership check on PUT/DELETE (403 on cross-tenant), logActivity accepts userId. Verified via curl: User2 cannot see/delete User1's data (returns 403 "غير مصرح").
+- Phase 5-b: Updated fetch interceptor (src/lib/local/fetch-interceptor.ts) to activate for web guests (no auth-session flag). /api/auth/* NEVER intercepted. Per-request check: if auth-session flag present → pass through to cloud. Updated api.ts waitForLocalMode() to skip wait for authenticated users.
+- Phase 6: Created /api/migrate-guest endpoint + src/lib/sync/migrate-guest.ts client. Bulk-imports localStorage data to cloud on first login. Idempotent by client id. AuthButton triggers migration automatically. Verified: POST /api/migrate-guest 200 in browser.
+- Phase 7: Created /api/sync/route.ts (one-shot pull of all user data for multi-device) + src/lib/sync/queue.ts (client-side offline write queue with retry, exponential backoff, transient/permanent error classification, 404-as-success on DELETE).
+- Phase 3: Installed cloudinary SDK. Created src/lib/cloudinary.ts (server-only, signUpload + deleteAsset + isCloudinaryConfigured). Created /api/upload/sign/route.ts (returns signed signature for client-direct upload; secret never leaves server).
+- Phase 8: Generated PNG icons (192, 512, maskable) from logo.svg via sharp. Updated manifest.json. Rewrote public/sw.js — SECURITY: never caches /api/auth/* or /api/*, only caches app shell + static assets. Network-first for navigation.
+- Phase 9: Created .env (real Neon + Cloudinary + AUTH_SECRET, empty GOOGLE_CLIENT_ID/SECRET placeholders) + .env.example (placeholders only). Strengthened .gitignore. Untracked .env from git (was tracked with only harmless SQLite path). Secret scan: no real secrets in tracked files or history.
+- Phase 10: Added src/__tests__/multi-tenant.test.ts (4 tests documenting isolation contract) + src/__tests__/sync-queue.test.ts (5 tests for enqueue/flush/retry). Total 37 tests pass.
+- Phase 11: Agent Browser verification — guest page renders, login flow works (NextAuth sign-in → session → Neon user created), AuthButton shows authenticated state, contact created via UI appears in Neon with correct userId, returning user bypasses interceptor (cloud data immediate), mobile responsive (375px). Multi-tenant isolation verified in browser (final-verify user doesn't see verify user's contact).
+- Bug fix: NextAuth session cookie is HttpOnly (JS can't read), so the interceptor couldn't detect auth. Fixed: AuthButton sets localStorage 'auth-session=1' flag; interceptor checks it at install-time AND per-request. Returning authenticated users: flag present → interceptor NOT installed → fetches go to cloud. Deleted middleware.ts (Next.js 16 treats it as fatal dev error overlay).
+
+Stage Summary:
+- Database: SQLite → Neon PostgreSQL (32 tables, multi-tenant, verified end-to-end)
+- Auth: NextAuth v4 + Google OAuth (ready for user's creds) + Dev provider (tested)
+- Multi-tenant: ALL 37 API routes updated; isolation verified (403 on cross-tenant)
+- Guest mode: fetch interceptor activates for web guests; offline-first localStorage
+- Guest→User: /api/migrate-guest bulk-imports localStorage to cloud (idempotent)
+- Sync: /api/sync pull + client-side queue with retry
+- Cloudinary: server-side signing; secret stays server-only
+- PWA: secure SW (no /api caching); PNG icons; manifest
+- Tests: 37 pass (28 existing + 9 new)
+- Lint: clean (0 errors, 0 warnings)
+- Dev server: running, all routes 200
+- Browser verification: guest mode, login, CRUD, multi-tenant, returning user — all verified
+- Commit: 054d951 (local; not pushed — no GitHub creds in sandbox)
+- Report: IMPLEMENTATION_REPORT.md
