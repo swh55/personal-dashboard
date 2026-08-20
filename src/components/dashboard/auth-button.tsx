@@ -26,6 +26,22 @@ export function AuthButton() {
   const { data: session, status } = useSession();
   const [migrating, setMigrating] = React.useState(false);
 
+  // Keep the client-side `auth-session` localStorage flag in sync with the
+  // real session. The fetch interceptor reads this flag (instead of the
+  // HttpOnly NextAuth cookie, which JS can't see) to decide whether to
+  // route /api/* to the cloud (authenticated) or localStorage (guest).
+  React.useEffect(() => {
+    try {
+      if (status === "authenticated" && session?.user) {
+        localStorage.setItem("auth-session", "1");
+      } else {
+        localStorage.removeItem("auth-session");
+      }
+    } catch {
+      // ignore
+    }
+  }, [status, session?.user]);
+
   // Trigger guest→cloud migration once when the user becomes authenticated.
   React.useEffect(() => {
     if (status !== "authenticated" || !session?.user?.id) return;

@@ -27,15 +27,25 @@ async function waitForLocalMode(): Promise<void> {
   } catch {
     // localStorage not available
   }
-  // Authenticated web users have a session cookie → skip local mode
-  const hasSessionCookie =
-    typeof document !== "undefined" &&
-    document.cookie &&
-    (document.cookie.includes("next-auth.session-token") ||
-      document.cookie.includes("__Secure-next-auth.session-token"));
+  // Authenticated web users have a non-HttpOnly `x-authed=1` cookie set
+  // by Next.js middleware (the NextAuth session cookie itself is HttpOnly
+  // and invisible to JS). When present, skip local mode → fetches go
+  // straight to the cloud server. Also check the localStorage flag as a
+  // fallback for the brief window before middleware runs.
+  let isAuthenticated = false;
+  if (typeof document !== "undefined" && document.cookie) {
+    isAuthenticated = document.cookie.includes("x-authed=1");
+  }
+  if (!isAuthenticated) {
+    try {
+      isAuthenticated = localStorage.getItem("auth-session") === "1";
+    } catch {
+      // ignore
+    }
+  }
 
   const shouldUseLocalMode =
-    isApkMode || isCapacitorNative || isForced || !hasSessionCookie;
+    isApkMode || isCapacitorNative || isForced || !isAuthenticated;
 
   if (!shouldUseLocalMode) {
     return; // Authenticated web user — fetch goes to cloud directly

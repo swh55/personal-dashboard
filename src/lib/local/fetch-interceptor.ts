@@ -2692,16 +2692,33 @@ export function getOriginalFetch(): typeof window.fetch {
 }
 
 /**
- * Check for the NextAuth session cookie. When present, the user is
- * authenticated and we must NOT intercept /api/* (let them hit the cloud).
- * When absent (guest), we route /api/* to localStorage for offline-first.
+ * Check whether the current client is an authenticated web user.
+ *
+ * NextAuth's session cookie is HttpOnly (correctly — we never want JS to
+ * read the actual token), so document.cookie can't see it. The Next.js
+ * middleware sets a non-HttpOnly `x-authed=1` cookie that mirrors the
+ * presence of the session cookie — we read THAT instead.
+ *
+ * As a fallback (for the brief window between page-load and the first
+ * middleware-set cookie, or if middleware is disabled), we also check a
+ * localStorage flag that the AuthButton sets after useSession() resolves.
+ *
+ * This is a hint, not a security control — the server still enforces
+ * authentication on every request via the signed JWT.
  */
-function hasSessionCookie(): boolean {
-  if (typeof document === "undefined" || !document.cookie) return false;
-  return (
-    document.cookie.includes("next-auth.session-token") ||
-    document.cookie.includes("__Secure-next-auth.session-token")
-  );
+function isAuthenticatedWebUser(): boolean {
+  if (typeof window === "undefined") return false;
+  // Primary: middleware-set non-HttpOnly cookie (available at module-load)
+  if (typeof document !== "undefined" && document.cookie) {
+    if (document.cookie.includes("x-authed=1")) return true;
+  }
+  // Fallback: localStorage flag set by AuthButton after session resolves
+  try {
+    if (window.localStorage.getItem("auth-session") === "1") return true;
+  } catch {
+    // ignore
+  }
+  return false;
 }
 
 function shouldIntercept(): boolean {
@@ -2721,9 +2738,9 @@ function shouldIntercept(): boolean {
   }
   // APK / native / forced → always intercept (offline-first shell)
   if (isApkMode || isNative || forceLocal) return true;
-  // Normal web: intercept ONLY for guests (no session cookie).
+  // Normal web: intercept ONLY for guests (no auth-session flag).
   // Authenticated users get real cloud data.
-  return !hasSessionCookie();
+  return !isAuthenticatedWebUser();
 }
 
 /** Install the fetch interceptor. Safe to call multiple times. */
@@ -2749,9 +2766,10 @@ export function installFetchInterceptor(): void {
       return originalFetch!(input as RequestInfo, init);
     }
 
-    // If the user just authenticated mid-session (cookie appeared after
-    // install), stop intercepting app data so writes go to the cloud.
-    if (hasSessionCookie()) {
+    // If the user just authenticated mid-session (the AuthButton set the
+    // auth-session flag after this interceptor was installed), stop
+    // intercepting app data so writes go to the cloud.
+    if (isAuthenticatedWebUser()) {
       return originalFetch!(input as RequestInfo, init);
     }
 
