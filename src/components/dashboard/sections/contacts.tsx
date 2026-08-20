@@ -327,7 +327,7 @@ export function ContactsSection() {
         <CardContent className="flex flex-col gap-1 p-1 md:flex-row md:items-center">
           <div className="relative flex-1">
             <Search className="absolute right-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="بحث بالاسم أو الهاتف أو البريد" className="pr-8" />
+            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="بحث بالاسم أو الهاتف أو البريد" className="pe-8" />
           </div>
           <div className="flex items-center gap-1">
             <Filter className="size-4 text-muted-foreground" />

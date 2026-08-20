@@ -88,7 +88,7 @@ export function PermissionsManager() {
               <span className="text-sm font-bold">صلاحيات التطبيق</span>
               {allGranted && (
                 <Badge className="bg-emerald-500/15 text-emerald-500 border-emerald-500/30">
-                  <Check className="size-3 ml-1" />
+                  <Check className="size-3 ms-1" />
                   ممنوحة
                 </Badge>
               )}

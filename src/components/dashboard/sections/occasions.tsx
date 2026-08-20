@@ -232,7 +232,7 @@ export function OccasionsSection() {
                       <Badge className="bg-emerald-glow text-background">اليوم!</Badge>
                     ) : (
                       <Badge variant="outline" className="text-emerald-glow border-emerald-glow/30">
-                        <Clock className="size-3 ml-1" />
+                        <Clock className="size-3 ms-1" />
                         بعد {nextOne.next.diffDays} يوم
                       </Badge>
                     )}

@@ -403,7 +403,7 @@ export function WaitingListSection() {
                           {Array.from({ length: 5 }).map((_, idx) => (
                             <Star key={idx} className={`size-3 ${idx < p ? pm.star + " fill-current" : "text-muted-foreground/30"}`} />
                           ))}
-                          <span className="mr-1">{pm.label}</span>
+                          <span className="me-1">{pm.label}</span>
                         </span>
                       </SelectItem>
                     );

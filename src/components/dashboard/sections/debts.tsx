@@ -295,7 +295,7 @@ export function DebtsSection() {
               <SelectItem value="owe">ديون عليّ</SelectItem>
             </SelectContent>
           </Select>
-          <div className="mr-auto text-xs text-muted-foreground">
+          <div className="me-auto text-xs text-muted-foreground">
             الديون المسوّاة لا تُعرض
           </div>
         </CardContent>

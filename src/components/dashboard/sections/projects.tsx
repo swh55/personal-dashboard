@@ -231,7 +231,7 @@ export function ProjectsSection() {
               <SelectItem value="archived">مؤرشف</SelectItem>
             </SelectContent>
           </Select>
-          <div className="mr-auto text-xs text-muted-foreground">{filtered.length} مشروع</div>
+          <div className="me-auto text-xs text-muted-foreground">{filtered.length} مشروع</div>
         </CardContent>
       </Card>
 

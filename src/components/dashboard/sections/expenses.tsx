@@ -329,7 +329,7 @@ export function ExpensesSection() {
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-center gap-1 mr-auto">
+          <div className="flex items-center gap-1 me-auto">
             <Label htmlFor="convert-all" className="text-sm text-muted-foreground">عرض القيمة بالليرة</Label>
             <Switch id="convert-all" checked={convertAll} onCheckedChange={setConvertAll} />
           </div>

@@ -400,7 +400,7 @@ export function HealthSection() {
                       </div>
                       {m.notes ? (
                         <div className="mt-2 rounded-md bg-muted/40 p-2 text-xs text-muted-foreground">
-                          <StickyNote className="size-3 inline ml-1" />
+                          <StickyNote className="size-3 inline ms-1" />
                           {m.notes}
                         </div>
                       ) : null}
@@ -480,7 +480,7 @@ export function HealthSection() {
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-1.5">
                             <Badge variant="outline" className={`text-[10px] ${q.color} border`}>
-                              <span className="ml-1">{q.emoji}</span>
+                              <span className="ms-1">{q.emoji}</span>
                               {q.label}
                             </Badge>
                             <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">

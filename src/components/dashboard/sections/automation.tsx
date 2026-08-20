@@ -424,7 +424,7 @@ export function AutomationSection() {
                               متوقفة
                             </Badge>
                           )}
-                          <span className="text-[11px] text-muted-foreground mr-auto">
+                          <span className="text-[11px] text-muted-foreground me-auto">
                             {timeAgo(r.updatedAt)}
                           </span>
                         </div>

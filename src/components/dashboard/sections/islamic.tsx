@@ -316,7 +316,7 @@ export function IslamicSection() {
               <CardTitle className="flex items-center gap-1 text-base">
                 <BookOpen className="size-4 text-emerald-glow" />
                 سجل القراءة
-                <Button size="sm" className="mr-auto h-7" onClick={openAdd}>
+                <Button size="sm" className="me-auto h-7" onClick={openAdd}>
                   <Plus className="size-3.5" />
                   تسجيل قراءة
                 </Button>
@@ -391,7 +391,7 @@ export function IslamicSection() {
               <CardTitle className="flex items-center gap-1 text-base">
                 <Clock className="size-4 text-emerald-glow" />
                 مواقيت الصلاة
-                <Badge variant="outline" className="text-[10px] mr-auto">حلب</Badge>
+                <Badge variant="outline" className="text-[10px] me-auto">حلب</Badge>
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-1.5">

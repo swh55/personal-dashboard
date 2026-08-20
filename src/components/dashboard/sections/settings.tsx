@@ -444,7 +444,7 @@ export function SettingsSection() {
                     </Button>
                   </div>
                   <p className="mt-2 text-xs text-muted-foreground">
-                    <Smartphone className="size-3 inline ml-1" />
+                    <Smartphone className="size-3 inline ms-1" />
                     سيُطلب الرمز في المرة القادمة عند فتح التطبيق
                   </p>
                 </div>
@@ -499,7 +499,7 @@ export function SettingsSection() {
                     <button
                       key={a.value}
                       onClick={() => changeAccent(a.value)}
-                      className={`relative flex items-center gap-1 rounded-lg border p-2 pr-3 transition ${settings.accent === a.value ? "border-foreground/40 bg-muted" : "border-border hover:bg-muted"}`}
+                      className={`relative flex items-center gap-1 rounded-lg border p-2 pe-3 transition ${settings.accent === a.value ? "border-foreground/40 bg-muted" : "border-border hover:bg-muted"}`}
                       aria-label={a.label}
                     >
                       <span
@@ -654,7 +654,7 @@ export function SettingsSection() {
                     value={aiKeyInput}
                     onChange={(e) => setAiKeyInput(e.target.value)}
                     placeholder="••••••••••••••••••••••••"
-                    className="pr-10 text-right"
+                    className="pe-10 text-right"
                   />
                   <button
                     type="button"
@@ -782,7 +782,7 @@ export function SettingsSection() {
               <div className="flex items-center justify-center gap-1.5 pt-2 text-xs text-muted-foreground">
                 <Heart className="size-3 text-rose-500" />
                 صُنع بعناية
-                <Github className="size-3 mr-1" />
+                <Github className="size-3 me-1" />
               </div>
             </CardContent>
           </Card>

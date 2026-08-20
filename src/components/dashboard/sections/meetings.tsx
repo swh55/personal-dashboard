@@ -272,7 +272,7 @@ export function MeetingsSection() {
               <SelectItem value="cancelled">ملغى</SelectItem>
             </SelectContent>
           </Select>
-          <div className="mr-auto text-xs text-muted-foreground">{filtered.length} اجتماع</div>
+          <div className="me-auto text-xs text-muted-foreground">{filtered.length} اجتماع</div>
         </CardContent>
       </Card>
 

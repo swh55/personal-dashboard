@@ -216,7 +216,7 @@ export function AiInsightsSection() {
                     <TrendingUp className="size-4" />
                   </div>
                   أنماط الإنفاق
-                  <Badge variant="secondary" className="ml-auto">
+                  <Badge variant="secondary" className="ms-auto">
                     {insights.spendingPatterns.length}
                   </Badge>
                 </CardTitle>
@@ -227,7 +227,7 @@ export function AiInsightsSection() {
                     لا توجد بيانات إنفاق في آخر 30 يوماً
                   </p>
                 ) : (
-                  <div className="flex flex-col gap-1 max-h-80 overflow-y-auto custom-scroll pr-1">
+                  <div className="flex flex-col gap-1 max-h-80 overflow-y-auto custom-scroll pe-1">
                     {insights.spendingPatterns.map((p) => (
                       <div
                         key={p.category}
@@ -302,7 +302,7 @@ export function AiInsightsSection() {
                     <Lightbulb className="size-4" />
                   </div>
                   اقتراحات المهام
-                  <Badge variant="secondary" className="ml-auto">
+                  <Badge variant="secondary" className="ms-auto">
                     {insights.taskSuggestions.length}
                   </Badge>
                 </CardTitle>
@@ -313,7 +313,7 @@ export function AiInsightsSection() {
                     لا توجد اقتراحات حالياً
                   </p>
                 ) : (
-                  <div className="flex flex-col gap-1 max-h-80 overflow-y-auto custom-scroll pr-1">
+                  <div className="flex flex-col gap-1 max-h-80 overflow-y-auto custom-scroll pe-1">
                     {insights.taskSuggestions.map((s, i) => {
                       const pr = PRIORITY_META[s.priority];
                       const tm =
@@ -361,7 +361,7 @@ export function AiInsightsSection() {
                     <Clock className="size-4" />
                   </div>
                   أفضل الأوقات للإنتاجية
-                  <Badge variant="secondary" className="ml-auto">
+                  <Badge variant="secondary" className="ms-auto">
                     {insights.bestTimes.length}
                   </Badge>
                 </CardTitle>
@@ -412,7 +412,7 @@ export function AiInsightsSection() {
                     <AlertTriangle className="size-4" />
                   </div>
                   التنبيهات التنبؤية
-                  <Badge variant="secondary" className="ml-auto">
+                  <Badge variant="secondary" className="ms-auto">
                     {insights.predictiveAlerts.length}
                   </Badge>
                 </CardTitle>
@@ -428,7 +428,7 @@ export function AiInsightsSection() {
                     </p>
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-1 max-h-80 overflow-y-auto custom-scroll pr-1">
+                  <div className="flex flex-col gap-1 max-h-80 overflow-y-auto custom-scroll pe-1">
                     {insights.predictiveAlerts.map((a, i) => {
                       const am = ALERT_META[a.severity];
                       const Icon = am.icon;

@@ -245,7 +245,7 @@ export function DiarySection() {
               onClick={() => setMoodFilter(moodFilter === m.value ? "all" : m.value)}
               className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs transition ${moodFilter === m.value ? m.color + " border" : "border-border hover:bg-muted"}`}
             >
-              <span className="ml-0.5">{m.emoji}</span>
+              <span className="ms-0.5">{m.emoji}</span>
               {m.label}
               {m.count > 0 ? <Badge variant="secondary" className="text-[10px] h-4 px-1">{m.count}</Badge> : null}
             </button>
@@ -262,7 +262,7 @@ export function DiarySection() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="بحث في العنوان أو المحتوى"
-              className="pr-8"
+              className="pe-8"
             />
           </div>
         </CardContent>
@@ -304,7 +304,7 @@ export function DiarySection() {
                       </div>
                       {w ? (
                         <Badge variant="outline" className="text-[10px] shrink-0">
-                          <WIcon className="size-3 ml-1" />
+                          <WIcon className="size-3 ms-1" />
                           {w.label}
                         </Badge>
                       ) : null}

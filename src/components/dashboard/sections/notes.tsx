@@ -185,7 +185,7 @@ export function NotesSection() {
         <CardContent className="p-1">
           <div className="relative">
             <Search className="absolute right-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="بحث في العنوان أو المحتوى" className="pr-8" />
+            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="بحث في العنوان أو المحتوى" className="pe-8" />
           </div>
         </CardContent>
       </Card>

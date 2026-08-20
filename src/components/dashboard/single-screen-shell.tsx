@@ -213,9 +213,10 @@ function BottomDock() {
                         ? "bg-emerald-glow/15 text-emerald-glow"
                         : "text-muted-foreground hover:bg-accent/40 hover:text-foreground",
                     )}
-                    style={{ height: 40 }}
+                    style={{ height: 48 }}
                   >
                     <Icon className="size-4" />
+                    <span className="text-[9px] font-medium leading-tight line-clamp-1 max-w-full text-center">{item.label}</span>
                   </button>
                 );
               })}
@@ -257,7 +258,7 @@ function BottomDock() {
                     "flex flex-1 flex-col items-center justify-center gap-0.5 transition-colors",
                     isActive ? "text-emerald-glow" : "text-muted-foreground hover:text-foreground",
                   )}
-                  style={{ height: 44 }}
+                  style={{ height: 52 }}
                 >
                   <div
                     className={cn(
@@ -267,6 +268,7 @@ function BottomDock() {
                   >
                     <Icon className="size-4" />
                   </div>
+                  <span className="text-[10px] font-medium leading-none">{item.label}</span>
                 </button>
               );
             })}
@@ -275,9 +277,10 @@ function BottomDock() {
               onClick={() => setExpanded(true)}
               aria-label="عرض كل الأقسام"
               className="flex flex-col items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
-              style={{ width: 44, height: 44 }}
+              style={{ width: 44, height: 52 }}
             >
               <ChevronUp className="size-4" />
+              <span className="text-[10px] font-medium leading-none">الكل</span>
             </button>
             {/* Quick-add floating button */}
             <button

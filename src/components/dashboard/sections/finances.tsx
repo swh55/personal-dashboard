@@ -214,7 +214,7 @@ export function FinancesSection() {
                   <CardTitle className="flex items-center gap-1 text-base">
                     <Coins className="size-4 text-emerald-glow" />
                     الأصول
-                    <Badge variant="secondary" className="text-[10px] mr-auto">{fin.assets.length}</Badge>
+                    <Badge variant="secondary" className="text-[10px] me-auto">{fin.assets.length}</Badge>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="flex-1 min-h-0">
@@ -233,7 +233,7 @@ export function FinancesSection() {
                             <div className="text-xs text-muted-foreground">
                               {formatCurrency(a.amount, a.currency)}
                               {a.currency === "usd" ? (
-                                <span className="mr-1">· ≈ {formatCurrency(toSYP(a.amount, a.currency), "syp")}</span>
+                                <span className="me-1">· ≈ {formatCurrency(toSYP(a.amount, a.currency), "syp")}</span>
                               ) : null}
                             </div>
                           </div>
@@ -252,7 +252,7 @@ export function FinancesSection() {
                   <CardTitle className="flex items-center gap-1 text-base">
                     <Landmark className="size-4 text-amber-glow" />
                     الحسابات
-                    <Badge variant="secondary" className="text-[10px] mr-auto">{fin.accounts.length}</Badge>
+                    <Badge variant="secondary" className="text-[10px] me-auto">{fin.accounts.length}</Badge>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="flex-1 min-h-0">
@@ -296,7 +296,7 @@ export function FinancesSection() {
                 <CardTitle className="flex items-center gap-1 text-base">
                   <Scale className="size-4 text-emerald-glow" />
                   نظرة على الديون
-                  <Badge variant="secondary" className="text-[10px] mr-auto">{fin.debts.length}</Badge>
+                  <Badge variant="secondary" className="text-[10px] me-auto">{fin.debts.length}</Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent>

@@ -396,7 +396,7 @@ export function CallPadSection() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="بحث بالاسم أو الرقم"
-                className="pr-8"
+                className="pe-8"
               />
             </div>
           </CardHeader>

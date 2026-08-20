@@ -17,6 +17,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 
 interface ChatMessage {
   id: string;
@@ -231,12 +232,12 @@ export function AIAssistantWidget() {
 function MessageBubble({ msg }: { msg: ChatMessage }) {
   const isUser = msg.role === "user";
   return (
-    <div className={"flex gap-1 " + (isUser ? "flex-row-reverse" : "flex-row")}>
+    <div className={cn("flex gap-1", isUser ? "justify-end" : "justify-start")}>
       <Avatar
         className={
           "size-6 shrink-0 " +
           (isUser
-            ? "bg-muted text-foreground"
+            ? "order-2 bg-muted text-foreground"
             : msg.error
             ? "bg-rose-500/15 text-rose-500"
             : "bg-gradient-to-br from-emerald-glow to-amber-glow text-background")
