@@ -56,6 +56,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { ImageUpload } from "@/components/ui/image-upload";
 
 interface Contact {
   id: string;
@@ -522,8 +523,13 @@ export function ContactsSection() {
               </Select>
             </div>
             <div className="grid gap-1.5">
-              <Label htmlFor="n-avatar">رابط الصورة الرمزية</Label>
-              <Input id="n-avatar" dir="ltr" value={form.avatar} onChange={(e) => setForm((f) => ({ ...f, avatar: e.target.value }))} className="text-right" placeholder="https://..." />
+              <Label>الصورة الرمزية</Label>
+              <ImageUpload
+                value={form.avatar}
+                onChange={(url) => setForm((f) => ({ ...f, avatar: url }))}
+                folder="avatars"
+                placeholder="رفع صورة رمزية"
+              />
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="n-note">ملاحظة</Label>

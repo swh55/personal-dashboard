@@ -15,9 +15,10 @@ import {
   CheckCircle2,
   Archive,
   Filter,
+  X,
 } from "lucide-react";
 import { useApi, toast, formatDate } from "@/lib/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,6 +29,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Progress } from "@/components/ui/progress";
 import { Slider } from "@/components/ui/slider";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -54,6 +56,15 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+interface ChecklistItem {
+  id: string;
+  text: string;
+  done: boolean;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface Project {
   id: string;
   name: string;
@@ -64,6 +75,8 @@ interface Project {
   startDate: string | null;
   endDate: string | null;
   createdAt: string;
+  checklist?: ChecklistItem[];
+  effectiveProgress?: number;
   _count?: { tasks: number };
 }
 
@@ -101,6 +114,24 @@ const EMPTY_FORM = {
   endDate: "",
 };
 
+/**
+ * Compute the display progress for a project:
+ *  - If it has checklist items: doneItems / totalItems * 100
+ *  - Otherwise: the manual `progress` field
+ */
+function effectiveProgress(p: Project): number {
+  if (typeof p.effectiveProgress === "number") return p.effectiveProgress;
+  const list = p.checklist ?? [];
+  if (list.length === 0) return p.progress;
+  const done = list.filter((i) => i.done).length;
+  return Math.round((done / list.length) * 100);
+}
+
+/** Whether a project is currently using its checklist to drive progress. */
+function hasChecklist(p: Project): boolean {
+  return (p.checklist?.length ?? 0) > 0;
+}
+
 export function ProjectsSection() {
   const { data, raw, loading, error, reload } = useApi<Project[]>("/api/projects");
   const projects = data || [];
@@ -113,6 +144,10 @@ export function ProjectsSection() {
   const [deleteId, setDeleteId] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
   const [form, setForm] = React.useState(EMPTY_FORM);
+
+  // Checklist composer state (inside the detail dialog).
+  const [newItemText, setNewItemText] = React.useState("");
+  const [itemBusy, setItemBusy] = React.useState<string | null>(null);
 
   const filtered = React.useMemo(() => {
     if (filter === "all") return projects;
@@ -147,7 +182,7 @@ export function ProjectsSection() {
     }
     setSubmitting(true);
     try {
-      const payload: any = {
+      const payload: Record<string, unknown> = {
         name: form.name.trim(),
         description: form.description.trim() || null,
         status: form.status,
@@ -166,8 +201,9 @@ export function ProjectsSection() {
       toast.success(editing ? "تم تحديث المشروع" : "تمت إضافة المشروع");
       setDialogOpen(false);
       reload();
-    } catch (e: any) {
-      toast.error(e.message || "خطأ في الحفظ");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "خطأ في الحفظ";
+      toast.error(msg);
     } finally {
       setSubmitting(false);
     }
@@ -183,8 +219,110 @@ export function ProjectsSection() {
       setDeleteId(null);
       if (detail && detail.id === deleteId) setDetail(null);
       reload();
-    } catch (e: any) {
-      toast.error(e.message || "خطأ");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "خطأ";
+      toast.error(msg);
+    }
+  }
+
+  // --------------------------------------------------------------------------
+  // Checklist handlers — optimistic local updates + master list reload.
+  // --------------------------------------------------------------------------
+
+  async function addChecklistItem() {
+    if (!detail) return;
+    const text = newItemText.trim();
+    if (!text) return;
+    setItemBusy("new");
+    try {
+      const res = await fetch(`/api/projects/${detail.id}/checklist`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error || "فشل إضافة البند");
+      const created: ChecklistItem = json.data;
+      const nextList = [...(detail.checklist ?? []), created];
+      setDetail({
+        ...detail,
+        checklist: nextList,
+        progress: json.progress ?? effectiveProgress({ ...detail, checklist: nextList }),
+      });
+      setNewItemText("");
+      reload();
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "خطأ";
+      toast.error(msg);
+    } finally {
+      setItemBusy(null);
+    }
+  }
+
+  async function toggleChecklistItem(item: ChecklistItem) {
+    if (!detail) return;
+    const nextDone = !item.done;
+    const nextList = (detail.checklist ?? []).map((i) =>
+      i.id === item.id ? { ...i, done: nextDone } : i
+    );
+    // Optimistic update.
+    setDetail({
+      ...detail,
+      checklist: nextList,
+      progress: effectiveProgress({ ...detail, checklist: nextList }),
+    });
+    setItemBusy(item.id);
+    try {
+      const res = await fetch(`/api/projects/${detail.id}/checklist`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: item.id, done: nextDone }),
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error || "فشل تحديث البند");
+      if (typeof json.progress === "number") {
+        setDetail((d) => (d ? { ...d, progress: json.progress } : d));
+      }
+      reload();
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "خطأ";
+      toast.error(msg);
+      // Revert optimistic update.
+      setDetail((d) => (d ? { ...d, checklist: detail.checklist ?? [] } : d));
+    } finally {
+      setItemBusy(null);
+    }
+  }
+
+  async function deleteChecklistItem(item: ChecklistItem) {
+    if (!detail) return;
+    const prevList = detail.checklist ?? [];
+    const nextList = prevList.filter((i) => i.id !== item.id);
+    // Optimistic update.
+    setDetail({
+      ...detail,
+      checklist: nextList,
+      progress: nextList.length === 0 ? detail.progress : effectiveProgress({ ...detail, checklist: nextList }),
+    });
+    setItemBusy(item.id);
+    try {
+      const res = await fetch(
+        `/api/projects/${detail.id}/checklist?itemId=${item.id}`,
+        { method: "DELETE" }
+      );
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error || "فشل حذف البند");
+      if (typeof json.progress === "number") {
+        setDetail((d) => (d ? { ...d, progress: json.progress } : d));
+      }
+      reload();
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "خطأ";
+      toast.error(msg);
+      // Revert.
+      setDetail((d) => (d ? { ...d, checklist: prevList } : d));
+    } finally {
+      setItemBusy(null);
     }
   }
 
@@ -256,6 +394,9 @@ export function ProjectsSection() {
             {filtered.map((p) => {
               const meta = STATUS_META[p.status] || STATUS_META.active;
               const colorHex = COLOR_HEX[p.color] || COLOR_HEX.emerald;
+              const dispProgress = effectiveProgress(p);
+              const list = p.checklist ?? [];
+              const doneCount = list.filter((i) => i.done).length;
               return (
                 <Card
                   key={p.id}
@@ -283,9 +424,11 @@ export function ProjectsSection() {
                     <div>
                       <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
                         <span>التقدم</span>
-                        <span className="font-medium" style={{ color: colorHex }}>{p.progress}%</span>
+                        <span className="font-medium" style={{ color: colorHex }}>
+                          {list.length > 0 ? `${doneCount}/${list.length} · ` : ""}{dispProgress}%
+                        </span>
                       </div>
-                      <Progress value={p.progress} className="h-2" />
+                      <Progress value={dispProgress} className="h-2" />
                     </div>
 
                     <div className="flex items-center gap-1 text-xs text-muted-foreground flex-wrap">
@@ -293,6 +436,12 @@ export function ProjectsSection() {
                         <ListChecks className="size-3" />
                         {p._count?.tasks || 0} مهمة
                       </span>
+                      {list.length > 0 ? (
+                        <span className="flex items-center gap-1">
+                          <CheckCircle2 className="size-3" />
+                          {doneCount}/{list.length} بند
+                        </span>
+                      ) : null}
                       {p.startDate ? (
                         <span className="flex items-center gap-1">
                           <Calendar className="size-3" />
@@ -346,11 +495,109 @@ export function ProjectsSection() {
                 ) : null}
                 <div>
                   <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                    <span>التقدم</span>
-                    <span className="font-medium">{detail.progress}%</span>
+                    <span className="flex items-center gap-1">
+                      <ListChecks className="size-3" />
+                      التقدم
+                      {hasChecklist(detail) ? (
+                        <Badge variant="secondary" className="text-[10px] ms-1 bg-emerald-glow/15 text-emerald-glow">
+                          تلقائي من القائمة
+                        </Badge>
+                      ) : null}
+                    </span>
+                    <span className="font-medium">{effectiveProgress(detail)}%</span>
                   </div>
-                  <Progress value={detail.progress} className="h-2" />
+                  <Progress value={effectiveProgress(detail)} className="h-2" />
                 </div>
+
+                {/* Checklist */}
+                <div className="rounded-lg border border-border/60 p-1.5 mt-1">
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-1 text-xs font-medium">
+                      <CheckCircle2 className="size-3.5 text-emerald-glow" />
+                      قائمة المهام
+                      {(detail.checklist?.length ?? 0) > 0 ? (
+                        <span className="text-muted-foreground">
+                          {detail.checklist!.filter((i) => i.done).length}/{detail.checklist!.length}
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  {(detail.checklist?.length ?? 0) > 0 ? (
+                    <ScrollArea className="custom-scroll max-h-48 -mx-0.5 px-0.5">
+                      <ul className="flex flex-col gap-0.5">
+                        {detail.checklist!.map((item) => {
+                          const busy = itemBusy === item.id;
+                          return (
+                            <li
+                              key={item.id}
+                              className="group flex items-center gap-1.5 rounded-md px-1 py-1 hover:bg-muted/40 transition-colors"
+                            >
+                              <Checkbox
+                                checked={item.done}
+                                disabled={busy}
+                                onCheckedChange={() => toggleChecklistItem(item)}
+                                className="data-[state=checked]:bg-emerald-glow data-[state=checked]:border-emerald-glow data-[state=checked]:text-white"
+                              />
+                              <span
+                                className={`flex-1 text-sm truncate ${
+                                  item.done ? "line-through text-muted-foreground" : ""
+                                }`}
+                                title={item.text}
+                              >
+                                {item.text}
+                              </span>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="size-6 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
+                                disabled={busy}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteChecklistItem(item);
+                                }}
+                                aria-label="حذف"
+                              >
+                                <X className="size-3.5" />
+                              </Button>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </ScrollArea>
+                  ) : (
+                    <p className="text-xs text-muted-foreground py-1.5 text-center">
+                      لا توجد بنود. أضف أول بند لبدء قائمة المهام وحساب التقدم تلقائيًا.
+                    </p>
+                  )}
+
+                  {/* Add new item */}
+                  <div className="flex items-center gap-1 mt-1">
+                    <Input
+                      value={newItemText}
+                      onChange={(e) => setNewItemText(e.target.value)}
+                      placeholder="أضف بندًا..."
+                      className="h-8 text-sm"
+                      disabled={itemBusy === "new"}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          addChecklistItem();
+                        }
+                      }}
+                    />
+                    <Button
+                      size="sm"
+                      className="h-8 px-2 shrink-0"
+                      onClick={addChecklistItem}
+                      disabled={!newItemText.trim() || itemBusy === "new"}
+                    >
+                      <Plus className="size-3.5" />
+                      أضف
+                    </Button>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-2 gap-1 text-sm">
                   <div>
                     <div className="text-xs text-muted-foreground">تاريخ البدء</div>
@@ -432,6 +679,11 @@ export function ProjectsSection() {
                 </Select>
               </div>
             </div>
+            {editing && hasChecklist(editing) ? (
+              <div className="rounded-md bg-emerald-glow/10 border border-emerald-glow/30 p-2 text-xs text-emerald-glow">
+                هذا المشروع يستخدم قائمة مهام لحساب التقدم تلقائيًا — التعديل اليدوي هنا يتجاهل التقدم التلقائي ما دامت القائمة غير فارغة.
+              </div>
+            ) : null}
             <div className="grid gap-1.5">
               <Label>التقدم: {form.progress}%</Label>
               <Slider

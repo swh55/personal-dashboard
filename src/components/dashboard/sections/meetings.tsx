@@ -16,6 +16,10 @@ import {
   Filter,
   CalendarDays,
   StickyNote,
+  Search,
+  X,
+  Phone,
+  MessageCircle,
 } from "lucide-react";
 import { useApi, toast, formatDateTime, formatDate, formatTime } from "@/lib/api";
 import { Card, CardContent } from "@/components/ui/card";
@@ -27,6 +31,8 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Dialog,
   DialogContent,
@@ -66,6 +72,39 @@ interface Meeting {
   createdAt: string;
 }
 
+interface Contact {
+  id: string;
+  name: string;
+  phone: string;
+  whatsapp?: string | null;
+  email?: string | null;
+  favorite?: boolean;
+  relation?: string;
+}
+
+/** Split the comma-separated participants string into a trimmed list of names. */
+function parseParticipants(s: string | null | undefined): string[] {
+  if (!s) return [];
+  return s
+    .split(",")
+    .map((n) => n.trim())
+    .filter(Boolean);
+}
+
+/** Strip everything except digits and a leading +, for use in tel: links. */
+function sanitizePhone(p?: string | null): string {
+  if (!p) return "";
+  let cleaned = p.replace(/[^\d+]/g, "");
+  // Drop any + that is not at the start
+  cleaned = cleaned.replace(/(?!^)\+/g, "");
+  return cleaned;
+}
+
+/** Sanitize and strip leading + for wa.me links (WhatsApp wants digits only). */
+function waPhone(p?: string | null): string {
+  return sanitizePhone(p).replace(/^\+/, "");
+}
+
 interface MeetingStats {
   total: number;
   upcoming: number;
@@ -99,6 +138,8 @@ export function MeetingsSection() {
   const { data, raw, loading, error, reload } = useApi<Meeting[]>("/api/meetings");
   const meetings = data || [];
   const stats: MeetingStats = raw?.stats || { total: 0, upcoming: 0, completed: 0, cancelled: 0 };
+  const { data: contactsData } = useApi<Contact[]>("/api/contacts");
+  const contacts = contactsData || [];
 
   const [filter, setFilter] = React.useState<string>("all");
   const [dialogOpen, setDialogOpen] = React.useState(false);
@@ -140,6 +181,15 @@ export function MeetingsSection() {
   function openDetail(m: Meeting) {
     setDetail(m);
     setDetailNotes(m.notes || "");
+  }
+
+  /** Toggle a contact name in the participants list (add/remove). */
+  function toggleParticipant(name: string) {
+    setForm((f) => {
+      const list = parseParticipants(f.participants);
+      const newList = list.includes(name) ? list.filter((n) => n !== name) : [...list, name];
+      return { ...f, participants: newList.join(", ") };
+    });
   }
 
   async function submit() {
@@ -330,8 +380,14 @@ export function MeetingsSection() {
                     </div>
                     {m.participants ? (
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Users className="size-3" />
-                        <span className="truncate">{m.participants}</span>
+                        <Users className="size-3 text-emerald-glow/80" />
+                        <span className="truncate">
+                          {(() => {
+                            const list = parseParticipants(m.participants);
+                            if (list.length <= 2) return list.join("، ");
+                            return `${list.slice(0, 2).join("، ")} +${list.length - 2}`;
+                          })()}
+                        </span>
                       </div>
                     ) : null}
                     <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100 mt-1">
@@ -425,8 +481,65 @@ export function MeetingsSection() {
                 </div>
                 {detail.participants ? (
                   <div>
-                    <div className="text-xs text-muted-foreground">المشاركون</div>
-                    <div className="text-sm">{detail.participants}</div>
+                    <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                      <Users className="size-3" />
+                      المشاركون ({parseParticipants(detail.participants).length})
+                    </div>
+                    <div className="grid grid-cols-1 gap-1">
+                      {parseParticipants(detail.participants).map((name) => {
+                        const contact = contacts.find((c) => c.name === name) || null;
+                        const phone = contact?.phone || null;
+                        const wa = waPhone(contact?.whatsapp || contact?.phone);
+                        return (
+                          <div
+                            key={name}
+                            className="flex items-center gap-2 rounded-lg border border-border/50 bg-muted/30 p-2"
+                          >
+                            <div className="flex size-8 items-center justify-center rounded-full bg-emerald-glow/15 text-emerald-glow text-xs font-bold shrink-0">
+                              {name.charAt(0)}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-sm font-medium truncate">{name}</div>
+                              {phone ? (
+                                <div className="text-xs text-muted-foreground truncate" dir="ltr">
+                                  {phone}
+                                </div>
+                              ) : (
+                                <div className="text-xs text-muted-foreground/60 italic">غير موجود في جهات الاتصال</div>
+                              )}
+                            </div>
+                            {phone ? (
+                              <div className="flex items-center gap-1 shrink-0">
+                                <Button
+                                  asChild
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 px-2 text-xs text-emerald-glow"
+                                >
+                                  <a href={`tel:${sanitizePhone(phone)}`}>
+                                    <Phone className="size-3" />
+                                    اتصال
+                                  </a>
+                                </Button>
+                                {wa ? (
+                                  <Button
+                                    asChild
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-7 px-2 text-xs text-emerald-glow"
+                                  >
+                                    <a href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer">
+                                      <MessageCircle className="size-3" />
+                                      واتساب
+                                    </a>
+                                  </Button>
+                                ) : null}
+                              </div>
+                            ) : null}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 ) : null}
                 <div>
@@ -521,15 +634,11 @@ export function MeetingsSection() {
                 </Select>
               </div>
             </div>
-            <div className="grid gap-1.5">
-              <Label htmlFor="m-parts">المشاركون</Label>
-              <Input
-                id="m-parts"
-                value={form.participants}
-                onChange={(e) => setForm((f) => ({ ...f, participants: e.target.value }))}
-                placeholder="مثال: أحمد، سامي، خالد"
-              />
-            </div>
+            <ContactPicker
+              contacts={contacts}
+              selected={parseParticipants(form.participants)}
+              onToggle={toggleParticipant}
+            />
             <div className="grid grid-cols-2 gap-1">
               <div className="grid gap-1.5">
                 <Label htmlFor="m-start">البداية *</Label>
@@ -584,6 +693,149 @@ export function MeetingsSection() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </div>
+  );
+}
+
+/**
+ * Multi-select contact picker.
+ * - Renders a trigger button that opens a searchable popover.
+ * - Selected contacts appear as emerald-glow badges above the trigger,
+ *   each with an X to remove it.
+ * - The picker works on contact *names*; the parent stores the selected
+ *   names as a comma-separated string (kept compatible with the existing
+ *   `participants: string` schema field).
+ */
+function ContactPicker({
+  contacts,
+  selected,
+  onToggle,
+}: {
+  contacts: Contact[];
+  selected: string[];
+  onToggle: (name: string) => void;
+}) {
+  const [query, setQuery] = React.useState("");
+  const [open, setOpen] = React.useState(false);
+
+  const filtered = React.useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return contacts;
+    return contacts.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        (c.phone || "").toLowerCase().includes(q)
+    );
+  }, [contacts, query]);
+
+  return (
+    <div className="grid gap-1.5">
+      <Label>المشاركون</Label>
+      {selected.length > 0 ? (
+        <div className="flex flex-wrap gap-1">
+          {selected.map((name) => (
+            <Badge
+              key={name}
+              variant="secondary"
+              className="gap-1 bg-emerald-glow/15 text-emerald-glow pr-1"
+            >
+              <Users className="size-3" />
+              {name}
+              <button
+                type="button"
+                aria-label={`إزالة ${name}`}
+                className="rounded-full p-0.5 hover:bg-emerald-glow/20"
+                onClick={() => onToggle(name)}
+              >
+                <X className="size-3" />
+              </button>
+            </Badge>
+          ))}
+        </div>
+      ) : null}
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            type="button"
+            className="justify-start w-full font-normal"
+          >
+            <Search className="size-4 text-muted-foreground" />
+            {selected.length > 0 ? (
+              <span className="text-muted-foreground">إضافة المزيد...</span>
+            ) : (
+              <span className="text-muted-foreground">اختر المشاركين من جهات الاتصال</span>
+            )}
+            {selected.length > 0 ? (
+              <Badge
+                className="ms-auto bg-emerald-glow/15 text-emerald-glow"
+                variant="secondary"
+              >
+                {selected.length}
+              </Badge>
+            ) : null}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent
+          className="p-0"
+          align="start"
+          style={{ width: "var(--radix-popover-trigger-width)", minWidth: 260 }}
+        >
+          <div className="flex flex-col">
+            <div className="border-b p-2">
+              <Input
+                placeholder="بحث بالاسم أو الرقم..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="h-8"
+              />
+            </div>
+            <ScrollArea className="h-60">
+              {contacts.length === 0 ? (
+                <div className="p-4 text-center text-sm text-muted-foreground">
+                  لا جهات اتصال متاحة
+                </div>
+              ) : filtered.length === 0 ? (
+                <div className="p-4 text-center text-sm text-muted-foreground">
+                  لا نتائج
+                </div>
+              ) : (
+                <div className="flex flex-col">
+                  {filtered.map((c) => {
+                    const checked = selected.includes(c.name);
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => onToggle(c.name)}
+                        className="flex items-center gap-2 px-3 py-2 text-start hover:bg-muted/40 text-sm"
+                      >
+                        <Checkbox checked={checked} />
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate font-medium">{c.name}</div>
+                          {c.phone ? (
+                            <div className="truncate text-xs text-muted-foreground" dir="ltr">
+                              {c.phone}
+                            </div>
+                          ) : null}
+                        </div>
+                        {c.favorite ? (
+                          <Badge
+                            className="text-[9px] bg-amber-glow/15 text-amber-glow"
+                            variant="secondary"
+                          >
+                            مميز
+                          </Badge>
+                        ) : null}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </ScrollArea>
+          </div>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }

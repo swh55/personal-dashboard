@@ -218,14 +218,14 @@ export function NotesSection() {
                 >
                   <div className="flex items-start justify-between gap-1">
                     <h3 className="text-sm font-semibold leading-snug flex-1">{n.title}</h3>
-                    <div className="flex shrink-0 gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
-                      <Button size="icon" variant="ghost" className="size-7" onClick={() => togglePin(n)} aria-label={n.pinned ? "إلغاء التثبيت" : "تثبيت"}>
+                    <div className="flex shrink-0 gap-0.5 opacity-70 transition-opacity group-hover:opacity-100">
+                      <Button size="icon" variant="ghost" className="size-7 hover:bg-accent" onClick={() => togglePin(n)} aria-label={n.pinned ? "إلغاء التثبيت" : "تثبيت"}>
                         {n.pinned ? <PinOff className="size-3.5 text-amber-glow" /> : <Pin className="size-3.5" />}
                       </Button>
-                      <Button size="icon" variant="ghost" className="size-7" onClick={() => openEdit(n)} aria-label="تعديل">
+                      <Button size="icon" variant="ghost" className="size-7 hover:bg-accent" onClick={() => openEdit(n)} aria-label="تعديل">
                         <Pencil className="size-3.5" />
                       </Button>
-                      <Button size="icon" variant="ghost" className="size-7 text-destructive" onClick={() => setDeleteId(n.id)} aria-label="حذف">
+                      <Button size="icon" variant="outline" className="size-7 border-destructive/30 text-destructive hover:bg-destructive hover:text-destructive-foreground" onClick={() => setDeleteId(n.id)} aria-label="حذف">
                         <Trash2 className="size-3.5" />
                       </Button>
                     </div>

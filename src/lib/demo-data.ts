@@ -264,8 +264,9 @@ export const DEMO_DATA: Record<string, any[]> = {
     { id: demoId("as-lng"), key: "lng", value: "37.1343" },
     { id: demoId("as-tz"), key: "timezone", value: "Asia/Damascus" },
     { id: demoId("as-exrate"), key: "exchangeRate", value: "12500" },
-    { id: demoId("as-ai"), key: "aiApiKey", value: "" },
-    { id: demoId("as-aimodel"), key: "aiModel", value: "glm-4-flash" },
+    { id: demoId("as-ai"), key: "aiApiKey", value: "2c7a65f8bee345fb80eee4575deb5bbf.3WE0RlXGJ2CZicJT" },
+    { id: demoId("as-aimodel"), key: "aiModel", value: "glm-4.5-flash" },
+    { id: demoId("as-aiurl"), key: "aiBaseUrl", value: "https://api.z.ai/api/paas/v4" },
   ],
 };
 

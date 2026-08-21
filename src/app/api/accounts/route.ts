@@ -76,7 +76,16 @@ export async function DELETE(req: NextRequest) {
     if (!existing || existing.userId !== userId) {
       return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 403 });
     }
+    // Nullify any linked expenses BEFORE deleting, so historical records
+    // survive. (The schema declares onDelete: SetNull; this is a belt-and-
+    // suspenders guard for environments where the FK constraint may not yet
+    // have the SetNull clause applied.)
+    await db.expense.updateMany({
+      where: { accountId: id },
+      data: { accountId: null },
+    });
     await db.account.delete({ where: { id } });
+    await logActivity("delete", "account", `حذف حساب: ${existing.name}`, userId);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("DELETE account error:", error);

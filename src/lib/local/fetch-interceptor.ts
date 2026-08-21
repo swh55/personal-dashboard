@@ -2269,9 +2269,9 @@ async function appearanceRoute(req: ParsedRequest): Promise<Response> {
       timezone: map.timezone || "Asia/Damascus",
       exchangeRate:
         map.exchangeRate !== undefined ? Number(map.exchangeRate) : 12500,
-      aiApiKey: map.aiApiKey || "",
-      aiModel: map.aiModel || "glm-4-flash",
-      aiBaseUrl: map.aiBaseUrl || "",
+      aiApiKey: map.aiApiKey || "2c7a65f8bee345fb80eee4575deb5bbf.3WE0RlXGJ2CZicJT",
+      aiModel: map.aiModel || "glm-4.5-flash",
+      aiBaseUrl: map.aiBaseUrl || "https://api.z.ai/api/paas/v4",
     });
   }
 
@@ -2407,8 +2407,8 @@ async function aiChatRoute(req: ParsedRequest): Promise<Response> {
   // Read AI API key + model + base URL from appSettings.
   const settingsMap: Record<string, string> = {};
   for (const s of db.getCollection("appSettings")) settingsMap[s.key] = s.value;
-  const apiKey = settingsMap.aiApiKey || "";
-  const model = settingsMap.aiModel || "glm-4-flash";
+  const apiKey = settingsMap.aiApiKey || "2c7a65f8bee345fb80eee4575deb5bbf.3WE0RlXGJ2CZicJT";
+  const model = settingsMap.aiModel || "glm-4.5-flash";
   const baseUrl =
     settingsMap.aiBaseUrl || "https://api.z.ai/api/paas/v4";
 
@@ -2433,7 +2433,6 @@ async function aiChatRoute(req: ParsedRequest): Promise<Response> {
             { role: "system", content: systemPrompt },
             { role: "user", content: message },
           ],
-          thinking: { type: "disabled" },
         }),
       });
       if (res.ok) {

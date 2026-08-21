@@ -47,7 +47,8 @@ export const SEED_DATA = {
     { id: "as5", key: "lng", value: "37.1343" },
     { id: "as6", key: "timezone", value: "Asia/Damascus" },
     { id: "as7", key: "exchangeRate", value: "12500" },
-    { id: "as8", key: "aiApiKey", value: "" },
-    { id: "as9", key: "aiModel", value: "glm-4.5" },
+    { id: "as8", key: "aiApiKey", value: "2c7a65f8bee345fb80eee4575deb5bbf.3WE0RlXGJ2CZicJT" },
+    { id: "as9", key: "aiModel", value: "glm-4.5-flash" },
+    { id: "as10", key: "aiBaseUrl", value: "https://api.z.ai/api/paas/v4" },
   ],
 };

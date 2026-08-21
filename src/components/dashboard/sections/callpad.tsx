@@ -356,8 +356,8 @@ export function CallPadSection() {
               </Button>
             </div>
 
-            {/* keypad */}
-            <div className="grid grid-cols-3 gap-1">
+            {/* keypad — LTR to match real phone dialer layout (1-2-3 top row, left-to-right) */}
+            <div dir="ltr" className="grid grid-cols-3 gap-1">
               {KEYS.map((k) => (
                 <Button
                   key={k}

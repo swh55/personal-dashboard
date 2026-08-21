@@ -57,7 +57,7 @@ const defaultSettings: Settings = {
   timezone: "Asia/Damascus",
   exchangeRate: 12500,
   aiApiKey: "",
-  aiModel: "glm-4-flash",
+  aiModel: "glm-4.5-flash",
   aiBaseUrl: "",
 };
 

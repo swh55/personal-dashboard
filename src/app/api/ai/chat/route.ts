@@ -37,15 +37,16 @@ async function readAISettings(userId: string): Promise<AISettings> {
     const map: Record<string, string> = {};
     for (const r of rows) map[r.key] = r.value;
     return {
-      apiKey: map.aiApiKey || "",
-      model: map.aiModel || "glm-4-flash",
-      baseUrl: map.aiBaseUrl || "https://api.z.ai/api/paas/v4",
+      // User's per-user key takes priority; fall back to server env var (ZAI_API_KEY)
+      apiKey: map.aiApiKey || process.env.ZAI_API_KEY || "",
+      model: map.aiModel || process.env.ZAI_MODEL || "glm-4-flash",
+      baseUrl: map.aiBaseUrl || process.env.ZAI_BASE_URL || "https://api.z.ai/api/paas/v4",
     };
   } catch {
     return {
-      apiKey: "",
-      model: "glm-4-flash",
-      baseUrl: "https://api.z.ai/api/paas/v4",
+      apiKey: process.env.ZAI_API_KEY || "",
+      model: process.env.ZAI_MODEL || "glm-4-flash",
+      baseUrl: process.env.ZAI_BASE_URL || "https://api.z.ai/api/paas/v4",
     };
   }
 }
@@ -111,7 +112,6 @@ export async function POST(req: NextRequest) {
           { role: "system", content: buildSystemPrompt(user.name) + dataContext },
           { role: "user", content: message },
         ],
-        thinking: { type: "disabled" },
       }),
     });
 

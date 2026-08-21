@@ -137,14 +137,15 @@ export function BudgetSection() {
   const [submitting, setSubmitting] = React.useState(false);
   const [deleteId, setDeleteId] = React.useState<string | null>(null);
 
-  // Year options: current year ± 2
+  // Year options: current year ± 2 (uses `year` state, not an undefined `now`)
   const yearOptions = React.useMemo(() => {
     const arr: number[] = [];
-    for (let y = now.getFullYear() - 2; y <= now.getFullYear() + 1; y++) {
+    const currentYear = new Date().getFullYear();
+    for (let y = currentYear - 2; y <= currentYear + 1; y++) {
       arr.push(y);
     }
     return arr;
-  }, [now.getFullYear()]);
+  }, []);
 
   function openAdd() {
     setEditing(null);
@@ -278,7 +279,7 @@ export function BudgetSection() {
               ))}
             </SelectContent>
           </Select>
-          {month === now.getMonth() + 1 && year === now.getFullYear() && (
+          {month === new Date().getMonth() + 1 && year === new Date().getFullYear() && (
             <Badge className="bg-emerald-glow/15 text-emerald-glow border-emerald-glow/30">
               الشهر الحالي
             </Badge>

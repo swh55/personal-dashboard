@@ -15,11 +15,16 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Scale,
+  Plus,
+  ArrowLeftRight,
+  ArrowDownToLine,
+  Loader2,
 } from "lucide-react";
-import { useApi } from "@/lib/api";
+import { useApi, toast } from "@/lib/api";
 import {
   formatCurrency,
   USD_TO_SYP,
+  CURRENCIES,
 } from "@/lib/constants";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,6 +32,23 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Asset {
   id: string;
@@ -70,10 +92,6 @@ interface FinancesData {
   monthExpenseCount: number;
 }
 
-interface ApiResponse {
-  data: FinancesData;
-}
-
 const ASSET_TYPE_LABELS: Record<string, string> = {
   cash: "نقد",
   bank: "مصرف",
@@ -90,12 +108,207 @@ const ACCOUNT_TYPE_LABELS: Record<string, string> = {
   credit: "ائتماني",
 };
 
+const ACCOUNT_TYPE_OPTIONS = [
+  { value: "bank", label: "مصرفي" },
+  { value: "cash", label: "نقدي" },
+  { value: "savings", label: "توفير" },
+  { value: "credit", label: "ائتماني" },
+];
+
 function toSYP(amount: number, currency: string): number {
   return currency === "usd" ? amount * USD_TO_SYP : amount;
 }
 
+const EMPTY_ACCOUNT_FORM = {
+  name: "",
+  balance: "",
+  currency: "syp",
+  type: "bank",
+  institution: "",
+};
+
+const EMPTY_TRANSFER_FORM = {
+  fromAccountId: "",
+  toAccountId: "",
+  amount: "",
+  currency: "syp",
+  note: "",
+};
+
+const EMPTY_INCOME_FORM = {
+  accountId: "",
+  amount: "",
+  currency: "syp",
+  note: "",
+};
+
 export function FinancesSection() {
   const { data: fin, loading, error, reload } = useApi<FinancesData>("/api/finances");
+  const accounts = fin?.accounts ?? [];
+
+  // --- Add Account dialog ---
+  const [addOpen, setAddOpen] = React.useState(false);
+  const [addForm, setAddForm] = React.useState(EMPTY_ACCOUNT_FORM);
+  const [addSubmitting, setAddSubmitting] = React.useState(false);
+
+  // --- Transfer dialog ---
+  const [transferOpen, setTransferOpen] = React.useState(false);
+  const [transferForm, setTransferForm] = React.useState(EMPTY_TRANSFER_FORM);
+  const [transferSubmitting, setTransferSubmitting] = React.useState(false);
+
+  // --- Income dialog ---
+  const [incomeOpen, setIncomeOpen] = React.useState(false);
+  const [incomeForm, setIncomeForm] = React.useState(EMPTY_INCOME_FORM);
+  const [incomeSubmitting, setIncomeSubmitting] = React.useState(false);
+
+  // Auto-sync currency from the selected source account in the transfer dialog
+  React.useEffect(() => {
+    if (!transferForm.fromAccountId) return;
+    const src = accounts.find((a) => a.id === transferForm.fromAccountId);
+    if (src && transferForm.currency !== src.currency) {
+      setTransferForm((f) => ({ ...f, currency: src.currency }));
+    }
+  }, [transferForm.fromAccountId, accounts, transferForm.currency]);
+
+  // Auto-sync currency from the selected account in the income dialog
+  React.useEffect(() => {
+    if (!incomeForm.accountId) return;
+    const acc = accounts.find((a) => a.id === incomeForm.accountId);
+    if (acc && incomeForm.currency !== acc.currency) {
+      setIncomeForm((f) => ({ ...f, currency: acc.currency }));
+    }
+  }, [incomeForm.accountId, accounts, incomeForm.currency]);
+
+  function openAddDialog() {
+    setAddForm(EMPTY_ACCOUNT_FORM);
+    setAddOpen(true);
+  }
+
+  function openTransferDialog() {
+    if (accounts.length < 2) {
+      toast.error("يلزم وجود حسابان على الأقل لإجراء تحويل");
+      return;
+    }
+    setTransferForm({
+      ...EMPTY_TRANSFER_FORM,
+      fromAccountId: accounts[0]?.id ?? "",
+      toAccountId: accounts[1]?.id ?? "",
+      currency: accounts[0]?.currency ?? "syp",
+    });
+    setTransferOpen(true);
+  }
+
+  function openIncomeDialog(account: Account) {
+    setIncomeForm({
+      ...EMPTY_INCOME_FORM,
+      accountId: account.id,
+      currency: account.currency,
+    });
+    setIncomeOpen(true);
+  }
+
+  async function submitAdd() {
+    if (!addForm.name.trim()) {
+      toast.error("اسم الحساب مطلوب");
+      return;
+    }
+    setAddSubmitting(true);
+    try {
+      const res = await fetch("/api/accounts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: addForm.name.trim(),
+          balance: Number(addForm.balance) || 0,
+          currency: addForm.currency,
+          type: addForm.type,
+          institution: addForm.institution.trim() || null,
+        }),
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error || "فشل الحفظ");
+      toast.success("تمت إضافة الحساب");
+      setAddOpen(false);
+      reload();
+    } catch (e: any) {
+      toast.error(e.message || "خطأ");
+    } finally {
+      setAddSubmitting(false);
+    }
+  }
+
+  async function submitTransfer() {
+    if (!transferForm.fromAccountId || !transferForm.toAccountId) {
+      toast.error("يلزم اختيار الحسابين");
+      return;
+    }
+    if (transferForm.fromAccountId === transferForm.toAccountId) {
+      toast.error("لا يمكن التحويل من حساب إلى نفسه");
+      return;
+    }
+    const amt = Number(transferForm.amount);
+    if (!Number.isFinite(amt) || amt <= 0) {
+      toast.error("المبلغ غير صالح");
+      return;
+    }
+    setTransferSubmitting(true);
+    try {
+      const res = await fetch("/api/accounts/transfer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fromAccountId: transferForm.fromAccountId,
+          toAccountId: transferForm.toAccountId,
+          amount: amt,
+          currency: transferForm.currency,
+          note: transferForm.note.trim() || undefined,
+        }),
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error || "فشل التحويل");
+      toast.success("تم التحويل بنجاح");
+      setTransferOpen(false);
+      reload();
+    } catch (e: any) {
+      toast.error(e.message || "خطأ");
+    } finally {
+      setTransferSubmitting(false);
+    }
+  }
+
+  async function submitIncome() {
+    if (!incomeForm.accountId) {
+      toast.error("يلزم اختيار الحساب");
+      return;
+    }
+    const amt = Number(incomeForm.amount);
+    if (!Number.isFinite(amt) || amt <= 0) {
+      toast.error("المبلغ غير صالح");
+      return;
+    }
+    setIncomeSubmitting(true);
+    try {
+      const res = await fetch("/api/accounts/income", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          accountId: incomeForm.accountId,
+          amount: amt,
+          currency: incomeForm.currency,
+          note: incomeForm.note.trim() || undefined,
+        }),
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error || "فشل تسجيل الوارد");
+      toast.success("تم تسجيل الوارد");
+      setIncomeOpen(false);
+      reload();
+    } catch (e: any) {
+      toast.error(e.message || "خطأ");
+    } finally {
+      setIncomeSubmitting(false);
+    }
+  }
 
   return (
     <div className="flex h-full flex-col gap-1">
@@ -105,10 +318,26 @@ export function FinancesSection() {
           <h1 className="text-lg font-bold tracking-tight">الوضع المالي</h1>
           <p className="text-sm text-muted-foreground">نظرة شاملة على الأصول والحسابات والديون</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => reload()}>
-          <RefreshCw className="size-4" />
-          تحديث
-        </Button>
+        <div className="flex items-center gap-1 flex-wrap">
+          <Button variant="outline" size="sm" onClick={() => reload()}>
+            <RefreshCw className="size-4" />
+            تحديث
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={openTransferDialog}
+            disabled={loading}
+            title="تحويل بين الحسابات"
+          >
+            <ArrowLeftRight className="size-4" />
+            تحويل
+          </Button>
+          <Button size="sm" onClick={openAddDialog}>
+            <Plus className="size-4" />
+            حساب جديد
+          </Button>
+        </div>
       </div>
 
       {error ? (
@@ -257,28 +486,46 @@ export function FinancesSection() {
                 </CardHeader>
                 <CardContent className="flex-1 min-h-0">
                   {fin.accounts.length > 0 ? (
-                    <div className="flex flex-col gap-1 max-h-72 overflow-y-auto custom-scroll">
+                    <div className="flex flex-col gap-1 max-h-80 overflow-y-auto custom-scroll">
                       {fin.accounts.map((a) => (
-                        <div key={a.id} className="flex items-center gap-1 rounded-lg border p-2.5">
-                          <div className="flex size-7 items-center justify-center rounded-md bg-amber-glow/10 text-amber-glow shrink-0">
-                            <CreditCard className="size-4" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1">
-                              <span className="text-sm font-semibold truncate">{a.name}</span>
-                              <Badge variant="outline" className="text-[10px]">{ACCOUNT_TYPE_LABELS[a.type] || a.type}</Badge>
+                        <div
+                          key={a.id}
+                          className="group rounded-lg border p-2 transition-colors hover:border-emerald-glow/40"
+                        >
+                          <div className="flex items-center gap-1">
+                            <div className="flex size-7 items-center justify-center rounded-md bg-amber-glow/10 text-amber-glow shrink-0">
+                              <CreditCard className="size-4" />
                             </div>
-                            {a.institution ? (
-                              <div className="text-xs text-muted-foreground truncate">{a.institution}</div>
-                            ) : null}
-                          </div>
-                          <div className="text-left shrink-0">
-                            <div className={`text-sm font-bold ${a.balance >= 0 ? "text-emerald-glow" : "text-rose-500"}`}>
-                              {formatCurrency(a.balance, a.currency)}
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1">
+                                <span className="text-sm font-semibold truncate">{a.name}</span>
+                                <Badge variant="outline" className="text-[10px]">{ACCOUNT_TYPE_LABELS[a.type] || a.type}</Badge>
+                              </div>
+                              {a.institution ? (
+                                <div className="text-xs text-muted-foreground truncate">{a.institution}</div>
+                              ) : null}
                             </div>
-                            {a.currency === "usd" ? (
-                              <div className="text-[10px] text-muted-foreground">≈ {formatCurrency(toSYP(a.balance, a.currency), "syp")}</div>
-                            ) : null}
+                            {/* balance — prominent */}
+                            <div className="text-left shrink-0">
+                              <div className={`text-sm font-bold ${a.balance >= 0 ? "text-emerald-glow" : "text-rose-500"}`}>
+                                {formatCurrency(a.balance, a.currency)}
+                              </div>
+                              {a.currency === "usd" ? (
+                                <div className="text-[10px] text-muted-foreground">≈ {formatCurrency(toSYP(a.balance, a.currency), "syp")}</div>
+                              ) : null}
+                            </div>
+                          </div>
+                          {/* per-account action: add income */}
+                          <div className="mt-1 flex justify-end">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 gap-1 px-2 text-[11px] text-emerald-glow hover:bg-emerald-glow/10 hover:text-emerald-glow"
+                              onClick={() => openIncomeDialog(a)}
+                            >
+                              <ArrowDownToLine className="size-3" />
+                              وارد
+                            </Button>
                           </div>
                         </div>
                       ))}
@@ -347,6 +594,268 @@ export function FinancesSection() {
           </div>
         )}
       </ScrollArea>
+
+      {/* Add Account Dialog */}
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>إضافة حساب</DialogTitle>
+            <DialogDescription>أدخل تفاصيل الحساب المالي.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-1 max-h-[60vh] overflow-y-auto custom-scroll py-1">
+            <div className="grid gap-1.5">
+              <Label htmlFor="f-name">اسم الحساب *</Label>
+              <Input
+                id="f-name"
+                value={addForm.name}
+                onChange={(e) => setAddForm((f) => ({ ...f, name: e.target.value }))}
+                placeholder="مثال: حساب البنك الرئيسي"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-1">
+              <div className="grid gap-1.5">
+                <Label htmlFor="f-balance">الرصيد الابتدائي</Label>
+                <Input
+                  id="f-balance"
+                  type="number"
+                  inputMode="decimal"
+                  value={addForm.balance}
+                  onChange={(e) => setAddForm((f) => ({ ...f, balance: e.target.value }))}
+                  placeholder="0"
+                />
+              </div>
+              <div className="grid gap-1.5">
+                <Label>العملة</Label>
+                <Select
+                  value={addForm.currency}
+                  onValueChange={(v) => setAddForm((f) => ({ ...f, currency: v }))}
+                >
+                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {CURRENCIES.map((c) => (
+                      <SelectItem key={c.code} value={c.code}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid gap-1.5">
+              <Label>نوع الحساب</Label>
+              <Select
+                value={addForm.type}
+                onValueChange={(v) => setAddForm((f) => ({ ...f, type: v }))}
+              >
+                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {ACCOUNT_TYPE_OPTIONS.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="f-institution">المؤسسة (اختياري)</Label>
+              <Input
+                id="f-institution"
+                value={addForm.institution}
+                onChange={(e) => setAddForm((f) => ({ ...f, institution: e.target.value }))}
+                placeholder="مثال: بنك سوريا الدولي الإسلامي"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddOpen(false)}>إلغاء</Button>
+            <Button onClick={submitAdd} disabled={addSubmitting}>
+              {addSubmitting ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  جارٍ الحفظ...
+                </>
+              ) : "حفظ"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Transfer Dialog */}
+      <Dialog open={transferOpen} onOpenChange={setTransferOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>تحويل بين الحسابات</DialogTitle>
+            <DialogDescription>انقل مبلغاً من حساب إلى آخر لديك.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-1 py-1">
+            <div className="grid gap-1.5">
+              <Label>من حساب *</Label>
+              <Select
+                value={transferForm.fromAccountId}
+                onValueChange={(v) => setTransferForm((f) => ({ ...f, fromAccountId: v }))}
+              >
+                <SelectTrigger className="w-full"><SelectValue placeholder="اختر الحساب المصدري" /></SelectTrigger>
+                <SelectContent>
+                  {accounts.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      {a.name} · {formatCurrency(a.balance, a.currency)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-1.5">
+              <Label>إلى حساب *</Label>
+              <Select
+                value={transferForm.toAccountId}
+                onValueChange={(v) => setTransferForm((f) => ({ ...f, toAccountId: v }))}
+              >
+                <SelectTrigger className="w-full"><SelectValue placeholder="اختر حساب الوجهة" /></SelectTrigger>
+                <SelectContent>
+                  {accounts.map((a) => (
+                    <SelectItem
+                      key={a.id}
+                      value={a.id}
+                      disabled={a.id === transferForm.fromAccountId}
+                    >
+                      {a.name} · {formatCurrency(a.balance, a.currency)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-1">
+              <div className="grid gap-1.5">
+                <Label htmlFor="t-amount">المبلغ *</Label>
+                <Input
+                  id="t-amount"
+                  type="number"
+                  inputMode="decimal"
+                  value={transferForm.amount}
+                  onChange={(e) => setTransferForm((f) => ({ ...f, amount: e.target.value }))}
+                  placeholder="0"
+                />
+              </div>
+              <div className="grid gap-1.5">
+                <Label>العملة</Label>
+                <Select
+                  value={transferForm.currency}
+                  onValueChange={(v) => setTransferForm((f) => ({ ...f, currency: v }))}
+                >
+                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {CURRENCIES.map((c) => (
+                      <SelectItem key={c.code} value={c.code}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="t-note">ملاحظة (اختياري)</Label>
+              <Input
+                id="t-note"
+                value={transferForm.note}
+                onChange={(e) => setTransferForm((f) => ({ ...f, note: e.target.value }))}
+                placeholder="مثال: رواتب، مصاريف بيت..."
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTransferOpen(false)}>إلغاء</Button>
+            <Button onClick={submitTransfer} disabled={transferSubmitting}>
+              {transferSubmitting ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  جارٍ التحويل...
+                </>
+              ) : (
+                <>
+                  <ArrowLeftRight className="size-4" />
+                  تحويل
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Income Dialog */}
+      <Dialog open={incomeOpen} onOpenChange={setIncomeOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>تسجيل وارد</DialogTitle>
+            <DialogDescription>أضف دخلاً إلى حساب معيّن.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-1 py-1">
+            <div className="grid gap-1.5">
+              <Label>الحساب *</Label>
+              <Select
+                value={incomeForm.accountId}
+                onValueChange={(v) => setIncomeForm((f) => ({ ...f, accountId: v }))}
+              >
+                <SelectTrigger className="w-full"><SelectValue placeholder="اختر الحساب" /></SelectTrigger>
+                <SelectContent>
+                  {accounts.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      {a.name} · {formatCurrency(a.balance, a.currency)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-1">
+              <div className="grid gap-1.5">
+                <Label htmlFor="i-amount">المبلغ *</Label>
+                <Input
+                  id="i-amount"
+                  type="number"
+                  inputMode="decimal"
+                  value={incomeForm.amount}
+                  onChange={(e) => setIncomeForm((f) => ({ ...f, amount: e.target.value }))}
+                  placeholder="0"
+                />
+              </div>
+              <div className="grid gap-1.5">
+                <Label>العملة</Label>
+                <Select
+                  value={incomeForm.currency}
+                  onValueChange={(v) => setIncomeForm((f) => ({ ...f, currency: v }))}
+                >
+                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {CURRENCIES.map((c) => (
+                      <SelectItem key={c.code} value={c.code}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="i-note">ملاحظة / المصدر (اختياري)</Label>
+              <Input
+                id="i-note"
+                value={incomeForm.note}
+                onChange={(e) => setIncomeForm((f) => ({ ...f, note: e.target.value }))}
+                placeholder="مثال: راتب، مبيعات..."
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIncomeOpen(false)}>إلغاء</Button>
+            <Button onClick={submitIncome} disabled={incomeSubmitting}>
+              {incomeSubmitting ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  جارٍ الحفظ...
+                </>
+              ) : (
+                <>
+                  <ArrowDownToLine className="size-4" />
+                  تسجيل الوارد
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

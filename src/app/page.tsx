@@ -23,12 +23,10 @@ import { NotesSection } from "@/components/dashboard/sections/notes";
 import { ActivitySection } from "@/components/dashboard/sections/activity";
 import { RecycleBinSection } from "@/components/dashboard/sections/recycle-bin";
 import { SettingsSection } from "@/components/dashboard/sections/settings";
-import { SuggestionsSection } from "@/components/dashboard/sections/suggestions";
 import { MapsSection } from "@/components/dashboard/sections/maps";
 import { AiInsightsSection } from "@/components/dashboard/sections/ai-insights";
 import { BudgetSection } from "@/components/dashboard/sections/budget";
 import { IntegrationsSection } from "@/components/dashboard/sections/integrations";
-import { AutomationSection } from "@/components/dashboard/sections/automation";
 import { ScheduledMessagesSection } from "@/components/dashboard/sections/scheduled-messages";
 import { WaitingListSection } from "@/components/dashboard/sections/waiting-list";
 import { ContactRemindersSection } from "@/components/dashboard/sections/contact-reminders";
@@ -75,7 +73,6 @@ export default function Home() {
       case "aiinsights": return <AiInsightsSection />;
       case "budget": return <BudgetSection />;
       case "integrations": return <IntegrationsSection />;
-      case "automation": return <AutomationSection />;
       case "scheduledmsgs": return <ScheduledMessagesSection />;
       case "waitinglist": return <WaitingListSection />;
       case "reminders": return <ContactRemindersSection />;
@@ -89,7 +86,6 @@ export default function Home() {
       case "pomodoro": return <PomodoroWidget />;
       case "notifications": return <SmartNotificationsWidget />;
       case "settings": return <SettingsSection />;
-      case "suggestions": return <SuggestionsSection />;
       case "device": return <DeviceSection />;
       default: return <OverviewSection />;
     }

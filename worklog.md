@@ -861,3 +861,117 @@ Stage Summary:
 - vercel.json: explicit framework + security headers + region config
 - DEPLOY_VERCEL.md: complete deployment guide with env vars + redirect URIs
 - Commit: 511e4ea (local; user must push to GitHub + import to Vercel)
+
+---
+Task ID: meetings-participants
+Agent: meetings-participants-agent
+Task: Add contact picker to meetings section
+
+Work Log:
+- Read /home/z/my-project/worklog.md to understand prior work (Arabic RTL dashboard, 35 sections, Prisma/Neon, dark theme + emerald-glow accent).
+- Reviewed existing src/components/dashboard/sections/meetings.tsx: participants field was a plain text Input where users typed names manually (comma-separated). Detail view also showed participants as a flat text string with no actions.
+- Reviewed src/app/api/meetings/route.ts (schema unchanged: participants stays a nullable string) and src/app/api/contacts/route.ts (returns Contact[] with id, name, phone, whatsapp?, email?, favorite?, relation?).
+- Confirmed shadcn/ui components available: checkbox.tsx, popover.tsx (Radix-based, supports --radix-popover-trigger-width CSS var), badge.tsx, dialog.tsx, scroll-area.tsx, input.tsx, button.tsx (supports asChild via Slot).
+- Updated meetings.tsx imports: added lucide-react icons (Search, X, Phone, MessageCircle); added Checkbox + Popover/PopoverContent/PopoverTrigger from ui.
+- Added Contact interface + three pure helpers at module scope: parseParticipants(s) splits the comma-separated string into a trimmed name array; sanitizePhone(p) keeps digits + leading + for tel: links; waPhone(p) strips the leading + for wa.me links (WhatsApp requires digits only).
+- In MeetingsSection, added a second useApi<Contact[]>("/api/contacts") call alongside the existing meetings fetch, so contact lookup is shared between the picker and the detail view.
+- Added a toggleParticipant(name) handler inside MeetingsSection that updates form.participants (string) by either appending or removing the contact's name and re-joining with ", " — keeps the existing string schema fully intact.
+- Replaced the participants text Input in the add/edit dialog with a new <ContactPicker> component (contacts, selected, onToggle props).
+- Built ContactPicker component: trigger is a full-width outline Button with a Search icon + dynamic placeholder ("اختر المشاركين..." or "إضافة المزيد..."); shows a count Badge when there is at least one selected. Selected contacts render as emerald-glow Badges above the trigger, each with a small X button to remove. The PopoverContent is sized to match the trigger width via the Radix CSS var (min 260px). Inside: a search Input (filters by name OR phone) and a ScrollArea (h-60) of contacts, each row = Checkbox + name + phone (dir=ltr) + favorite Badge ("مميز"). Empty/loading/no-results states all handled.
+- Updated the meeting card grid preview: instead of dumping the raw comma-separated participants string, it now shows the first two names + "+N" if there are more (RTL join with Arabic comma "،"), with the Users icon tinted emerald-glow/80.
+- Rewrote the meeting DETAIL view's participants block: each participant renders as a card (rounded-lg border + bg-muted/30) with: avatar circle showing the first letter (emerald-glow/15 bg), name, phone (dir=ltr) or an italic "غير موجود في جهات الاتصال" hint when no contact matches, and two action buttons when phone is available — "اتصال" (Phone icon, links to tel:<sanitized>) and "واتساب" (MessageCircle icon, links to https://wa.me/<digits>, target=_blank rel=noopener noreferrer). Buttons use Button asChild so the anchor inherits button styling. WhatsApp button falls back to the regular phone when the contact has no dedicated whatsapp field (matches contacts.tsx convention). Section header shows participant count.
+- Preserved existing design language: dark theme via bg-muted/30 + border-border/50, emerald-glow accent on avatars/badges/action buttons, RTL layout (text-start, ms-auto for the count badge), Card/Badge/Button components from shadcn/ui, single-screen spacing (gap-1, p-1) consistent with the rest of the dashboard.
+- Lint verification: ran `bunx eslint src/components/dashboard/sections/meetings.tsx --max-warnings=0` → 0 errors, 0 warnings. Also ran project-wide `bunx tsc --noEmit --project tsconfig.json` → no errors attributable to meetings.tsx (remaining TS errors are pre-existing in other files: contacts.tsx, auth-button.tsx, web-adapter.ts, examples/, skills/).
+
+Stage Summary:
+- Participants field upgraded from manual text input → multi-select contact picker (Popover + Checkbox + searchable Input).
+- Selected participants render as emerald-glow Badges with a one-click X removal; a count Badge sits in the trigger.
+- Storage format unchanged: participants stays a comma-separated string in the Meeting schema (no Prisma migration, no API route change needed). The picker re-derives the selected names from the string, so existing meetings keep working.
+- Detail view now shows each participant as a card with name, phone (lookup by name against /api/contacts), and "اتصال" (tel:) + "واتساب" (wa.me) action buttons. Participants with no matching contact show an italic "غير موجود في جهات الاتصال" hint and omit the action buttons.
+- Phone-number handling: sanitizePhone keeps digits + a single leading + for tel:; waPhone strips the leading + so wa.me links work. WhatsApp button falls back to phone when no dedicated whatsapp field exists.
+- Card grid preview upgraded: shows first 2 names + "+N" overflow instead of the raw comma-separated blob.
+- Design language preserved: dark theme, emerald-glow accent, RTL, shadcn/ui Card/Badge/Button/Checkbox/Popover/ScrollArea/Input/Label.
+- Verification: eslint --max-warnings=0 → clean; project-wide tsc → no meetings.tsx errors.
+
+---
+Task ID: projects-checklist
+Agent: projects-checklist-agent
+Task: Add checklist to projects + auto-calculate progress
+
+Work Log:
+- Read worklog.md (project context), prisma/schema.prisma (Project model has no checklist), src/components/dashboard/sections/projects.tsx (existing UI with progress slider), src/app/api/projects/route.ts (GET/POST/PUT/DELETE without checklist), src/lib/api.ts (useApi hook), src/lib/auth-helpers.ts (getCurrentUser pattern), src/lib/db.ts (Prisma singleton), and src/components/ui/checkbox.tsx (existing Checkbox component). Confirmed no nested dynamic route pattern existed under /api/projects/[id]/.
+- Added `ProjectChecklistItem` model to prisma/schema.prisma with fields id/projectId/text/done/order/timestamps + @@index([projectId]) and cascade-delete relation to Project. Added `checklist ProjectChecklistItem[]` field on the existing Project model.
+- Ran `bunx prisma db push` → SUCCESS, "Your database is now in sync with your Prisma schema" + Prisma Client regenerated. Verified via standalone node script: `p.projectChecklistItem.count()` returns 0 (table exists), `p.project.findMany({ include: { checklist: true } })` returns checklist array (relation works).
+- Rewrote src/app/api/projects/route.ts:
+  • GET: now `include: { _count: { select: { tasks: true } }, checklist: { orderBy: { order: 'asc' } } }`. Computes `effectiveProgress` per project (checklist-based if any items exist, else manual `progress`) and uses it in `stats.avgProgress` instead of raw `p.progress`. Each project response now carries the `checklist` array AND `effectiveProgress` for the client to consume.
+  • POST: accepts optional `checklist` array (strings OR { text, done, order } objects). The `normalizeChecklist` helper trims/filters/dedupes empty texts and assigns ascending `order` when not supplied. Items are created atomically with the project via nested `checklist: { create: [...] }`.
+  • PUT: treats `checklist === undefined` as "leave it alone" (so editing project metadata via the existing edit dialog does NOT wipe the checklist). When a `checklist` array is explicitly provided, it replaces the entire checklist atomically: `checklist: { deleteMany: {}, create: [...] }`. Returns the updated project with the checklist included.
+  • DELETE: unchanged (soft/hard delete still gated by ownership check).
+- Created src/app/api/projects/[id]/checklist/route.ts (new dynamic route file):
+  • Shared `getOwnedProject(projectId, userId)` helper verifies the project exists, belongs to the current user, and is not soft-deleted; returns 403 otherwise.
+  • Shared `syncProjectProgress(projectId)` helper recomputes the parent project's manual `progress` field from `doneItems/totalItems*100` after every checklist mutation so dashboard tiles and other consumers that only read `project.progress` stay accurate. Returns the recomputed ratio.
+  • POST: body `{ text, order? }`. Trims text (400 if empty). Auto-assigns `order = max(existing) + 1` when not provided. Creates the item, syncs parent progress, logs activity, returns `{ data, progress }`.
+  • PUT: body `{ id, text?, done?, order? }`. Verifies the item belongs to this project (cross-project edit blocked). Validates text not empty. Selectively updates only the supplied fields. Syncs parent progress. Returns `{ data, progress }`.
+  • DELETE: query `?itemId=`. Verifies the item belongs to this project. Deletes it. Syncs parent progress. Returns `{ progress }`.
+- Updated src/components/dashboard/sections/projects.tsx:
+  • Added `ChecklistItem` interface + added `checklist?: ChecklistItem[]` and `effectiveProgress?: number` to the `Project` interface.
+  • Added helper functions `effectiveProgress(p)` (checklist-aware) and `hasChecklist(p)`. Used everywhere `p.progress` was previously displayed: card grid progress bar + percentage label + detail dialog progress bar.
+  • Card grid: progress percentage now shows `doneCount/totalCount · percentage%` when a checklist exists. Added a small `2/5 بند` badge in the meta row (next to tasks count) when the project has checklist items.
+  • Detail dialog: added a full checklist section between the progress bar and the start/end-date grid:
+    - Header row with `CheckCircle2` icon + "قائمة المهام" title + live `doneCount/totalCount` counter.
+    - ScrollArea (max-h-48) of items, each row = Checkbox (emerald-glow when checked) + text (strikethrough + muted when done) + ghost delete button (visible on hover, destructive on hover).
+    - Empty-state message when no items exist explaining the auto-progress behavior.
+    - Inline composer at the bottom: text Input + "أضف" Button. Enter key also submits.
+  • Edit dialog: added a contextual emerald-glow notice when the project being edited has a checklist, telling the user that the manual progress slider will be ignored while the checklist is non-empty.
+  • Three new handlers with optimistic updates + master-list reload:
+    - `addChecklistItem()`: POSTs to `/api/projects/[id]/checklist`, appends server-created item to `detail.checklist`, sets `detail.progress` from server response, calls `reload()`.
+    - `toggleChecklistItem(item)`: optimistically flips `done` and recomputes `detail.progress`, PUTs to the route, applies server-returned `progress` on success, reverts on error.
+    - `deleteChecklistItem(item)`: optimistically removes the item, DELETEs with `?itemId=`, applies server-returned `progress`, reverts on error.
+  • Added `itemBusy` state to disable the affected row's checkbox/button while its request is in flight (prevents double-toggling and shows user something is happening). Added `newItemText` state for the composer input.
+  • Removed unused `CardHeader`/`CardTitle` imports and unused `React.useEffect` (auto-sync from master list caused optimistic-update clobbering; switched to a self-contained optimistic model instead).
+- Verified clean: `bunx eslint src/components/dashboard/sections/projects.tsx src/app/api/projects/ --max-warnings=0` exits 0 (zero errors, zero warnings). `bunx tsc --noEmit` reports ZERO errors in any projects-related file (all remaining TS errors are in pre-existing unrelated files: capacitor.config.ts, examples/, skills/, auth-button.tsx, contacts.tsx, fetch-interceptor.ts, web-adapter.ts, next.config.ts).
+
+Stage Summary:
+- Schema: added ProjectChecklistItem model + checklist relation on Project. Database synced via `prisma db push` and verified queryable end-to-end.
+- API: GET returns each project with its `checklist` array and an `effectiveProgress` (checklist-aware); `stats.avgProgress` now reflects checklist-driven progress. POST/PUT accept an optional `checklist` array for bulk create/replace. New nested route `/api/projects/[id]/checklist` handles item-level POST/PUT/DELETE with ownership checks + auto-syncs the parent project's `progress` field after every mutation so dashboard/aggregate consumers stay accurate.
+- UI: project detail dialog now has a full checklist section (add/toggle/delete with optimistic updates and per-row busy state). The progress bar in both the card grid and detail dialog reflects checklist completion (`doneItems/totalItems*100`) when a checklist exists; otherwise it falls back to the manual `progress` field as before. The card grid also surfaces a `done/total` badge and an inline `doneCount/totalCount · percentage%` label. Edit dialog shows an emerald-glow notice when editing a checklist-driven project. RTL, dark theme, and emerald-glow accent preserved.
+- Lint + TypeScript clean for all touched files.
+
+---
+Task ID: finances-multi-account
+Agent: finances-multi-account-agent
+Task: Add multi-account + transfers + income to finances
+
+Work Log:
+- Read worklog.md (project context), src/components/dashboard/sections/finances.tsx (FinancesSection — read-only overview with assets/accounts/debts cards), src/app/api/accounts/route.ts (existing GET/POST/PUT/DELETE — POST already supports multi-account create), src/app/api/expenses/route.ts (no accountId field yet), prisma/schema.prisma (Account + Expense models, no relation between them), src/components/dashboard/sections/accounts.tsx (separate AccountsSection already has add/edit/delete dialogs with Dialog/Select/Input), src/lib/auth-helpers.ts (getCurrentUser pattern), src/lib/api.ts (useApi + fetcher + toast), src/lib/activity.ts (logActivity), src/lib/constants.ts (CURRENCIES, USD_TO_SYP, formatCurrency), and shadcn/ui Dialog/Select/Input/Label/Button components.
+- Added `accountId String?` + `account Account? @relation("AccountExpenses", fields: [accountId], references: [id], onDelete: SetNull)` to the Expense model in prisma/schema.prisma. Added the matching `expenses Expense[] @relation("AccountExpenses")` back-relation to the Account model. Optional FK so historical expenses survive even without account linkage.
+- Ran `bunx prisma db push`. First run partially succeeded: the `accountId` column + `AccountExpenses` FK were applied to the Expense table, but the push then errored on an unrelated `ProjectChecklistItem` table that already existed (leftover from the projects-checklist task's prior migration). Verified via `bunx prisma db pull --print` that the DB now contains `Expense.accountId`, the `account` relation, AND `Account.expenses Expense[] @relation("AccountExpenses")` — schema is fully in sync. Subsequent db push attempts failed with P1001 (Neon direct URL unreachable from this sandbox — only the pooler URL works for DDL-free queries). Regenerated the Prisma client with `bunx prisma generate` so the new fields are typed correctly.
+- Created src/app/api/accounts/transfer/route.ts (new POST endpoint):
+  • Body: `{ fromAccountId, toAccountId, amount, currency, note }`.
+  • Resolves the current user via getCurrentUser(), validates fromAccount/toAccount ownership in a single findMany (one round-trip).
+  • Rejects same-account transfers, non-positive/non-finite amounts.
+  • Wraps both balance updates + an Expense record (category="transfer", description includes note or "تحويل بين الحسابات (from → to)", linked via accountId) in `db.$transaction([...])` so balances + expense stay consistent.
+  • Returns `{ fromAccount: {id, balance}, toAccount: {id, balance}, amount, currency }`.
+  • Logs activity via logActivity("transfer", "account", ...).
+- Created src/app/api/accounts/income/route.ts (new POST endpoint):
+  • Body: `{ accountId, amount, currency?, note?, source? }`.
+  • Validates ownership, rejects non-positive amounts.
+  • Runs `db.$transaction([...])`: increments the account balance AND creates an Expense record with NEGATIVE `amount` (so existing monthly-spend aggregators that sum positive amounts treat it as income, not expense), category="income", description="وارد: <note>" or "وارد من <source>" or "وارد إلى الحساب", linked via accountId.
+  • Returns `{ account: {id, balance}, amount, currency }`. Logs activity "income".
+  • Chose the negative-amount Expense approach (over a new Income model) per the task notes — reuses existing schema, no new migration, and existing stats endpoints already filter positive-only for spend.
+- Updated src/app/api/accounts/route.ts DELETE handler: now runs `db.expense.updateMany({ where: { accountId: id }, data: { accountId: null } })` before `db.account.delete(...)` so historical expense records survive even if the DB-level onDelete:SetNull clause isn't applied yet (belt-and-suspenders guard against the P1001 unreachable-direct-URL scenario above). Also added logActivity("delete", "account", ...) call for parity with POST.
+- Rewrote src/components/dashboard/sections/finances.tsx:
+  • New header actions: "تحويل" (Transfer, outline button with ArrowLeftRight icon) and "حساب جديد" (Add Account, default Button with Plus icon) alongside the existing Refresh button.
+  • Per-account card redesigned: balance row stays prominent (emerald-glow when ≥0, rose when negative, USD shows ≈ SYP equivalent), and a small ghost "وارد" button (ArrowDownToLine icon) appears under each account card that opens the Income dialog pre-filled with that account + its currency.
+  • Add Account dialog: name/balance/currency/type/institution fields, mirroring the existing AccountsSection dialog but compact. POSTs to /api/accounts, toast on success, reload() to refresh the overview.
+  • Transfer dialog: from-account Select (shows name + current balance), to-account Select (same-account disabled), amount Input, currency Select (auto-syncs to the from-account's currency on source change), optional note Input. Validates ownership/same-account/positive-amount client-side, POSTs to /api/accounts/transfer, toast on success.
+  • Income dialog: account Select (pre-filled from the clicked card), amount Input, currency Select (auto-syncs to the selected account), optional note/source Input. POSTs to /api/accounts/income, toast on success.
+  • All three dialogs use existing shadcn/ui Dialog/DialogContent/DialogHeader/DialogTitle/DialogDescription/DialogFooter, Select/SelectTrigger/SelectContent/SelectItem, Input, Label, Button components. RTL preserved, dark theme + emerald-glow accent preserved. Loader2 spinner on submit buttons while submitting.
+  • Reused the toSYP helper and ACCOUNT_TYPE_LABELS map; added a small ACCOUNT_TYPE_OPTIONS array for the add-account Select.
+- Verified clean: `bunx eslint src/components/dashboard/sections/finances.tsx src/app/api/accounts/ --max-warnings=0` exits 0 (zero errors, zero warnings). `bunx tsc --noEmit` reports ZERO errors in finances.tsx or any api/accounts/* file (remaining TS errors are all in pre-existing unrelated files: capacitor.config.ts, examples/, skills/, auth-button.tsx, contacts.tsx, fetch-interceptor.ts, web-adapter.ts, next.config.ts).
+
+Stage Summary:
+- Schema: Expense ↔ Account now linked via optional `accountId` FK + `AccountExpenses` named relation. DB synced (verified via db pull). Prisma client regenerated.
+- API: two new endpoints — `/api/accounts/transfer` (transactional balance move + transfer expense record) and `/api/accounts/income` (transactional balance increment + negative-amount expense as income). DELETE handler hardened to nullify FKs before delete. All routes use getCurrentUser() for ownership; all run inside `db.$transaction`.
+- UI: Finances section now supports multi-account creation (Add Account dialog), inter-account transfers (Transfer dialog with from/to/currency auto-sync), and per-account income deposits (Income dialog). Balance prominently shown per account card. Existing design language (dark theme, emerald-glow accent, RTL, shadcn/ui) preserved. ESLint + TypeScript clean for all touched files.
+- Note: `prisma db push` could not be re-run to completion from this sandbox because Neon's direct (non-pooler) URL is unreachable here, but `prisma db pull` confirms the schema change is fully applied (accountId + relation + back-relation all present in DB).

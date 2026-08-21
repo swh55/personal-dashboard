@@ -77,9 +77,9 @@ const TIMEZONES = [
 
 const AI_MODELS = [
   { value: "glm-4.5", label: "GLM-4.5 (الأحدث والأذكى)" },
+  { value: "glm-4.5-flash", label: "GLM-4.5-Flash (موصى به)" },
   { value: "glm-4-plus", label: "GLM-4-Plus" },
   { value: "glm-4-air", label: "GLM-4-Air (سريع)" },
-  { value: "glm-4-flash", label: "GLM-4-Flash (مجاني)" },
   { value: "glm-4-flashx", label: "GLM-4-FlashX" },
   { value: "glm-4-long", label: "GLM-4-Long (سياق طويل)" },
 ];
