@@ -1,65 +1,47 @@
-"use client";
-
-// ---------------------------------------------------------------------------
-// Backwards-compatible re-export layer.
+// =============================================================================
+// Web-only bridge — provides browser fallbacks for all native functions.
+// =============================================================================
 //
-// All native bridge functions now delegate to the platform abstraction layer
-// in `src/lib/platform/`. Existing code that imports from
-// `@/lib/native/bridge` continues to work without any changes.
+// This file replaces the previous Capacitor/Electron native bridge with
+// pure web implementations. When the app runs in a browser:
+//   - isNative() returns false → all native-only UI is hidden
+//   - makePhoneCall() → opens tel: link
+//   - getCurrentLocation() → uses navigator.geolocation
+//   - haptics → no-op
+//   - Notifications → Web Notification API
 //
-// The wrappers below call `getPlatformAdapter()` and forward to the
-// appropriate adapter (web / android / electron). The adapter is selected at
-// runtime via dynamic import — see `src/lib/platform/platform-adapter.ts`.
-//
-// The original Capacitor plugin imports have been moved to
-// `src/lib/platform/capacitor-adapter.ts` so that Capacitor code is only ever
-// loaded when running on Android.
-// ---------------------------------------------------------------------------
+// This keeps the component code unchanged — native features gracefully
+// degrade to web equivalents.
 
-export {
-  getPlatformAdapter,
-  getPlatform,
-  isNative,
-  isWeb,
-  isElectron,
-  type Platform,
-  type PlatformAdapter,
-} from "@/lib/platform/platform-adapter";
-
-import { getPlatformAdapter, isNative } from "@/lib/platform/platform-adapter";
-
-// ---------------------------------------------------------------------------
-// Type aliases (preserved for backwards compatibility — these match the
-// inline types declared on `PlatformAdapter` in `platform-adapter.ts`).
-// ---------------------------------------------------------------------------
+// ---- Types (preserved for compatibility) ----
 
 export interface DeviceContact {
   id: string;
-  displayName: string;
+  name: string;
   phoneNumbers: string[];
   emails: string[];
 }
 
-export type LocationData = {
+export interface LocationData {
   latitude: number;
   longitude: number;
   accuracy: number;
   altitude: number | null;
   timestamp: number;
-};
+}
 
-export type PhotoResult = {
+export interface PhotoResult {
   base64: string | null;
   path: string | null;
   webPath: string | null;
-};
+}
 
-export type NetworkStatus = {
+export interface NetworkStatus {
   connected: boolean;
   connectionType: string;
-};
+}
 
-export type DeviceInfo = {
+export interface DeviceInfo {
   model: string;
   platform: string;
   osVersion: string;
@@ -70,275 +52,320 @@ export type DeviceInfo = {
   appId: string;
   appName: string;
   appVersion: string;
-};
+}
 
-export type SensorData = {
+export interface SensorData {
   x: number;
   y: number;
   z: number;
   timestamp: number;
-};
-
-export type PermissionStatus = {
-  name: string;
-  label: string;
-  granted: boolean;
-};
-
-// ---------------------------------------------------------------------------
-// Helper for Capacitor-only extra methods (contacts / location-permission /
-// camera-permission). These are NOT part of the `PlatformAdapter` interface
-// — only `CapacitorAdapter` implements them. On web/electron we short-circuit
-// to the appropriate default.
-// ---------------------------------------------------------------------------
-
-async function callNativeOnly<T>(
-  methodName: string,
-  fallback: T
-): Promise<T> {
-  if (!isNative()) return fallback;
-  const adapter = (await getPlatformAdapter()) as any;
-  if (typeof adapter[methodName] !== "function") return fallback;
-  return adapter[methodName]();
 }
 
-// ---------------------------------------------------------------------------
-// Phone calls & SMS (via URI schemes)
-// ---------------------------------------------------------------------------
+export interface PermissionStatus {
+  granted: boolean;
+}
+
+// ---- Platform detection ----
+
+export type Platform = "web" | "android" | "electron";
+
+export function getPlatform(): Platform {
+  return "web";
+}
+
+export function isNative(): boolean {
+  return false;
+}
+
+export function isWeb(): boolean {
+  return true;
+}
+
+export function isElectron(): boolean {
+  return typeof window !== "undefined" && !!(window as any).electronAPI;
+}
+
+// ---- Phone / SMS ----
 
 export async function makePhoneCall(phone: string): Promise<boolean> {
-  return (await getPlatformAdapter()).makePhoneCall(phone);
+  if (typeof window !== "undefined") {
+    window.open(`tel:${phone}`, "_self");
+    return true;
+  }
+  return false;
 }
 
-export async function sendSMS(phone: string, body: string): Promise<boolean> {
-  return (await getPlatformAdapter()).sendSMS(phone, body);
+export async function sendSMS(phone: string, body?: string): Promise<boolean> {
+  if (typeof window !== "undefined") {
+    const url = body ? `sms:${phone}?body=${encodeURIComponent(body)}` : `sms:${phone}`;
+    window.open(url, "_self");
+    return true;
+  }
+  return false;
 }
 
 export async function openWhatsApp(phone: string, text?: string): Promise<boolean> {
-  return (await getPlatformAdapter()).openWhatsApp(phone, text);
+  if (typeof window !== "undefined") {
+    const cleanPhone = phone.replace(/[^0-9]/g, "");
+    const url = text
+      ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`
+      : `https://wa.me/${cleanPhone}`;
+    window.open(url, "_blank");
+    return true;
+  }
+  return false;
 }
 
 export async function sendEmail(to: string, subject?: string, body?: string): Promise<boolean> {
-  return (await getPlatformAdapter()).sendEmail(to, subject, body);
+  if (typeof window !== "undefined") {
+    const params = new URLSearchParams();
+    if (subject) params.set("subject", subject);
+    if (body) params.set("body", body);
+    const qs = params.toString();
+    window.open(`mailto:${to}${qs ? "?" + qs : ""}`, "_self");
+    return true;
+  }
+  return false;
 }
 
-// ---------------------------------------------------------------------------
-// Contacts sync (Capacitor-only)
-// ---------------------------------------------------------------------------
-
-export async function requestContactsPermission(): Promise<boolean> {
-  return callNativeOnly<boolean>("requestContactsPermission", false);
-}
-
-export async function checkContactsPermission(): Promise<boolean> {
-  return callNativeOnly<boolean>("checkContactsPermission", false);
-}
-
-export async function getDeviceContacts(): Promise<DeviceContact[]> {
-  return callNativeOnly<DeviceContact[]>("getDeviceContacts", []);
-}
-
-// ---------------------------------------------------------------------------
-// Geolocation
-// ---------------------------------------------------------------------------
-
-export async function requestLocationPermission(): Promise<boolean> {
-  return callNativeOnly<boolean>("requestLocationPermission", false);
-}
+// ---- Location ----
 
 export async function getCurrentLocation(): Promise<LocationData | null> {
-  return (await getPlatformAdapter()).getCurrentLocation();
+  if (typeof navigator === "undefined" || !navigator.geolocation) return null;
+  return new Promise((resolve) => {
+    navigator.geolocation.getCurrentPosition(
+      (pos) =>
+        resolve({
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+          accuracy: pos.coords.accuracy,
+          altitude: pos.coords.altitude,
+          timestamp: pos.timestamp,
+        }),
+      () => resolve(null),
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  });
 }
 
-// ---------------------------------------------------------------------------
-// Camera
-// ---------------------------------------------------------------------------
-
-export async function requestCameraPermission(): Promise<boolean> {
-  return callNativeOnly<boolean>("requestCameraPermission", false);
-}
+// ---- Camera ----
 
 export async function takePhoto(): Promise<PhotoResult | null> {
-  return (await getPlatformAdapter()).takePhoto();
+  return null; // Web uses <input type="file"> in ImageUpload component
 }
 
 export async function pickImage(): Promise<PhotoResult | null> {
-  return (await getPlatformAdapter()).pickImage();
+  return null;
 }
 
-// ---------------------------------------------------------------------------
-// Haptics
-// ---------------------------------------------------------------------------
+// ---- Haptics (no-op on web) ----
 
-export async function hapticLight(): Promise<void> {
-  return (await getPlatformAdapter()).hapticLight();
-}
-export async function hapticMedium(): Promise<void> {
-  return (await getPlatformAdapter()).hapticMedium();
-}
-export async function hapticHeavy(): Promise<void> {
-  return (await getPlatformAdapter()).hapticHeavy();
-}
-export async function hapticSuccess(): Promise<void> {
-  return (await getPlatformAdapter()).hapticSuccess();
-}
-export async function hapticWarning(): Promise<void> {
-  return (await getPlatformAdapter()).hapticWarning();
-}
-export async function hapticError(): Promise<void> {
-  return (await getPlatformAdapter()).hapticError();
-}
+export async function hapticLight(): Promise<void> {}
+export async function hapticMedium(): Promise<void> {}
+export async function hapticHeavy(): Promise<void> {}
+export async function hapticSuccess(): Promise<void> {}
+export async function hapticWarning(): Promise<void> {}
+export async function hapticError(): Promise<void> {}
 
-// ---------------------------------------------------------------------------
-// Local Notifications
-// ---------------------------------------------------------------------------
+// ---- Notifications ----
 
 export async function requestNotificationPermission(): Promise<boolean> {
-  return (await getPlatformAdapter()).requestNotificationPermission();
+  if (typeof Notification === "undefined") return false;
+  if (Notification.permission === "granted") return true;
+  const result = await Notification.requestPermission();
+  return result === "granted";
 }
 
 export async function scheduleNotification(
   title: string,
   body: string,
-  scheduleAt: Date,
-  id?: number
+  _scheduleAt: Date,
+  _id?: number
 ): Promise<number | null> {
-  return (await getPlatformAdapter()).scheduleNotification(title, body, scheduleAt, id);
+  // Web: use setTimeout as a simple fallback
+  if (typeof Notification === "undefined") return null;
+  const delay = Math.max(0, _scheduleAt.getTime() - Date.now());
+  setTimeout(() => {
+    try {
+      new Notification(title, { body });
+    } catch {}
+  }, delay);
+  return Date.now();
 }
 
-export async function cancelNotification(id: number): Promise<void> {
-  return (await getPlatformAdapter()).cancelNotification(id);
-}
+export async function cancelNotification(_id: number): Promise<void> {}
 
-// ---------------------------------------------------------------------------
-// Network
-// ---------------------------------------------------------------------------
+// ---- Network ----
 
 export async function getNetworkStatus(): Promise<NetworkStatus> {
-  return (await getPlatformAdapter()).getNetworkStatus();
-}
-
-export function onNetworkChange(callback: (status: NetworkStatus) => void): () => void {
-  let unsub: (() => void) | null = null;
-  let cancelled = false;
-  getPlatformAdapter().then((adapter) => {
-    if (cancelled) return;
-    unsub = adapter.onNetworkChange(callback);
-  });
-  return () => {
-    cancelled = true;
-    if (unsub) unsub();
+  return {
+    connected: typeof navigator !== "undefined" ? navigator.onLine : true,
+    connectionType: "wifi",
   };
 }
 
-// ---------------------------------------------------------------------------
-// Share
-// ---------------------------------------------------------------------------
-
-export async function share(title: string, text: string, url?: string): Promise<boolean> {
-  return (await getPlatformAdapter()).share(title, text, url);
+export function onNetworkChange(
+  callback: (status: NetworkStatus) => void
+): () => void {
+  if (typeof window === "undefined") return () => {};
+  const handler = () => {
+    callback({
+      connected: navigator.onLine,
+      connectionType: "wifi",
+    });
+  };
+  window.addEventListener("online", handler);
+  window.addEventListener("offline", handler);
+  return () => {
+    window.removeEventListener("online", handler);
+    window.removeEventListener("offline", handler);
+  };
 }
 
-// ---------------------------------------------------------------------------
-// Filesystem
-// ---------------------------------------------------------------------------
+// ---- Share ----
+
+export async function share(title: string, text: string, url?: string): Promise<boolean> {
+  if (typeof navigator !== "undefined" && navigator.share) {
+    try {
+      await navigator.share({ title, text, url });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  // Fallback: copy to clipboard
+  if (typeof navigator !== "undefined" && navigator.clipboard) {
+    try {
+      await navigator.clipboard.writeText(url ? `${title}\n${text}\n${url}` : `${title}\n${text}`);
+      return true;
+    } catch {}
+  }
+  return false;
+}
+
+// ---- Filesystem (localStorage-based) ----
 
 export async function writeFile(filename: string, content: string): Promise<string | null> {
-  return (await getPlatformAdapter()).writeFile(filename, content);
+  try {
+    localStorage.setItem(`file:${filename}`, content);
+    return filename;
+  } catch {
+    return null;
+  }
 }
 
 export async function readFile(filename: string): Promise<string | null> {
-  return (await getPlatformAdapter()).readFile(filename);
+  try {
+    return localStorage.getItem(`file:${filename}`);
+  } catch {
+    return null;
+  }
 }
 
 export async function listFiles(): Promise<string[]> {
-  return (await getPlatformAdapter()).listFiles();
+  try {
+    return Object.keys(localStorage)
+      .filter((k) => k.startsWith("file:"))
+      .map((k) => k.slice(5));
+  } catch {
+    return [];
+  }
 }
 
 export async function deleteFile(filename: string): Promise<boolean> {
-  return (await getPlatformAdapter()).deleteFile(filename);
+  try {
+    localStorage.removeItem(`file:${filename}`);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export async function exportBackup(data: any, filename?: string): Promise<string | null> {
-  return (await getPlatformAdapter()).exportBackup(data, filename);
+  try {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename || "backup.json";
+    a.click();
+    URL.revokeObjectURL(url);
+    return filename || "backup.json";
+  } catch {
+    return null;
+  }
 }
 
-// ---------------------------------------------------------------------------
-// Device info
-// ---------------------------------------------------------------------------
+// ---- Device info ----
 
 export async function getDeviceInfo(): Promise<DeviceInfo> {
-  return (await getPlatformAdapter()).getDeviceInfo();
-}
-
-// ---------------------------------------------------------------------------
-// Motion sensors
-// ---------------------------------------------------------------------------
-
-export async function startAccelerometer(callback: (data: SensorData) => void): Promise<void> {
-  return (await getPlatformAdapter()).startAccelerometer(callback);
-}
-
-export async function stopAccelerometer(): Promise<void> {
-  return (await getPlatformAdapter()).stopAccelerometer();
-}
-
-// ---------------------------------------------------------------------------
-// Toast
-// ---------------------------------------------------------------------------
-
-export async function showToast(
-  message: string,
-  duration: "short" | "long" = "short"
-): Promise<void> {
-  return (await getPlatformAdapter()).showToast(message, duration);
-}
-
-// ---------------------------------------------------------------------------
-// App lifecycle
-// ---------------------------------------------------------------------------
-
-export function onAppStateChange(callback: (isActive: boolean) => void): () => void {
-  let unsub: (() => void) | null = null;
-  let cancelled = false;
-  getPlatformAdapter().then((adapter) => {
-    if (cancelled) return;
-    unsub = adapter.onAppStateChange(callback);
-  });
-  return () => {
-    cancelled = true;
-    if (unsub) unsub();
+  const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+  return {
+    model: ua,
+    platform: "web",
+    osVersion: "unknown",
+    manufacturer: "browser",
+    batteryLevel: 1,
+    isCharging: true,
+    languageCode: typeof navigator !== "undefined" ? navigator.language : "en",
+    appId: "web",
+    appName: "Silah",
+    appVersion: "1.0.0",
   };
 }
 
-export async function getAppInfo(): Promise<{ name: string; version: string; build: string } | null> {
-  return (await getPlatformAdapter()).getAppInfo();
+// ---- Motion sensors (no-op on web) ----
+
+export async function startAccelerometer(
+  _callback: (data: SensorData) => void
+): Promise<void> {}
+
+export async function stopAccelerometer(): Promise<void> {}
+
+// ---- Toast ----
+
+export async function showToast(message: string, duration?: "short" | "long"): Promise<void> {
+  console.log(`[toast] ${message}`);
 }
 
-// ---------------------------------------------------------------------------
-// Preferences
-// ---------------------------------------------------------------------------
+// ---- Device contacts (empty on web) ----
 
-export async function setPref(key: string, value: string): Promise<void> {
-  return (await getPlatformAdapter()).setPref(key, value);
+export async function getDeviceContacts(): Promise<DeviceContact[]> {
+  return [];
 }
 
-export async function getPref(key: string): Promise<string | null> {
-  return (await getPlatformAdapter()).getPref(key);
+export async function requestContactsPermission(): Promise<boolean> {
+  return false;
 }
 
-export async function removePref(key: string): Promise<void> {
-  return (await getPlatformAdapter()).removePref(key);
+export async function checkContactsPermission(): Promise<boolean> {
+  return false;
 }
 
-// ---------------------------------------------------------------------------
-// Permissions manager
-// ---------------------------------------------------------------------------
-
-export async function requestAllPermissions(): Promise<PermissionStatus[]> {
-  return (await getPlatformAdapter()).requestAllPermissions();
+export async function requestLocationPermission(): Promise<boolean> {
+  return true; // Web geolocation API handles its own permission
 }
 
-export async function checkAllPermissions(): Promise<PermissionStatus[]> {
-  return (await getPlatformAdapter()).checkAllPermissions();
+export async function requestCameraPermission(): Promise<boolean> {
+  return false;
+}
+
+// ---- Permission aggregation (web-only: all return false/not-granted) ----
+
+export async function requestAllPermissions(): Promise<Record<string, PermissionStatus>> {
+  return {
+    contacts: { granted: false },
+    location: { granted: true },
+    camera: { granted: false },
+    notifications: { granted: false },
+  };
+}
+
+export async function checkAllPermissions(): Promise<Record<string, PermissionStatus>> {
+  return {
+    contacts: { granted: false },
+    location: { granted: true },
+    camera: { granted: false },
+    notifications: { granted: false },
+  };
 }

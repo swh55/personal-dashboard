@@ -1,27 +1,10 @@
-import { registerPlugin } from "@capacitor/core";
-
-export interface PhoneCallLog {
-  id: string;
-  number: string;
-  name: string | null;
-  date: number;
-  duration: number;
-  direction: "incoming" | "outgoing" | "missed" | "unknown";
-  type: string;
-}
-
+// Web-only stub for CallLogSync — no native call log on web.
 export interface CallLogSyncPlugin {
-  checkPermissions(): Promise<{ read: string }>;
-  requestPermissions(): Promise<{ read: string }>;
-  getCallLogs(options: { limit?: number }): Promise<{ logs: PhoneCallLog[] }>;
+  getCallLogs(opts: { limit?: number }): Promise<any[]>;
 }
 
-const CallLogSync = registerPlugin<CallLogSyncPlugin>("CallLogSync", {
-  web: {
-    checkPermissions: async () => ({ read: "denied" }),
-    requestPermissions: async () => ({ read: "denied" }),
-    getCallLogs: async () => ({ logs: [] }),
-  },
-});
+const CallLogSync: CallLogSyncPlugin = {
+  getCallLogs: async () => [],
+};
 
 export default CallLogSync;

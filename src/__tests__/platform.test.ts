@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getPlatform } from "@/lib/platform/platform-adapter";
+import { getPlatform, isNative, isWeb, isElectron } from "@/lib/native/bridge";
 
 describe("Platform Detection", () => {
   it("should detect web platform in test environment", () => {
@@ -7,13 +7,15 @@ describe("Platform Detection", () => {
     expect(platform).toBe("web");
   });
 
-  it("isNative should return false in web environment", async () => {
-    const { isNative } = await import("@/lib/platform/platform-adapter");
+  it("isNative should return false in web environment", () => {
     expect(isNative()).toBe(false);
   });
 
-  it("isElectron should return false in web environment", async () => {
-    const { isElectron } = await import("@/lib/platform/platform-adapter");
+  it("isElectron should return false in web environment", () => {
     expect(isElectron()).toBe(false);
+  });
+
+  it("isWeb should return true in web environment", () => {
+    expect(isWeb()).toBe(true);
   });
 });

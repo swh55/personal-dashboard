@@ -2725,22 +2725,7 @@ function isAuthenticatedWebUser(): boolean {
 
 function shouldIntercept(): boolean {
   if (typeof window === "undefined") return false;
-  // APK build: NEXT_PUBLIC_APK_MODE is baked into the bundle as "true"
-  const isApkMode = process.env.NEXT_PUBLIC_APK_MODE === "true";
-  // Capacitor native shell (Android/iOS)
-  const isNative =
-    (window as any).capacitor?.isNative === true ||
-    (window as any).capacitor?.platform === "android";
-  // Manual override for browser testing (use try/catch to avoid minifier issues)
-  let forceLocal = false;
-  try {
-    forceLocal = window.localStorage.getItem("force-local-mode") === "true";
-  } catch {
-    // localStorage not available
-  }
-  // APK / native / forced → always intercept (offline-first shell)
-  if (isApkMode || isNative || forceLocal) return true;
-  // Normal web: intercept ONLY for guests (no auth-session flag).
+  // Web-only: intercept for guests (no auth-session flag).
   // Authenticated users get real cloud data.
   return !isAuthenticatedWebUser();
 }

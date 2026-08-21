@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">صلة سكوب</string>
-    <string name="title_activity_main">صلة سكوب</string>
-    <string name="package_name">pro.datascoop.sela</string>
-    <string name="custom_url_scheme">pro.datascoop.sela</string>
-</resources>

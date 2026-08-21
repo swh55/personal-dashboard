@@ -3,12 +3,12 @@
 import * as React from "react";
 
 /**
- * If the local-mode interceptor is being installed (APK mode, native shell,
- * forced, OR guest web user without a session cookie), wait for it to be
- * ready before any fetch fires. This prevents race conditions where useApi
- * fetches /api/notes before the interceptor has replaced fetch().
+ * If the local-mode interceptor is being installed (guest web user without
+ * a session), wait for it to be ready before any fetch fires. This prevents
+ * race conditions where useApi fetches /api/notes before the interceptor
+ * has replaced fetch().
  *
- * Authenticated web users (session cookie present) skip the wait — their
+ * Authenticated web users (session flag present) skip the wait — their
  * fetches go straight to the cloud server.
  */
 async function waitForLocalMode(): Promise<void> {
@@ -17,35 +17,15 @@ async function waitForLocalMode(): Promise<void> {
   // If local mode is already ready, no need to wait
   if (w.__localModeReady) return;
 
-  // Determine whether local mode SHOULD be active for this client.
-  const isApkMode = process.env.NEXT_PUBLIC_APK_MODE === "true";
-  const isCapacitorNative =
-    w.capacitor?.isNative === true || w.capacitor?.platform === "android";
-  let isForced = false;
-  try {
-    isForced = localStorage.getItem("force-local-mode") === "true";
-  } catch {
-    // localStorage not available
-  }
-  // Authenticated web users have a non-HttpOnly `x-authed=1` cookie set
-  // by Next.js middleware (the NextAuth session cookie itself is HttpOnly
-  // and invisible to JS). When present, skip local mode → fetches go
-  // straight to the cloud server. Also check the localStorage flag as a
-  // fallback for the brief window before middleware runs.
+  // Authenticated web users have a localStorage flag set by the AuthButton.
   let isAuthenticated = false;
-  if (typeof document !== "undefined" && document.cookie) {
-    isAuthenticated = document.cookie.includes("x-authed=1");
-  }
-  if (!isAuthenticated) {
-    try {
-      isAuthenticated = localStorage.getItem("auth-session") === "1";
-    } catch {
-      // ignore
-    }
+  try {
+    isAuthenticated = localStorage.getItem("auth-session") === "1";
+  } catch {
+    // ignore
   }
 
-  const shouldUseLocalMode =
-    isApkMode || isCapacitorNative || isForced || !isAuthenticated;
+  const shouldUseLocalMode = !isAuthenticated;
 
   if (!shouldUseLocalMode) {
     return; // Authenticated web user — fetch goes to cloud directly

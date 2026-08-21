@@ -1,48 +1,14 @@
-import { registerPlugin } from "@capacitor/core";
-
-export interface PhoneCalendar {
-  id: string;
-  name: string;
-  accountName: string;
-  accountType: string;
-  color: number;
-}
-
-export interface PhoneCalendarEvent {
-  id: string;
-  title: string;
-  description: string | null;
-  location: string | null;
-  startTime: number;
-  endTime: number;
-  allDay: boolean;
-  calendarId: string;
-  color: number;
-}
-
+// Web-only stub for CalendarSync — no native calendar on web.
 export interface CalendarSyncPlugin {
-  checkPermissions(): Promise<{ read: string; write: string }>;
-  requestPermissions(): Promise<{ read: string; write: string }>;
-  getCalendars(): Promise<{ calendars: PhoneCalendar[] }>;
-  getEvents(options: { startTime?: number; endTime?: number }): Promise<{ events: PhoneCalendarEvent[] }>;
-  createEvent(options: {
-    title: string;
-    description?: string;
-    location?: string;
-    startTime: number;
-    endTime: number;
-    allDay?: boolean;
-  }): Promise<{ success: boolean; eventId: number }>;
+  getCalendars(): Promise<any[]>;
+  getEvents(opts: { startTime: number; endTime: number }): Promise<any[]>;
+  createEvent(opts: { title: string; startDate: number; endDate?: number; location?: string; notes?: string }): Promise<{ id: string } | null>;
 }
 
-const CalendarSync = registerPlugin<CalendarSyncPlugin>("CalendarSync", {
-  web: {
-    checkPermissions: async () => ({ read: "denied", write: "denied" }),
-    requestPermissions: async () => ({ read: "denied", write: "denied" }),
-    getCalendars: async () => ({ calendars: [] }),
-    getEvents: async () => ({ events: [] }),
-    createEvent: async () => ({ success: false, eventId: 0 }),
-  },
-});
+const CalendarSync: CalendarSyncPlugin = {
+  getCalendars: async () => [],
+  getEvents: async () => [],
+  createEvent: async () => null,
+};
 
 export default CalendarSync;
