@@ -1,4 +1,4 @@
-package com.abdullah.dashboard;
+package pro.datascoop.sela;
 
 import android.os.Bundle;
 import com.getcapacitor.BridgeActivity;

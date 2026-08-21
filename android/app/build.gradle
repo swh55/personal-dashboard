@@ -1,11 +1,11 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace = "com.abdullah.dashboard"
+    namespace = "pro.datascoop.sela"
     compileSdk = rootProject.ext.compileSdkVersion
 
     defaultConfig {
-        applicationId "com.abdullah.dashboard"
+        applicationId "pro.datascoop.sela"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

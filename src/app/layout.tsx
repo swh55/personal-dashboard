@@ -7,10 +7,10 @@ import { AuthProvider } from "@/components/auth-provider";
 import { LocalModeInitializer } from "@/components/local-mode-initializer";
 
 export const metadata: Metadata = {
-  title: "لوحة التحكم الشخصية | Business Dashboard",
-  description: "لوحة تحكم متكاملة لرجل الأعمال — تقويم، اتصالات، مهام، مالية، وأكثر",
-  keywords: ["dashboard", "business", "calendar", "Aleppo", "prayer times"],
-  authors: [{ name: "Personal Dashboard" }],
+  title: "صلة سكوب | Silah Dashboard",
+  description: "صلة سكوب — لوحة تحكم متكاملة لرجل الأعمال: تقويم، اتصالات، مهام، مالية، وأكثر",
+  keywords: ["dashboard", "business", "calendar", "صلة", "سكوب"],
+  authors: [{ name: "Silah" }],
   icons: {
     icon: "/logo.svg",
   },

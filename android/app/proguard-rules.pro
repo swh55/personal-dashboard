@@ -1,12 +1,12 @@
 # Keep Capacitor bridge
 -keep class com.getcapacitor.** { *; }
--keep class com.abdullah.dashboard.** { *; }
+-keep class pro.datascoop.sela.** { *; }
 
 # Keep native plugins
--keep class com.abdullah.dashboard.AppDrawerPlugin { *; }
--keep class com.abdullah.dashboard.CalendarSyncPlugin { *; }
--keep class com.abdullah.dashboard.CallLogSyncPlugin { *; }
--keep class com.abdullah.dashboard.MainActivity { *; }
+-keep class pro.datascoop.sela.AppDrawerPlugin { *; }
+-keep class pro.datascoop.sela.CalendarSyncPlugin { *; }
+-keep class pro.datascoop.sela.CallLogSyncPlugin { *; }
+-keep class pro.datascoop.sela.MainActivity { *; }
 
 # Keep model classes (used by JSON serialization)
 -keepclassmembers class * {

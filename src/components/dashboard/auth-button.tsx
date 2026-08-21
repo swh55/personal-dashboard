@@ -13,6 +13,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { LogIn, LogOut, User as UserIcon, Loader2 } from "lucide-react";
 import { migrateGuestData } from "@/lib/sync/migrate-guest";
+import { isNative } from "@/lib/native/bridge";
+
+/**
+ * The production web URL where Google OAuth is fully configured.
+ * In the Android APK (static export), there is no /api/auth/* server, so
+ * we open the system browser to this URL to handle login. After the user
+ * authenticates, they return to the app and the session is established via
+ * the cookie-based NextAuth flow on the production domain.
+ */
+const PRODUCTION_WEB_URL =
+  process.env.NEXT_PUBLIC_PRODUCTION_URL ||
+  "https://personal-dashboard-mu-lyart.vercel.app";
 
 /**
  * Auth button for the top bar.
@@ -129,12 +141,25 @@ export function AuthButton() {
   }
 
   // Guest — show sign-in button
+  const handleSignIn = () => {
+    if (isNative()) {
+      // In the Android APK (static export), there is no /api/auth/* server.
+      // Open the production web URL in the system browser — Google OAuth
+      // runs there, and the user can authenticate + return to the app.
+      const loginUrl = `${PRODUCTION_WEB_URL}/api/auth/signin`;
+      window.open(loginUrl, "_blank");
+    } else {
+      // Web — use the standard NextAuth signIn() flow (modal/redirect)
+      signIn();
+    }
+  };
+
   return (
     <Button
       variant="ghost"
       size="sm"
       className="flex h-8 items-center gap-1.5 rounded-md px-2 text-emerald-glow"
-      onClick={() => signIn()}
+      onClick={handleSignIn}
       aria-label="تسجيل الدخول"
     >
       <LogIn className="size-4" />

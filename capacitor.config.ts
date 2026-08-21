@@ -1,8 +1,8 @@
 import { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
-  appId: "com.abdullah.dashboard",
-  appName: "لوحة التحكم الشخصية",
+  appId: "pro.datascoop.sela",
+  appName: "صلة سكوب",
   webDir: "out",
   android: {
     allowMixedContent: true,
@@ -20,6 +20,7 @@ const config: CapacitorConfig = {
     "tile.openstreetmap.org",
     "unpkg.com",
     "wa.me",
+    "personal-dashboard-mu-lyart.vercel.app",
   ],
 };
 

@@ -123,19 +123,30 @@ const QUICK_ACTIONS: { label: string; icon: LucideIcon; panel: PanelId; color: s
 ];
 
 /* ------------------------------------------------------------------ */
-/*  Swipe-up gesture hook                                               */
+/*  Launcher gestures: swipe-up → app drawer, swipe-down → notifications*/
 /* ------------------------------------------------------------------ */
 
-function useSwipeUpToOpenApps() {
+function useLauncherGestures() {
   React.useEffect(() => {
     if (!isNative()) return;
     let startY: number | null = null;
+    let startX: number | null = null;
     let startTime: number = 0;
 
     const onTouchStart = (e: TouchEvent) => {
       const touch = e.touches[0];
-      if (touch.clientY > window.innerHeight - 20) {
+      // Only start gesture tracking if the touch begins at the very top
+      // (swipe-down → notifications) or very bottom (swipe-up → app drawer)
+      // edge of the screen.
+      if (touch.clientY <= 20) {
+        // Top edge → swipe-down for notifications
         startY = touch.clientY;
+        startX = touch.clientX;
+        startTime = Date.now();
+      } else if (touch.clientY > window.innerHeight - 20) {
+        // Bottom edge → swipe-up for app drawer
+        startY = touch.clientY;
+        startX = touch.clientX;
         startTime = Date.now();
       } else {
         startY = null;
@@ -145,13 +156,26 @@ function useSwipeUpToOpenApps() {
       if (startY === null) return;
       const touch = e.touches[0];
       const deltaY = startY - touch.clientY;
-      if (deltaY > 50 && Date.now() - startTime < 500) {
+      const absDeltaY = Math.abs(deltaY);
+      const deltaX = startX !== null ? Math.abs(touch.clientX - startX) : 0;
+
+      // Require primarily vertical movement (avoid horizontal scroll triggers)
+      if (absDeltaY < 50 || deltaX > absDeltaY * 1.5) return;
+      if (Date.now() - startTime > 600) return;
+
+      if (deltaY < -50) {
+        // Swipe DOWN from top → open notifications
+        e.preventDefault();
+        AppDrawer.openNotifications().catch(() => {});
+        startY = null;
+      } else if (deltaY > 50) {
+        // Swipe UP from bottom → open app drawer
         e.preventDefault();
         AppDrawer.openAppDrawer().catch(() => {});
         startY = null;
       }
     };
-    const onTouchEnd = () => { startY = null; };
+    const onTouchEnd = () => { startY = null; startX = null; };
 
     document.addEventListener("touchstart", onTouchStart, { passive: true });
     document.addEventListener("touchmove", onTouchMove, { passive: false });
@@ -278,7 +302,10 @@ function BottomDock() {
             </button>
             {/* Quick-add floating button */}
             <button
-              onClick={() => setQuickAddOpen(true)}
+              onClick={() => {
+                setExpanded(false);
+                setQuickAddOpen(true);
+              }}
               aria-label="إضافة سريعة"
               className="flex size-9 items-center justify-center rounded-full bg-gradient-to-br from-emerald-glow to-amber-glow text-background shadow-lg transition-transform hover:scale-110"
             >
@@ -337,7 +364,7 @@ export function SingleScreenShell({
   const panelLabel = currentItem?.label ?? "الرئيسية";
   const PanelIcon = currentItem?.icon ?? Home;
 
-  useSwipeUpToOpenApps();
+  useLauncherGestures();
 
   React.useEffect(() => {
     if (typeof window !== "undefined") {
