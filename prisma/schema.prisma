@@ -54,6 +54,11 @@ model User {
   suggestions       Suggestion[]
   appSettings       AppSetting[]
   syncQueue         SyncQueue[]
+
+  // --- Silah Cloud Platform v1 ---
+  devices           Device[]
+  apiTokens         ApiToken[]
+  syncEvents        SyncEvent[]
 }
 
 // ----------------------------------------------------------------------------
@@ -72,6 +77,7 @@ model Contact {
   note      String?
   favorite  Boolean  @default(false)
   avatar    String?
+  version   Int      @default(1)
   deletedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -80,6 +86,7 @@ model Contact {
   reminders ContactReminder[]
 
   @@index([userId])
+  @@index([userId, updatedAt])
 }
 
 model CallLog {
@@ -109,11 +116,13 @@ model Note {
   content   String
   color     String   @default("default") // default, yellow, green, blue, red, purple
   pinned    Boolean  @default(false)
+  version   Int      @default(1)
   deletedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([userId])
+  @@index([userId, updatedAt])
 }
 
 // ----------------------------------------------------------------------------
@@ -131,11 +140,13 @@ model Event {
   type        String   @default("personal") // work, personal, family, health, other
   color       String   @default("emerald") // emerald, amber, rose, blue, violet, slate
   location    String?
+  version     Int      @default(1)
   deletedAt   DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([userId])
+  @@index([userId, updatedAt])
 }
 
 // ----------------------------------------------------------------------------
@@ -153,11 +164,13 @@ model Task {
   dueDate     DateTime?
   projectId   String?
   project     Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  version     Int      @default(1)
   deletedAt   DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([userId])
+  @@index([userId, updatedAt])
 }
 
 // ----------------------------------------------------------------------------
@@ -172,6 +185,7 @@ model Expense {
   category    String   @default("general")
   description String?
   date        DateTime @default(now())
+  version     Int      @default(1)
   deletedAt   DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -182,6 +196,7 @@ model Expense {
   account     Account? @relation("AccountExpenses", fields: [accountId], references: [id], onDelete: SetNull)
 
   @@index([userId])
+  @@index([userId, updatedAt])
 }
 
 // ----------------------------------------------------------------------------
@@ -195,11 +210,14 @@ model Budget {
   limit     Float
   month     Int // 1-12
   year      Int
+  version   Int    @default(1)
+  deletedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([userId, category, month, year])
   @@index([userId])
+  @@index([userId, updatedAt])
 }
 
 // ----------------------------------------------------------------------------
@@ -214,10 +232,13 @@ model Asset {
   currency    String   @default("syp")
   type        String   @default("cash") // cash, bank, real-estate, gold, stocks, other
   description String?
+  version     Int      @default(1)
+  deletedAt   DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([userId])
+  @@index([userId, updatedAt])
 }
 
 model Account {
@@ -229,6 +250,8 @@ model Account {
   currency      String   @default("syp")
   type          String   @default("bank") // bank, cash, savings, credit
   institution   String?
+  version       Int      @default(1)
+  deletedAt     DateTime?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -236,6 +259,7 @@ model Account {
   expenses      Expense[] @relation("AccountExpenses")
 
   @@index([userId])
+  @@index([userId, updatedAt])
 }
 
 // ----------------------------------------------------------------------------
@@ -253,11 +277,13 @@ model Debt {
   dueDate     DateTime?
   settled     Boolean  @default(false)
   settledAt   DateTime?
+  version     Int      @default(1)
   deletedAt   DateTime?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   @@index([userId])
+  @@index([userId, updatedAt])
 }
 
 // ----------------------------------------------------------------------------
@@ -274,13 +300,15 @@ model Project {
   progress    Int      @default(0) // 0-100
   startDate   DateTime?
   endDate     DateTime?
+  version     Int      @default(1)
+  deletedAt   DateTime?
   tasks       Task[]
   checklist   ProjectChecklistItem[]
-  deletedAt   DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([userId])
+  @@index([userId, updatedAt])
 }
 
 model ProjectChecklistItem {
@@ -311,11 +339,13 @@ model Meeting {
   startDate    DateTime
   endDate      DateTime?
   status       String   @default("scheduled") // scheduled, completed, cancelled
+  version      Int      @default(1)
   deletedAt    DateTime?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   @@index([userId])
+  @@index([userId, updatedAt])
 }
 
 // ----------------------------------------------------------------------------
@@ -330,10 +360,13 @@ model Occasion {
   type      String   @default("birthday") // birthday, anniversary, holiday, other
   recurring Boolean  @default(true)
   note      String?
+  version   Int      @default(1)
+  deletedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([userId])
+  @@index([userId, updatedAt])
 }
 
 // ----------------------------------------------------------------------------
@@ -348,11 +381,13 @@ model DiaryEntry {
   mood      String   @default("neutral") // happy, sad, neutral, angry, excited, anxious
   weather   String?
   date      DateTime @default(now())
+  version   Int      @default(1)
   deletedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([userId])
+  @@index([userId, updatedAt])
 }
 
 // ----------------------------------------------------------------------------
@@ -369,12 +404,15 @@ model Habit {
   color       String   @default("emerald")
   icon        String   @default("CheckCircle")
   active      Boolean  @default(true)
+  version     Int      @default(1)
+  deletedAt   DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   logs        HabitLog[]
 
   @@index([userId])
+  @@index([userId, updatedAt])
 }
 
 model HabitLog {
@@ -403,11 +441,13 @@ model Medication {
   endDate     DateTime?
   notes       String?
   active      Boolean  @default(true)
+  version     Int      @default(1)
   deletedAt   DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([userId])
+  @@index([userId, updatedAt])
 }
 
 model SleepLog {
@@ -437,10 +477,13 @@ model PantryItem {
   unit      String   @default("piece") // piece, kg, g, l, ml, pack
   lowStock  Int      @default(1)
   category  String   @default("other") // grains, dairy, meat, vegetables, fruits, beverages, cleaning, other
+  version   Int      @default(1)
+  deletedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([userId])
+  @@index([userId, updatedAt])
 }
 
 // ----------------------------------------------------------------------------
@@ -454,10 +497,13 @@ model WaitingItem {
   description String?
   priority    Int      @default(0)
   ready       Boolean  @default(false)
+  version     Int      @default(1)
+  deletedAt   DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([userId])
+  @@index([userId, updatedAt])
 }
 
 // ----------------------------------------------------------------------------
@@ -473,10 +519,13 @@ model SavedLocation {
   lng       Float
   icon      String   @default("MapPin")
   color     String   @default("blue")
+  version   Int      @default(1)
+  deletedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([userId])
+  @@index([userId, updatedAt])
 }
 
 // ----------------------------------------------------------------------------
@@ -493,10 +542,13 @@ model ContactReminder {
   lastContacted  DateTime?
   nextReminder   DateTime?
   active         Boolean  @default(true)
+  version        Int      @default(1)
+  deletedAt      DateTime?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   @@index([userId])
+  @@index([userId, updatedAt])
 }
 
 // ----------------------------------------------------------------------------
@@ -510,11 +562,14 @@ model HappinessLog {
   score     Int // 1-10
   factors   String? // JSON
   note      String?
+  version   Int      @default(1)
+  deletedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([userId, date])
   @@index([userId])
+  @@index([userId, updatedAt])
 }
 
 // ----------------------------------------------------------------------------
@@ -547,11 +602,14 @@ model Integration {
   connected Boolean  @default(false)
   config    String? // JSON
   lastSync  DateTime?
+  version   Int      @default(1)
+  deletedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([userId, service])
   @@index([userId])
+  @@index([userId, updatedAt])
 }
 
 // ----------------------------------------------------------------------------
@@ -582,11 +640,13 @@ model ScheduledMessage {
   scheduledAt  DateTime
   sent         Boolean  @default(false)
   sentAt       DateTime?
+  version      Int      @default(1)
   deletedAt    DateTime?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   @@index([userId])
+  @@index([userId, updatedAt])
 }
 
 // ----------------------------------------------------------------------------
@@ -601,10 +661,13 @@ model AutomationRule {
   action    String // action to perform
   config    String? // JSON
   active    Boolean  @default(true)
+  version   Int      @default(1)
+  deletedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([userId])
+  @@index([userId, updatedAt])
 }
 
 // ----------------------------------------------------------------------------
@@ -618,10 +681,13 @@ model Suggestion {
   content   String
   category  String   @default("general")
   status    String   @default("pending") // pending, accepted, rejected
+  version   Int      @default(1)
+  deletedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([userId])
+  @@index([userId, updatedAt])
 }
 
 // ----------------------------------------------------------------------------
@@ -662,3 +728,98 @@ model SyncQueue {
 // the standard Account/Session/VerificationToken tables are NOT required.
 // User records are upserted on first Google login via the signIn callback
 // in src/lib/auth.ts. The financial "Account" model above is unrelated.
+
+// ============================================================================
+// SILAH CLOUD PLATFORM — v1 API layer
+// ----------------------------------------------------------------------------
+// The following models power the versioned REST API (/api/v1/) and the
+// offline-first sync engine used by future Android / Windows / iOS clients.
+// All additions are backward-compatible: new fields have defaults so existing
+// rows and the current web app continue to work without data migration.
+// ============================================================================
+
+// ----------------------------------------------------------------------------
+// Device — registered native client (Android / Windows / iOS / other)
+// ----------------------------------------------------------------------------
+// A user can have many devices. Each device holds its own refresh token(s).
+// Devices can be revoked individually (remote logout) without affecting other
+// sessions. `lastSeenAt` is stamped on every token refresh.
+model Device {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name          String   @default("Unnamed device")
+  platform      String   @default("unknown") // android, windows, ios, web, other
+  appVersion    String?
+  deviceId      String?  // client-generated stable identifier
+  userAgent     String?
+  lastSeenAt    DateTime @default(now())
+  revokedAt     DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  apiTokens     ApiToken[]
+
+  @@unique([userId, deviceId])
+  @@index([userId])
+}
+
+// ----------------------------------------------------------------------------
+// ApiToken — access + refresh tokens for native API clients
+// ----------------------------------------------------------------------------
+// Native apps authenticate with a bearer access token (short-lived) and renew
+// it with a refresh token (long-lived). Refresh tokens are hash-stored so a DB
+// leak does not immediately compromise sessions. Revoking a device cascades to
+// all its tokens. `operationId` on SyncEvent + idempotency keys ride on top of
+// this — tokens themselves are stateless JWTs signed with AUTH_SECRET.
+model ApiToken {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceId        String?
+  device          Device?  @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  kind            String   @default("access") // access | refresh
+  tokenHash       String   @unique // sha256 of the raw token (never store raw)
+  label           String?  // human-readable label
+  scopes          String   @default("read,write") // comma-separated
+  expiresAt       DateTime
+  revokedAt       DateTime?
+  lastUsedAt      DateTime?
+  createdAt       DateTime @default(now())
+
+  @@index([userId])
+  @@index([deviceId])
+}
+
+// ----------------------------------------------------------------------------
+// SyncEvent — append-only server-side change log for delta sync
+// ----------------------------------------------------------------------------
+// Every mutation on a sync-enabled entity writes a SyncEvent row. Native
+// clients call GET /api/v1/sync/pull?cursor=<seq> to receive all events with
+// seq > cursor. The `seq` field is a monotonic per-user sequence number —
+// generated atomically inside the mutation transaction so ordering is strict.
+//
+// `operation` is one of: create | update | delete.
+// `payload` is the full record snapshot at the time of the event (for create /
+// update) or `{}` (for delete). Clients apply events last-write-wins by seq.
+//
+// `operationId` is the client-supplied idempotency key (on push). Replaying the
+// same operationId returns the original result instead of duplicating.
+model SyncEvent {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  seq          BigInt                         // monotonic per-user sequence
+  entity       String                         // tasks, contacts, notes, ...
+  entityId     String                         // the record's cuid
+  operation    String                         // create | update | delete
+  payload      String   @default("{}")        // JSON snapshot
+  operationId  String?                        // client idempotency key
+  deviceId     String?                        // which device caused it
+  createdAt    DateTime @default(now())
+
+  @@unique([userId, seq])
+  @@unique([userId, operationId])
+  @@index([userId, entity, createdAt])
+  @@index([userId, createdAt])
+}

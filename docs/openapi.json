@@ -1,0 +1,2467 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Silah Cloud Platform API",
+    "version": "1.0.0",
+    "description": "Production REST API for the Silah personal dashboard. Consumed by the Next.js web app (cookie session) and native Android / Windows / iOS clients (bearer token). All endpoints are user-scoped; ownership is enforced server-side. See /docs/API.md for the full human-readable contract and /docs/NATIVE_CLIENT_GUIDE.md for native client integration.",
+    "contact": {
+      "name": "Silah Cloud Platform",
+      "url": "https://personal-dashboard-mu-lyart.vercel.app"
+    },
+    "license": {
+      "name": "Proprietary"
+    }
+  },
+  "externalDocs": {
+    "description": "Full API documentation",
+    "url": "https://personal-dashboard-mu-lyart.vercel.app/docs/API.md"
+  },
+  "servers": [
+    {
+      "url": "https://personal-dashboard-mu-lyart.vercel.app/api/v1",
+      "description": "Production"
+    },
+    {
+      "url": "http://localhost:3000/api/v1",
+      "description": "Local development"
+    }
+  ],
+  "tags": [
+    { "name": "Discovery", "description": "API discovery and health endpoints" },
+    { "name": "Health", "description": "Service health and liveness" },
+    { "name": "Auth", "description": "Token exchange, refresh, logout, and current-user profile" },
+    { "name": "Devices", "description": "Device registration, listing, and revocation" },
+    { "name": "Sync", "description": "Delta sync: pull, push, and status" },
+    { "name": "Tasks", "description": "Task management" },
+    { "name": "Contacts", "description": "Contact management" },
+    { "name": "Notes", "description": "Note management" },
+    { "name": "Events", "description": "Calendar event management" },
+    { "name": "Expenses", "description": "Expense tracking" },
+    { "name": "Accounts", "description": "Financial account management" },
+    { "name": "Assets", "description": "Asset tracking" },
+    { "name": "Debts", "description": "Debt tracking" },
+    { "name": "Budgets", "description": "Budget management" },
+    { "name": "Projects", "description": "Project management" },
+    { "name": "Meetings", "description": "Meeting management" },
+    { "name": "Occurrences", "description": "Special occasions and recurring dates" },
+    { "name": "Diary", "description": "Diary entries" },
+    { "name": "Habits", "description": "Habit tracking" },
+    { "name": "Medications", "description": "Medication tracking" },
+    { "name": "Pantry", "description": "Pantry / grocery inventory" },
+    { "name": "Waiting-List", "description": "Waiting list items" },
+    { "name": "Locations", "description": "Saved map locations" },
+    { "name": "Reminders", "description": "Contact reminders" },
+    { "name": "Scheduled-Messages", "description": "Scheduled message sending" },
+    { "name": "Automation", "description": "Automation rule management" },
+    { "name": "Suggestions", "description": "AI/user suggestions" },
+    { "name": "Integrations", "description": "Third-party service integrations" },
+    { "name": "Happiness", "description": "Happiness log entries" }
+  ],
+  "security": [
+    { "bearerAuth": [] },
+    { "cookieAuth": [] }
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "tags": ["Discovery"],
+        "summary": "API discovery",
+        "description": "Returns API metadata, sync entity list, and documentation links. No authentication required.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "API metadata",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DiscoveryResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "Service health check",
+        "description": "Lightweight liveness + database probe. Returns 503 if the database is unreachable. Safe to call unauthenticated; never exposes secrets.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HealthResponse" }
+              }
+            }
+          },
+          "503": {
+            "description": "Service is degraded (database down)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HealthResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/token": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Exchange a Google ID token for Silah tokens",
+        "description": "Native clients call this after obtaining a Google ID token from the platform Sign-In SDK. The server verifies the ID token with Google, upserts the User and Device, and issues an access token (15 min JWT) + refresh token (30 day opaque). This endpoint does not require authentication.",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/TokenExchangeRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token pair issued",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TokenExchangeResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "422": { "$ref": "#/components/responses/ValidationError" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Exchange a refresh token for a new access token",
+        "description": "The refresh token is opaque (not a JWT). Its SHA-256 hash is looked up in ApiToken; if not revoked or expired, a new access token is issued. The refresh token itself is not rotated in v1.",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["refreshToken"],
+                "additionalProperties": false,
+                "properties": {
+                  "refreshToken": { "type": "string", "minLength": 10 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "New access token issued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessEnvelope" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "accessToken": { "type": "string" },
+                            "tokenType": { "type": "string", "example": "Bearer" },
+                            "expiresIn": { "type": "integer", "example": 900 }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Refresh token invalid, revoked, or expired",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" },
+                "examples": {
+                  "invalid": {
+                    "summary": "Invalid refresh token",
+                    "value": { "success": false, "error": { "code": "UNAUTHORIZED", "message": "Invalid refresh token" } }
+                  },
+                  "revoked": {
+                    "summary": "Refresh token revoked",
+                    "value": { "success": false, "error": { "code": "TOKEN_REVOKED", "message": "Refresh token has been revoked" } }
+                  },
+                  "device_revoked": {
+                    "summary": "Device revoked",
+                    "value": { "success": false, "error": { "code": "DEVICE_REVOKED", "message": "This device has been revoked" } }
+                  },
+                  "expired": {
+                    "summary": "Refresh token expired",
+                    "value": { "success": false, "error": { "code": "TOKEN_EXPIRED", "message": "Refresh token has expired — please re-authenticate" } }
+                  }
+                }
+              }
+            }
+          },
+          "422": { "$ref": "#/components/responses/ValidationError" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Revoke a refresh token, device, or all devices",
+        "description": "Accepts one of three mutually-exclusive bodies: `{ refreshToken }`, `{ deviceId }`, `{ allDevices: true }`. With no body, revokes the calling bearer token's device. Requires authentication.",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "refreshToken": { "type": "string", "minLength": 10 },
+                  "deviceId": { "type": "string", "minLength": 1 },
+                  "allDevices": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Revocation succeeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessEnvelope" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "revoked": {
+                              "type": "string",
+                              "enum": ["all-devices", "device", "token", "calling-device"]
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "204": { "description": "No content (cookie caller with no body)" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "422": { "$ref": "#/components/responses/ValidationError" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Get the current authenticated user",
+        "description": "Returns the user's profile plus auth-context metadata (`authMethod`, `deviceId`).",
+        "responses": {
+          "200": {
+            "description": "Current user profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessEnvelope" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "id": { "type": "string" },
+                            "email": { "type": "string", "format": "email" },
+                            "name": { "type": "string", "nullable": true },
+                            "image": { "type": "string", "nullable": true },
+                            "provider": { "type": "string", "nullable": true },
+                            "createdAt": { "type": "string", "format": "date-time" },
+                            "authMethod": { "type": "string", "enum": ["cookie", "bearer"] },
+                            "deviceId": { "type": "string", "nullable": true }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/devices": {
+      "get": {
+        "tags": ["Devices"],
+        "summary": "List the caller's devices",
+        "description": "Returns devices owned by the current user, most-recently-seen first.",
+        "parameters": [
+          { "$ref": "#/components/parameters/Page" },
+          { "$ref": "#/components/parameters/PageSize" }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of devices",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ListEnvelope" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": { "$ref": "#/components/schemas/Device" }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      },
+      "post": {
+        "tags": ["Devices"],
+        "summary": "Register or update a device",
+        "description": "Upserts a device by (userId, deviceId). Rarely needed — POST /auth/token does this automatically on login.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/DeviceCreateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Device created or updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessEnvelope" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/Device" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "422": { "$ref": "#/components/responses/ValidationError" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/devices/{id}": {
+      "get": {
+        "tags": ["Devices"],
+        "summary": "Get a single device",
+        "parameters": [
+          { "$ref": "#/components/parameters/PathId" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Device details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessEnvelope" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/Device" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      },
+      "delete": {
+        "tags": ["Devices"],
+        "summary": "Revoke a device (remote logout)",
+        "description": "Sets revokedAt = now(). The device row remains in the database for audit; its tokens are invalidated.",
+        "parameters": [
+          { "$ref": "#/components/parameters/PathId" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Device revoked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessEnvelope" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "id": { "type": "string" },
+                            "revoked": { "type": "boolean", "example": true }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/sync/pull": {
+      "get": {
+        "tags": ["Sync"],
+        "summary": "Pull sync events since a cursor",
+        "description": "Returns all SyncEvents with seq > cursor, in ascending seq order. Use nextCursor for the next pull. If hasMore is true, immediately issue another pull. cursor=0 (or omitted) triggers a full sync from the beginning.",
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "The last seq the client has applied (BigInt as string). 0 or omitted = full pull.",
+            "schema": { "type": "string", "pattern": "^[0-9]+$" }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "Max events to return (default 500, max 1000).",
+            "schema": { "type": "integer", "minimum": 1, "maximum": 1000, "default": 500 }
+          },
+          {
+            "name": "collections",
+            "in": "query",
+            "description": "Comma-separated entity plural names to limit the pull (e.g. 'tasks,contacts'). Unknown names are dropped.",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sync events",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SyncPullResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/sync/push": {
+      "post": {
+        "tags": ["Sync"],
+        "summary": "Push offline changes",
+        "description": "Push up to 100 offline changes. Each change must include a unique operationId (UUID) for idempotency. Each change is its own transaction; per-change results are returned. Conflicts are detected via baseVersion mismatch.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SyncPushRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Per-change results",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SyncPushResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "422": { "$ref": "#/components/responses/ValidationError" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/sync/status": {
+      "get": {
+        "tags": ["Sync"],
+        "summary": "Get sync metadata for the current user",
+        "description": "Returns the latestSeq, eventCount, perEntity breakdown, and the calling device's info.",
+        "responses": {
+          "200": {
+            "description": "Sync status",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SyncStatusResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/tasks": {
+      "get": { "$ref": "#/components/operations/listTasks" },
+      "post": { "$ref": "#/components/operations/createTask" }
+    },
+    "/tasks/{id}": {
+      "get": { "$ref": "#/components/operations/getTask" },
+      "patch": { "$ref": "#/components/operations/updateTask" },
+      "delete": { "$ref": "#/components/operations/deleteTask" }
+    },
+    "/contacts": {
+      "get": { "$ref": "#/components/operations/listContacts" },
+      "post": { "$ref": "#/components/operations/createContact" }
+    },
+    "/contacts/{id}": {
+      "get": { "$ref": "#/components/operations/getContact" },
+      "patch": { "$ref": "#/components/operations/updateContact" },
+      "delete": { "$ref": "#/components/operations/deleteContact" }
+    },
+    "/notes": {
+      "get": { "$ref": "#/components/operations/listNotes" },
+      "post": { "$ref": "#/components/operations/createNote" }
+    },
+    "/notes/{id}": {
+      "get": { "$ref": "#/components/operations/getNote" },
+      "patch": { "$ref": "#/components/operations/updateNote" },
+      "delete": { "$ref": "#/components/operations/deleteNote" }
+    },
+    "/events": {
+      "get": { "$ref": "#/components/operations/listEvents" },
+      "post": { "$ref": "#/components/operations/createEvent" }
+    },
+    "/events/{id}": {
+      "get": { "$ref": "#/components/operations/getEvent" },
+      "patch": { "$ref": "#/components/operations/updateEvent" },
+      "delete": { "$ref": "#/components/operations/deleteEvent" }
+    },
+    "/expenses": {
+      "get": { "$ref": "#/components/operations/listExpenses" },
+      "post": { "$ref": "#/components/operations/createExpense" }
+    },
+    "/expenses/{id}": {
+      "get": { "$ref": "#/components/operations/getExpense" },
+      "patch": { "$ref": "#/components/operations/updateExpense" },
+      "delete": { "$ref": "#/components/operations/deleteExpense" }
+    },
+    "/accounts": {
+      "get": { "$ref": "#/components/operations/listAccounts" },
+      "post": { "$ref": "#/components/operations/createAccount" }
+    },
+    "/accounts/{id}": {
+      "get": { "$ref": "#/components/operations/getAccount" },
+      "patch": { "$ref": "#/components/operations/updateAccount" },
+      "delete": { "$ref": "#/components/operations/deleteAccount" }
+    },
+    "/assets": {
+      "get": { "$ref": "#/components/operations/listAssets" },
+      "post": { "$ref": "#/components/operations/createAsset" }
+    },
+    "/assets/{id}": {
+      "get": { "$ref": "#/components/operations/getAsset" },
+      "patch": { "$ref": "#/components/operations/updateAsset" },
+      "delete": { "$ref": "#/components/operations/deleteAsset" }
+    },
+    "/debts": {
+      "get": { "$ref": "#/components/operations/listDebts" },
+      "post": { "$ref": "#/components/operations/createDebt" }
+    },
+    "/debts/{id}": {
+      "get": { "$ref": "#/components/operations/getDebt" },
+      "patch": { "$ref": "#/components/operations/updateDebt" },
+      "delete": { "$ref": "#/components/operations/deleteDebt" }
+    },
+    "/budgets": {
+      "get": { "$ref": "#/components/operations/listBudgets" },
+      "post": { "$ref": "#/components/operations/createBudget" }
+    },
+    "/budgets/{id}": {
+      "get": { "$ref": "#/components/operations/getBudget" },
+      "patch": { "$ref": "#/components/operations/updateBudget" },
+      "delete": { "$ref": "#/components/operations/deleteBudget" }
+    },
+    "/projects": {
+      "get": { "$ref": "#/components/operations/listProjects" },
+      "post": { "$ref": "#/components/operations/createProject" }
+    },
+    "/projects/{id}": {
+      "get": { "$ref": "#/components/operations/getProject" },
+      "patch": { "$ref": "#/components/operations/updateProject" },
+      "delete": { "$ref": "#/components/operations/deleteProject" }
+    },
+    "/meetings": {
+      "get": { "$ref": "#/components/operations/listMeetings" },
+      "post": { "$ref": "#/components/operations/createMeeting" }
+    },
+    "/meetings/{id}": {
+      "get": { "$ref": "#/components/operations/getMeeting" },
+      "patch": { "$ref": "#/components/operations/updateMeeting" },
+      "delete": { "$ref": "#/components/operations/deleteMeeting" }
+    },
+    "/occasions": {
+      "get": { "$ref": "#/components/operations/listOccasions" },
+      "post": { "$ref": "#/components/operations/createOccasion" }
+    },
+    "/occasions/{id}": {
+      "get": { "$ref": "#/components/operations/getOccasion" },
+      "patch": { "$ref": "#/components/operations/updateOccasion" },
+      "delete": { "$ref": "#/components/operations/deleteOccasion" }
+    },
+    "/diary": {
+      "get": { "$ref": "#/components/operations/listDiary" },
+      "post": { "$ref": "#/components/operations/createDiary" }
+    },
+    "/diary/{id}": {
+      "get": { "$ref": "#/components/operations/getDiary" },
+      "patch": { "$ref": "#/components/operations/updateDiary" },
+      "delete": { "$ref": "#/components/operations/deleteDiary" }
+    },
+    "/habits": {
+      "get": { "$ref": "#/components/operations/listHabits" },
+      "post": { "$ref": "#/components/operations/createHabit" }
+    },
+    "/habits/{id}": {
+      "get": { "$ref": "#/components/operations/getHabit" },
+      "patch": { "$ref": "#/components/operations/updateHabit" },
+      "delete": { "$ref": "#/components/operations/deleteHabit" }
+    },
+    "/medications": {
+      "get": { "$ref": "#/components/operations/listMedications" },
+      "post": { "$ref": "#/components/operations/createMedication" }
+    },
+    "/medications/{id}": {
+      "get": { "$ref": "#/components/operations/getMedication" },
+      "patch": { "$ref": "#/components/operations/updateMedication" },
+      "delete": { "$ref": "#/components/operations/deleteMedication" }
+    },
+    "/pantry": {
+      "get": { "$ref": "#/components/operations/listPantry" },
+      "post": { "$ref": "#/components/operations/createPantry" }
+    },
+    "/pantry/{id}": {
+      "get": { "$ref": "#/components/operations/getPantry" },
+      "patch": { "$ref": "#/components/operations/updatePantry" },
+      "delete": { "$ref": "#/components/operations/deletePantry" }
+    },
+    "/waiting-list": {
+      "get": { "$ref": "#/components/operations/listWaitingList" },
+      "post": { "$ref": "#/components/operations/createWaitingList" }
+    },
+    "/waiting-list/{id}": {
+      "get": { "$ref": "#/components/operations/getWaitingList" },
+      "patch": { "$ref": "#/components/operations/updateWaitingList" },
+      "delete": { "$ref": "#/components/operations/deleteWaitingList" }
+    },
+    "/locations": {
+      "get": { "$ref": "#/components/operations/listLocations" },
+      "post": { "$ref": "#/components/operations/createLocation" }
+    },
+    "/locations/{id}": {
+      "get": { "$ref": "#/components/operations/getLocation" },
+      "patch": { "$ref": "#/components/operations/updateLocation" },
+      "delete": { "$ref": "#/components/operations/deleteLocation" }
+    },
+    "/reminders": {
+      "get": { "$ref": "#/components/operations/listReminders" },
+      "post": { "$ref": "#/components/operations/createReminder" }
+    },
+    "/reminders/{id}": {
+      "get": { "$ref": "#/components/operations/getReminder" },
+      "patch": { "$ref": "#/components/operations/updateReminder" },
+      "delete": { "$ref": "#/components/operations/deleteReminder" }
+    },
+    "/scheduled-messages": {
+      "get": { "$ref": "#/components/operations/listScheduledMessages" },
+      "post": { "$ref": "#/components/operations/createScheduledMessage" }
+    },
+    "/scheduled-messages/{id}": {
+      "get": { "$ref": "#/components/operations/getScheduledMessage" },
+      "patch": { "$ref": "#/components/operations/updateScheduledMessage" },
+      "delete": { "$ref": "#/components/operations/deleteScheduledMessage" }
+    },
+    "/automation": {
+      "get": { "$ref": "#/components/operations/listAutomation" },
+      "post": { "$ref": "#/components/operations/createAutomation" }
+    },
+    "/automation/{id}": {
+      "get": { "$ref": "#/components/operations/getAutomation" },
+      "patch": { "$ref": "#/components/operations/updateAutomation" },
+      "delete": { "$ref": "#/components/operations/deleteAutomation" }
+    },
+    "/suggestions": {
+      "get": { "$ref": "#/components/operations/listSuggestions" },
+      "post": { "$ref": "#/components/operations/createSuggestion" }
+    },
+    "/suggestions/{id}": {
+      "get": { "$ref": "#/components/operations/getSuggestion" },
+      "patch": { "$ref": "#/components/operations/updateSuggestion" },
+      "delete": { "$ref": "#/components/operations/deleteSuggestion" }
+    },
+    "/integrations": {
+      "get": { "$ref": "#/components/operations/listIntegrations" },
+      "post": { "$ref": "#/components/operations/createIntegration" }
+    },
+    "/integrations/{id}": {
+      "get": { "$ref": "#/components/operations/getIntegration" },
+      "patch": { "$ref": "#/components/operations/updateIntegration" },
+      "delete": { "$ref": "#/components/operations/deleteIntegration" }
+    },
+    "/happiness": {
+      "get": { "$ref": "#/components/operations/listHappiness" },
+      "post": { "$ref": "#/components/operations/createHappiness" }
+    },
+    "/happiness/{id}": {
+      "get": { "$ref": "#/components/operations/getHappiness" },
+      "patch": { "$ref": "#/components/operations/updateHappiness" },
+      "delete": { "$ref": "#/components/operations/deleteHappiness" }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Silah-issued access token (HS256 JWT, 15 min TTL). Obtain via POST /auth/token. Send as: `Authorization: Bearer <accessToken>`."
+      },
+      "cookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "next-auth.session-token",
+        "description": "NextAuth JWT session cookie. Used automatically by the Next.js web app — native clients use bearerAuth instead."
+      }
+    },
+    "parameters": {
+      "Page": {
+        "name": "page",
+        "in": "query",
+        "description": "1-based page number.",
+        "schema": { "type": "integer", "minimum": 1, "default": 1 }
+      },
+      "PageSize": {
+        "name": "pageSize",
+        "in": "query",
+        "description": "Items per page (1–100, default 50).",
+        "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 50 }
+      },
+      "Sort": {
+        "name": "sort",
+        "in": "query",
+        "description": "Sort field. Prefix with '-' for descending (e.g. '-createdAt'). Unknown fields fall back to the entity's default sort.",
+        "schema": { "type": "string" }
+      },
+      "Search": {
+        "name": "search",
+        "in": "query",
+        "description": "Case-insensitive 'contains' search across the entity's whitelisted searchable fields.",
+        "schema": { "type": "string" }
+      },
+      "DateFrom": {
+        "name": "dateFrom",
+        "in": "query",
+        "description": "Inclusive lower bound on the entity's date field (or createdAt if no date field). ISO 8601.",
+        "schema": { "type": "string", "format": "date-time" }
+      },
+      "DateTo": {
+        "name": "dateTo",
+        "in": "query",
+        "description": "Inclusive upper bound on the entity's date field (or createdAt if no date field). ISO 8601.",
+        "schema": { "type": "string", "format": "date-time" }
+      },
+      "IncludeDeleted": {
+        "name": "includeDeleted",
+        "in": "query",
+        "description": "Set to 'true' to include soft-deleted records in list responses.",
+        "schema": { "type": "string", "enum": ["true", "false"], "default": "false" }
+      },
+      "Force": {
+        "name": "force",
+        "in": "query",
+        "description": "Set to 'true' to hard-delete instead of soft-delete.",
+        "schema": { "type": "string", "enum": ["true", "false"], "default": "false" }
+      },
+      "PathId": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "The record's server-side id (CUID).",
+        "schema": { "type": "string" }
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "Authentication missing or invalid",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorEnvelope" },
+            "examples": {
+              "no_auth": {
+                "value": { "success": false, "error": { "code": "UNAUTHORIZED", "message": "Unauthorized — authentication required" } }
+              },
+              "token_expired": {
+                "value": { "success": false, "error": { "code": "TOKEN_EXPIRED", "message": "Access token is invalid or expired" } }
+              },
+              "device_revoked": {
+                "value": { "success": false, "error": { "code": "DEVICE_REVOKED", "message": "This device has been revoked. Please re-authenticate." } }
+              }
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource not found or not owned by the caller",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorEnvelope" },
+            "example": { "success": false, "error": { "code": "NOT_FOUND", "message": "Resource not found" } }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "Version conflict or unique-constraint violation",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorEnvelope" },
+            "example": {
+              "success": false,
+              "error": {
+                "code": "CONFLICT",
+                "message": "Version conflict — the record was modified by another client",
+                "details": {
+                  "baseVersion": 4,
+                  "currentVersion": 7,
+                  "strategy": "Pull the latest version and retry your change."
+                }
+              }
+            }
+          }
+        }
+      },
+      "ValidationError": {
+        "description": "Request body failed Zod schema validation",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorEnvelope" },
+            "example": {
+              "success": false,
+              "error": {
+                "code": "VALIDATION_ERROR",
+                "message": "Request body failed validation",
+                "details": { "title": "String must contain at least 1 character(s)" }
+              }
+            }
+          }
+        }
+      },
+      "BadRequest": {
+        "description": "Malformed request (non-JSON body, invalid Google ID token, etc.)",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorEnvelope" },
+            "example": { "success": false, "error": { "code": "BAD_REQUEST", "message": "Invalid or expired Google ID token" } }
+          }
+        }
+      },
+      "InternalError": {
+        "description": "Internal server error",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorEnvelope" },
+            "example": { "success": false, "error": { "code": "INTERNAL_ERROR", "message": "Internal server error" } }
+          }
+        }
+      },
+      "RateLimited": {
+        "description": "Too many requests",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorEnvelope" },
+            "example": { "success": false, "error": { "code": "RATE_LIMITED", "message": "Too many requests" } }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "SuccessEnvelope": {
+        "type": "object",
+        "required": ["success", "data"],
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "data": {}
+        }
+      },
+      "ListEnvelope": {
+        "type": "object",
+        "required": ["success", "data", "pagination"],
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "data": { "type": "array", "items": {} },
+          "pagination": { "$ref": "#/components/schemas/PaginationMeta" }
+        }
+      },
+      "PaginationMeta": {
+        "type": "object",
+        "required": ["page", "pageSize", "total", "totalPages"],
+        "properties": {
+          "page": { "type": "integer", "example": 1 },
+          "pageSize": { "type": "integer", "example": 50 },
+          "total": { "type": "integer", "example": 137 },
+          "totalPages": { "type": "integer", "example": 3 }
+        }
+      },
+      "ErrorEnvelope": {
+        "type": "object",
+        "required": ["success", "error"],
+        "properties": {
+          "success": { "type": "boolean", "example": false },
+          "error": {
+            "type": "object",
+            "required": ["code", "message"],
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "VALIDATION_ERROR",
+                  "UNAUTHORIZED",
+                  "FORBIDDEN",
+                  "NOT_FOUND",
+                  "CONFLICT",
+                  "RATE_LIMITED",
+                  "METHOD_NOT_ALLOWED",
+                  "INTERNAL_ERROR",
+                  "BAD_REQUEST",
+                  "TOKEN_EXPIRED",
+                  "TOKEN_REVOKED",
+                  "DEVICE_REVOKED",
+                  "IDEMPOTENCY_REPLAY"
+                ]
+              },
+              "message": { "type": "string" },
+              "details": { "type": "object", "additionalProperties": true }
+            }
+          }
+        }
+      },
+      "DiscoveryResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/SuccessEnvelope" },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string", "example": "Silah Cloud Platform API" },
+                  "version": { "type": "string", "example": "v1" },
+                  "description": { "type": "string" },
+                  "baseUrl": { "type": "string", "example": "/api/v1" },
+                  "authentication": { "type": "object" },
+                  "sync": {
+                    "type": "object",
+                    "properties": {
+                      "enabled": { "type": "boolean" },
+                      "pullEndpoint": { "type": "string" },
+                      "pushEndpoint": { "type": "string" },
+                      "statusEndpoint": { "type": "string" },
+                      "syncEnabledEntities": { "type": "array", "items": { "type": "string" } }
+                    }
+                  },
+                  "domains": { "type": "array", "items": { "type": "string" } },
+                  "links": { "type": "object" }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "HealthResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/SuccessEnvelope" },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "status": { "type": "string", "enum": ["ok", "degraded"] },
+                  "version": { "type": "string", "example": "v1" },
+                  "timestamp": { "type": "string", "format": "date-time" },
+                  "latencyMs": { "type": "integer" },
+                  "services": {
+                    "type": "object",
+                    "properties": {
+                      "database": { "type": "string", "enum": ["ok", "down"] }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "TokenExchangeRequest": {
+        "type": "object",
+        "required": ["idToken"],
+        "additionalProperties": false,
+        "properties": {
+          "idToken": { "type": "string", "minLength": 10, "description": "Google ID token from the platform Sign-In SDK." },
+          "deviceId": { "type": "string", "minLength": 1, "maxLength": 200, "description": "Stable client-generated device identifier." },
+          "deviceName": { "type": "string", "maxLength": 200 },
+          "platform": { "type": "string", "enum": ["android", "windows", "ios", "web", "other"] },
+          "appVersion": { "type": "string", "maxLength": 100 }
+        }
+      },
+      "TokenExchangeResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/SuccessEnvelope" },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "accessToken": { "type": "string", "description": "HS256 JWT, 15 min TTL." },
+                  "refreshToken": { "type": "string", "description": "Opaque 32-byte base64url string, 30 day TTL. Returned once — store securely." },
+                  "tokenType": { "type": "string", "example": "Bearer" },
+                  "expiresIn": { "type": "integer", "example": 900, "description": "Seconds until the access token expires." },
+                  "user": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "string" },
+                      "email": { "type": "string", "format": "email" },
+                      "name": { "type": "string", "nullable": true },
+                      "image": { "type": "string", "nullable": true },
+                      "provider": { "type": "string", "nullable": true }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "DeviceCreateRequest": {
+        "type": "object",
+        "required": ["deviceId"],
+        "additionalProperties": false,
+        "properties": {
+          "deviceId": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "name": { "type": "string", "maxLength": 200 },
+          "platform": { "type": "string", "enum": ["android", "windows", "ios", "web", "other"] },
+          "appVersion": { "type": "string", "maxLength": 100 }
+        }
+      },
+      "Device": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "platform": { "type": "string" },
+          "appVersion": { "type": "string", "nullable": true },
+          "deviceId": { "type": "string" },
+          "userAgent": { "type": "string", "nullable": true },
+          "lastSeenAt": { "type": "string", "format": "date-time" },
+          "revokedAt": { "type": "string", "format": "date-time", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "SyncEvent": {
+        "type": "object",
+        "properties": {
+          "seq": { "type": "string", "description": "BigInt as string (may exceed Number.MAX_SAFE_INTEGER)." },
+          "entity": { "type": "string", "description": "Prisma delegate name (e.g. 'task')." },
+          "entityId": { "type": "string" },
+          "operation": { "type": "string", "enum": ["create", "update", "delete"] },
+          "payload": { "type": "object", "additionalProperties": true, "description": "Full record after the change, or {id, deletedAt} for deletes." },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "deviceId": { "type": "string", "nullable": true }
+        }
+      },
+      "SyncPullResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/SuccessEnvelope" },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "events": {
+                    "type": "array",
+                    "items": { "$ref": "#/components/schemas/SyncEvent" }
+                  },
+                  "nextCursor": { "type": "string", "description": "BigInt as string. Use as the cursor for the next pull." },
+                  "hasMore": { "type": "boolean" },
+                  "serverTime": { "type": "string", "format": "date-time" },
+                  "error": { "type": "string", "nullable": true, "description": "Present (non-null) only when the cursor was invalid; events will be empty." }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "SyncPushRequest": {
+        "type": "object",
+        "required": ["changes"],
+        "additionalProperties": false,
+        "properties": {
+          "changes": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "required": ["operationId", "entity", "entityId", "operation"],
+              "additionalProperties": false,
+              "properties": {
+                "operationId": { "type": "string", "minLength": 1, "maxLength": 200, "description": "Client-generated UUID for idempotency." },
+                "entity": { "type": "string", "description": "Plural entity name (e.g. 'tasks', 'waiting-list')." },
+                "entityId": { "type": "string", "minLength": 1, "maxLength": 100 },
+                "operation": { "type": "string", "enum": ["create", "update", "delete"] },
+                "baseVersion": { "type": "integer", "minimum": 1, "description": "For update: the version the client last saw. If omitted, no version check." },
+                "payload": { "type": "object", "additionalProperties": true, "description": "Record fields. For create/update must conform to the entity's schema. For delete, omit." }
+              }
+            }
+          }
+        }
+      },
+      "SyncPushResult": {
+        "type": "object",
+        "required": ["operationId", "status"],
+        "properties": {
+          "operationId": { "type": "string" },
+          "status": { "type": "string", "enum": ["applied", "replayed", "conflict", "error", "skipped"] },
+          "entityId": { "type": "string" },
+          "version": { "type": "integer", "nullable": true },
+          "error": { "type": "string", "nullable": true }
+        }
+      },
+      "SyncPushResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/SuccessEnvelope" },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "results": {
+                    "type": "array",
+                    "items": { "$ref": "#/components/schemas/SyncPushResult" }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "SyncStatusResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/SuccessEnvelope" },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "latestSeq": { "type": "string", "description": "BigInt as string." },
+                  "eventCount": { "type": "integer" },
+                  "lastEventAt": { "type": "string", "format": "date-time", "nullable": true },
+                  "perEntity": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "count": { "type": "integer" },
+                        "lastSeq": { "type": "string", "nullable": true },
+                        "lastEventAt": { "type": "string", "format": "date-time", "nullable": true }
+                      }
+                    }
+                  },
+                  "device": { "$ref": "#/components/schemas/Device", "nullable": true },
+                  "serverTime": { "type": "string", "format": "date-time" }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "Task": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "title": { "type": "string" },
+          "description": { "type": "string", "nullable": true },
+          "status": { "type": "string", "enum": ["todo", "doing", "done"] },
+          "priority": { "type": "string", "enum": ["low", "medium", "high"] },
+          "category": { "type": "string" },
+          "dueDate": { "type": "string", "format": "date-time", "nullable": true },
+          "projectId": { "type": "string", "nullable": true },
+          "version": { "type": "integer" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "deletedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "TaskCreate": {
+        "type": "object",
+        "required": ["title"],
+        "additionalProperties": false,
+        "properties": {
+          "title": { "type": "string", "minLength": 1, "maxLength": 500 },
+          "description": { "type": "string", "maxLength": 20000, "nullable": true },
+          "status": { "type": "string", "enum": ["todo", "doing", "done"], "default": "todo" },
+          "priority": { "type": "string", "enum": ["low", "medium", "high"], "default": "medium" },
+          "category": { "type": "string", "maxLength": 100, "default": "general" },
+          "dueDate": { "type": "string", "format": "date-time", "nullable": true },
+          "projectId": { "type": "string", "minLength": 1, "maxLength": 100, "nullable": true }
+        }
+      },
+      "TaskUpdate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "title": { "type": "string", "minLength": 1, "maxLength": 500 },
+          "description": { "type": "string", "maxLength": 20000, "nullable": true },
+          "status": { "type": "string", "enum": ["todo", "doing", "done"] },
+          "priority": { "type": "string", "enum": ["low", "medium", "high"] },
+          "category": { "type": "string", "maxLength": 100 },
+          "dueDate": { "type": "string", "format": "date-time", "nullable": true },
+          "projectId": { "type": "string", "minLength": 1, "maxLength": 100, "nullable": true },
+          "baseVersion": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "Contact": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "name": { "type": "string" },
+          "phone": { "type": "string" },
+          "whatsapp": { "type": "string", "nullable": true },
+          "email": { "type": "string", "format": "email", "nullable": true },
+          "relation": { "type": "string", "enum": ["family", "friend", "work", "business", "other"] },
+          "category": { "type": "string", "nullable": true },
+          "note": { "type": "string", "nullable": true },
+          "favorite": { "type": "boolean" },
+          "avatar": { "type": "string", "nullable": true },
+          "version": { "type": "integer" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "deletedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "ContactCreate": {
+        "type": "object",
+        "required": ["name", "phone"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "phone": { "type": "string", "minLength": 1, "maxLength": 50 },
+          "whatsapp": { "type": "string", "maxLength": 50, "nullable": true },
+          "email": { "type": "string", "format": "email", "maxLength": 200, "nullable": true },
+          "relation": { "type": "string", "enum": ["family", "friend", "work", "business", "other"], "default": "other" },
+          "category": { "type": "string", "maxLength": 100, "nullable": true },
+          "note": { "type": "string", "maxLength": 5000, "nullable": true },
+          "favorite": { "type": "boolean", "default": false },
+          "avatar": { "type": "string", "maxLength": 2000, "nullable": true }
+        }
+      },
+      "ContactUpdate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "phone": { "type": "string", "minLength": 1, "maxLength": 50 },
+          "whatsapp": { "type": "string", "maxLength": 50, "nullable": true },
+          "email": { "type": "string", "format": "email", "maxLength": 200, "nullable": true },
+          "relation": { "type": "string", "enum": ["family", "friend", "work", "business", "other"] },
+          "category": { "type": "string", "maxLength": 100, "nullable": true },
+          "note": { "type": "string", "maxLength": 5000, "nullable": true },
+          "favorite": { "type": "boolean" },
+          "avatar": { "type": "string", "maxLength": 2000, "nullable": true },
+          "baseVersion": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "Note": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "title": { "type": "string" },
+          "content": { "type": "string" },
+          "color": { "type": "string", "enum": ["default", "yellow", "green", "blue", "red", "purple"] },
+          "pinned": { "type": "boolean" },
+          "version": { "type": "integer" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "deletedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "NoteCreate": {
+        "type": "object",
+        "required": ["title", "content"],
+        "additionalProperties": false,
+        "properties": {
+          "title": { "type": "string", "minLength": 1, "maxLength": 500 },
+          "content": { "type": "string", "maxLength": 100000 },
+          "color": { "type": "string", "enum": ["default", "yellow", "green", "blue", "red", "purple"], "default": "default" },
+          "pinned": { "type": "boolean", "default": false }
+        }
+      },
+      "NoteUpdate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "title": { "type": "string", "minLength": 1, "maxLength": 500 },
+          "content": { "type": "string", "maxLength": 100000 },
+          "color": { "type": "string", "enum": ["default", "yellow", "green", "blue", "red", "purple"] },
+          "pinned": { "type": "boolean" },
+          "baseVersion": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "Event": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "title": { "type": "string" },
+          "description": { "type": "string", "nullable": true },
+          "startDate": { "type": "string", "format": "date-time" },
+          "endDate": { "type": "string", "format": "date-time", "nullable": true },
+          "allDay": { "type": "boolean" },
+          "type": { "type": "string", "enum": ["work", "personal", "family", "health", "other"] },
+          "color": { "type": "string", "enum": ["emerald", "amber", "rose", "blue", "violet", "slate"] },
+          "location": { "type": "string", "nullable": true },
+          "version": { "type": "integer" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "deletedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "EventCreate": {
+        "type": "object",
+        "required": ["title", "startDate"],
+        "additionalProperties": false,
+        "properties": {
+          "title": { "type": "string", "minLength": 1, "maxLength": 500 },
+          "description": { "type": "string", "maxLength": 20000, "nullable": true },
+          "startDate": { "type": "string", "format": "date-time" },
+          "endDate": { "type": "string", "format": "date-time", "nullable": true },
+          "allDay": { "type": "boolean", "default": false },
+          "type": { "type": "string", "enum": ["work", "personal", "family", "health", "other"], "default": "personal" },
+          "color": { "type": "string", "enum": ["emerald", "amber", "rose", "blue", "violet", "slate"], "default": "emerald" },
+          "location": { "type": "string", "maxLength": 500, "nullable": true }
+        }
+      },
+      "EventUpdate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "title": { "type": "string", "minLength": 1, "maxLength": 500 },
+          "description": { "type": "string", "maxLength": 20000, "nullable": true },
+          "startDate": { "type": "string", "format": "date-time" },
+          "endDate": { "type": "string", "format": "date-time", "nullable": true },
+          "allDay": { "type": "boolean" },
+          "type": { "type": "string", "enum": ["work", "personal", "family", "health", "other"] },
+          "color": { "type": "string", "enum": ["emerald", "amber", "rose", "blue", "violet", "slate"] },
+          "location": { "type": "string", "maxLength": 500, "nullable": true },
+          "baseVersion": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "Expense": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "amount": { "type": "number" },
+          "currency": { "type": "string", "enum": ["syp", "usd"] },
+          "category": { "type": "string" },
+          "description": { "type": "string", "nullable": true },
+          "date": { "type": "string", "format": "date-time", "nullable": true },
+          "accountId": { "type": "string", "nullable": true },
+          "version": { "type": "integer" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "deletedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "ExpenseCreate": {
+        "type": "object",
+        "required": ["amount"],
+        "additionalProperties": false,
+        "properties": {
+          "amount": { "type": "number", "format": "double" },
+          "currency": { "type": "string", "enum": ["syp", "usd"], "default": "syp" },
+          "category": { "type": "string", "maxLength": 100, "default": "general" },
+          "description": { "type": "string", "maxLength": 2000, "nullable": true },
+          "date": { "type": "string", "format": "date-time", "nullable": true },
+          "accountId": { "type": "string", "minLength": 1, "maxLength": 100, "nullable": true }
+        }
+      },
+      "ExpenseUpdate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "amount": { "type": "number", "format": "double" },
+          "currency": { "type": "string", "enum": ["syp", "usd"] },
+          "category": { "type": "string", "maxLength": 100 },
+          "description": { "type": "string", "maxLength": 2000, "nullable": true },
+          "date": { "type": "string", "format": "date-time", "nullable": true },
+          "accountId": { "type": "string", "minLength": 1, "maxLength": 100, "nullable": true },
+          "baseVersion": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "Account": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "name": { "type": "string" },
+          "balance": { "type": "number" },
+          "currency": { "type": "string", "enum": ["syp", "usd"] },
+          "type": { "type": "string", "enum": ["bank", "cash", "savings", "credit"] },
+          "institution": { "type": "string", "nullable": true },
+          "version": { "type": "integer" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "deletedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "AccountCreate": {
+        "type": "object",
+        "required": ["name"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "balance": { "type": "number", "format": "double", "default": 0 },
+          "currency": { "type": "string", "enum": ["syp", "usd"], "default": "syp" },
+          "type": { "type": "string", "enum": ["bank", "cash", "savings", "credit"], "default": "bank" },
+          "institution": { "type": "string", "maxLength": 200, "nullable": true }
+        }
+      },
+      "AccountUpdate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "balance": { "type": "number", "format": "double" },
+          "currency": { "type": "string", "enum": ["syp", "usd"] },
+          "type": { "type": "string", "enum": ["bank", "cash", "savings", "credit"] },
+          "institution": { "type": "string", "maxLength": 200, "nullable": true },
+          "baseVersion": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "Asset": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "name": { "type": "string" },
+          "amount": { "type": "number" },
+          "currency": { "type": "string", "enum": ["syp", "usd"] },
+          "type": { "type": "string", "enum": ["cash", "bank", "real-estate", "gold", "stocks", "other"] },
+          "description": { "type": "string", "nullable": true },
+          "version": { "type": "integer" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "deletedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "AssetCreate": {
+        "type": "object",
+        "required": ["name", "amount"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "amount": { "type": "number", "format": "double" },
+          "currency": { "type": "string", "enum": ["syp", "usd"], "default": "syp" },
+          "type": { "type": "string", "enum": ["cash", "bank", "real-estate", "gold", "stocks", "other"], "default": "cash" },
+          "description": { "type": "string", "maxLength": 2000, "nullable": true }
+        }
+      },
+      "AssetUpdate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "amount": { "type": "number", "format": "double" },
+          "currency": { "type": "string", "enum": ["syp", "usd"] },
+          "type": { "type": "string", "enum": ["cash", "bank", "real-estate", "gold", "stocks", "other"] },
+          "description": { "type": "string", "maxLength": 2000, "nullable": true },
+          "baseVersion": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "Debt": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "personName": { "type": "string" },
+          "amount": { "type": "number" },
+          "currency": { "type": "string", "enum": ["syp", "usd"] },
+          "type": { "type": "string", "enum": ["owed", "owe"] },
+          "description": { "type": "string", "nullable": true },
+          "dueDate": { "type": "string", "format": "date-time", "nullable": true },
+          "settled": { "type": "boolean" },
+          "version": { "type": "integer" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "deletedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "DebtCreate": {
+        "type": "object",
+        "required": ["personName", "amount"],
+        "additionalProperties": false,
+        "properties": {
+          "personName": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "amount": { "type": "number", "format": "double" },
+          "currency": { "type": "string", "enum": ["syp", "usd"], "default": "syp" },
+          "type": { "type": "string", "enum": ["owed", "owe"], "default": "owed" },
+          "description": { "type": "string", "maxLength": 2000, "nullable": true },
+          "dueDate": { "type": "string", "format": "date-time", "nullable": true },
+          "settled": { "type": "boolean", "default": false }
+        }
+      },
+      "DebtUpdate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "personName": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "amount": { "type": "number", "format": "double" },
+          "currency": { "type": "string", "enum": ["syp", "usd"] },
+          "type": { "type": "string", "enum": ["owed", "owe"] },
+          "description": { "type": "string", "maxLength": 2000, "nullable": true },
+          "dueDate": { "type": "string", "format": "date-time", "nullable": true },
+          "settled": { "type": "boolean" },
+          "baseVersion": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "Budget": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "category": { "type": "string" },
+          "limit": { "type": "number" },
+          "month": { "type": "integer" },
+          "year": { "type": "integer" },
+          "version": { "type": "integer" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "deletedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "BudgetCreate": {
+        "type": "object",
+        "required": ["category", "limit", "month", "year"],
+        "additionalProperties": false,
+        "properties": {
+          "category": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "limit": { "type": "number", "format": "double", "exclusiveMinimum": 0 },
+          "month": { "type": "integer", "minimum": 1, "maximum": 12 },
+          "year": { "type": "integer", "minimum": 2000, "maximum": 2100 }
+        }
+      },
+      "BudgetUpdate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "category": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "limit": { "type": "number", "format": "double", "exclusiveMinimum": 0 },
+          "month": { "type": "integer", "minimum": 1, "maximum": 12 },
+          "year": { "type": "integer", "minimum": 2000, "maximum": 2100 },
+          "baseVersion": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "Project": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "name": { "type": "string" },
+          "description": { "type": "string", "nullable": true },
+          "status": { "type": "string", "enum": ["active", "paused", "completed", "archived"] },
+          "color": { "type": "string" },
+          "progress": { "type": "integer", "minimum": 0, "maximum": 100 },
+          "startDate": { "type": "string", "format": "date-time", "nullable": true },
+          "endDate": { "type": "string", "format": "date-time", "nullable": true },
+          "version": { "type": "integer" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "deletedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "ProjectCreate": {
+        "type": "object",
+        "required": ["name"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "description": { "type": "string", "maxLength": 20000, "nullable": true },
+          "status": { "type": "string", "enum": ["active", "paused", "completed", "archived"], "default": "active" },
+          "color": { "type": "string", "maxLength": 50, "default": "emerald" },
+          "progress": { "type": "integer", "minimum": 0, "maximum": 100, "default": 0 },
+          "startDate": { "type": "string", "format": "date-time", "nullable": true },
+          "endDate": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "ProjectUpdate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "description": { "type": "string", "maxLength": 20000, "nullable": true },
+          "status": { "type": "string", "enum": ["active", "paused", "completed", "archived"] },
+          "color": { "type": "string", "maxLength": 50 },
+          "progress": { "type": "integer", "minimum": 0, "maximum": 100 },
+          "startDate": { "type": "string", "format": "date-time", "nullable": true },
+          "endDate": { "type": "string", "format": "date-time", "nullable": true },
+          "baseVersion": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "Meeting": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "title": { "type": "string" },
+          "agenda": { "type": "string", "nullable": true },
+          "notes": { "type": "string", "nullable": true },
+          "location": { "type": "string", "nullable": true },
+          "participants": { "type": "string", "nullable": true },
+          "startDate": { "type": "string", "format": "date-time" },
+          "endDate": { "type": "string", "format": "date-time", "nullable": true },
+          "status": { "type": "string", "enum": ["scheduled", "completed", "cancelled"] },
+          "version": { "type": "integer" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "deletedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "MeetingCreate": {
+        "type": "object",
+        "required": ["title", "startDate"],
+        "additionalProperties": false,
+        "properties": {
+          "title": { "type": "string", "minLength": 1, "maxLength": 500 },
+          "agenda": { "type": "string", "maxLength": 20000, "nullable": true },
+          "notes": { "type": "string", "maxLength": 20000, "nullable": true },
+          "location": { "type": "string", "maxLength": 500, "nullable": true },
+          "participants": { "type": "string", "maxLength": 2000, "nullable": true },
+          "startDate": { "type": "string", "format": "date-time" },
+          "endDate": { "type": "string", "format": "date-time", "nullable": true },
+          "status": { "type": "string", "enum": ["scheduled", "completed", "cancelled"], "default": "scheduled" }
+        }
+      },
+      "MeetingUpdate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "title": { "type": "string", "minLength": 1, "maxLength": 500 },
+          "agenda": { "type": "string", "maxLength": 20000, "nullable": true },
+          "notes": { "type": "string", "maxLength": 20000, "nullable": true },
+          "location": { "type": "string", "maxLength": 500, "nullable": true },
+          "participants": { "type": "string", "maxLength": 2000, "nullable": true },
+          "startDate": { "type": "string", "format": "date-time" },
+          "endDate": { "type": "string", "format": "date-time", "nullable": true },
+          "status": { "type": "string", "enum": ["scheduled", "completed", "cancelled"] },
+          "baseVersion": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "Occasion": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "title": { "type": "string" },
+          "date": { "type": "string", "format": "date-time" },
+          "type": { "type": "string", "enum": ["birthday", "anniversary", "holiday", "other"] },
+          "recurring": { "type": "boolean" },
+          "note": { "type": "string", "nullable": true },
+          "version": { "type": "integer" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "deletedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "OccasionCreate": {
+        "type": "object",
+        "required": ["title", "date"],
+        "additionalProperties": false,
+        "properties": {
+          "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "date": { "type": "string", "format": "date-time" },
+          "type": { "type": "string", "enum": ["birthday", "anniversary", "holiday", "other"], "default": "birthday" },
+          "recurring": { "type": "boolean", "default": true },
+          "note": { "type": "string", "maxLength": 2000, "nullable": true }
+        }
+      },
+      "OccasionUpdate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "date": { "type": "string", "format": "date-time" },
+          "type": { "type": "string", "enum": ["birthday", "anniversary", "holiday", "other"] },
+          "recurring": { "type": "boolean" },
+          "note": { "type": "string", "maxLength": 2000, "nullable": true },
+          "baseVersion": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "DiaryEntry": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "title": { "type": "string", "nullable": true },
+          "content": { "type": "string" },
+          "mood": { "type": "string", "enum": ["happy", "sad", "neutral", "angry", "excited", "anxious"] },
+          "weather": { "type": "string", "nullable": true },
+          "date": { "type": "string", "format": "date-time", "nullable": true },
+          "version": { "type": "integer" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "deletedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "DiaryCreate": {
+        "type": "object",
+        "required": ["content"],
+        "additionalProperties": false,
+        "properties": {
+          "title": { "type": "string", "maxLength": 500, "nullable": true },
+          "content": { "type": "string", "maxLength": 100000 },
+          "mood": { "type": "string", "enum": ["happy", "sad", "neutral", "angry", "excited", "anxious"], "default": "neutral" },
+          "weather": { "type": "string", "maxLength": 50, "nullable": true },
+          "date": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "DiaryUpdate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "title": { "type": "string", "maxLength": 500, "nullable": true },
+          "content": { "type": "string", "maxLength": 100000 },
+          "mood": { "type": "string", "enum": ["happy", "sad", "neutral", "angry", "excited", "anxious"] },
+          "weather": { "type": "string", "maxLength": 50, "nullable": true },
+          "date": { "type": "string", "format": "date-time", "nullable": true },
+          "baseVersion": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "Habit": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "name": { "type": "string" },
+          "description": { "type": "string", "nullable": true },
+          "frequency": { "type": "string", "enum": ["daily", "weekly"] },
+          "target": { "type": "integer" },
+          "color": { "type": "string" },
+          "icon": { "type": "string" },
+          "active": { "type": "boolean" },
+          "version": { "type": "integer" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "deletedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "HabitCreate": {
+        "type": "object",
+        "required": ["name"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "description": { "type": "string", "maxLength": 2000, "nullable": true },
+          "frequency": { "type": "string", "enum": ["daily", "weekly"], "default": "daily" },
+          "target": { "type": "integer", "minimum": 1, "maximum": 1000, "default": 1 },
+          "color": { "type": "string", "maxLength": 50, "default": "emerald" },
+          "icon": { "type": "string", "maxLength": 100, "default": "CheckCircle" },
+          "active": { "type": "boolean", "default": true }
+        }
+      },
+      "HabitUpdate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "description": { "type": "string", "maxLength": 2000, "nullable": true },
+          "frequency": { "type": "string", "enum": ["daily", "weekly"] },
+          "target": { "type": "integer", "minimum": 1, "maximum": 1000 },
+          "color": { "type": "string", "maxLength": 50 },
+          "icon": { "type": "string", "maxLength": 100 },
+          "active": { "type": "boolean" },
+          "baseVersion": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "Medication": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "name": { "type": "string" },
+          "dosage": { "type": "string", "nullable": true },
+          "frequency": { "type": "string" },
+          "startDate": { "type": "string", "format": "date-time", "nullable": true },
+          "endDate": { "type": "string", "format": "date-time", "nullable": true },
+          "notes": { "type": "string", "nullable": true },
+          "active": { "type": "boolean" },
+          "version": { "type": "integer" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "deletedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "MedicationCreate": {
+        "type": "object",
+        "required": ["name"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "dosage": { "type": "string", "maxLength": 200, "nullable": true },
+          "frequency": { "type": "string", "maxLength": 100, "default": "daily" },
+          "startDate": { "type": "string", "format": "date-time", "nullable": true },
+          "endDate": { "type": "string", "format": "date-time", "nullable": true },
+          "notes": { "type": "string", "maxLength": 2000, "nullable": true },
+          "active": { "type": "boolean", "default": true }
+        }
+      },
+      "MedicationUpdate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "dosage": { "type": "string", "maxLength": 200, "nullable": true },
+          "frequency": { "type": "string", "maxLength": 100 },
+          "startDate": { "type": "string", "format": "date-time", "nullable": true },
+          "endDate": { "type": "string", "format": "date-time", "nullable": true },
+          "notes": { "type": "string", "maxLength": 2000, "nullable": true },
+          "active": { "type": "boolean" },
+          "baseVersion": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "PantryItem": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "name": { "type": "string" },
+          "quantity": { "type": "integer" },
+          "unit": { "type": "string", "enum": ["piece", "kg", "g", "l", "ml", "pack"] },
+          "lowStock": { "type": "integer" },
+          "category": { "type": "string", "enum": ["grains", "dairy", "meat", "vegetables", "fruits", "beverages", "cleaning", "other"] },
+          "version": { "type": "integer" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "deletedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "PantryCreate": {
+        "type": "object",
+        "required": ["name"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "quantity": { "type": "integer", "minimum": 0, "default": 1 },
+          "unit": { "type": "string", "enum": ["piece", "kg", "g", "l", "ml", "pack"], "default": "piece" },
+          "lowStock": { "type": "integer", "minimum": 0, "default": 1 },
+          "category": { "type": "string", "enum": ["grains", "dairy", "meat", "vegetables", "fruits", "beverages", "cleaning", "other"], "default": "other" }
+        }
+      },
+      "PantryUpdate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "quantity": { "type": "integer", "minimum": 0 },
+          "unit": { "type": "string", "enum": ["piece", "kg", "g", "l", "ml", "pack"] },
+          "lowStock": { "type": "integer", "minimum": 0 },
+          "category": { "type": "string", "enum": ["grains", "dairy", "meat", "vegetables", "fruits", "beverages", "cleaning", "other"] },
+          "baseVersion": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "WaitingItem": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "title": { "type": "string" },
+          "description": { "type": "string", "nullable": true },
+          "priority": { "type": "integer" },
+          "ready": { "type": "boolean" },
+          "version": { "type": "integer" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "deletedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "WaitingCreate": {
+        "type": "object",
+        "required": ["title"],
+        "additionalProperties": false,
+        "properties": {
+          "title": { "type": "string", "minLength": 1, "maxLength": 500 },
+          "description": { "type": "string", "maxLength": 2000, "nullable": true },
+          "priority": { "type": "integer", "minimum": 0, "maximum": 100, "default": 0 },
+          "ready": { "type": "boolean", "default": false }
+        }
+      },
+      "WaitingUpdate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "title": { "type": "string", "minLength": 1, "maxLength": 500 },
+          "description": { "type": "string", "maxLength": 2000, "nullable": true },
+          "priority": { "type": "integer", "minimum": 0, "maximum": 100 },
+          "ready": { "type": "boolean" },
+          "baseVersion": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "SavedLocation": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "name": { "type": "string" },
+          "address": { "type": "string" },
+          "lat": { "type": "number" },
+          "lng": { "type": "number" },
+          "icon": { "type": "string" },
+          "color": { "type": "string" },
+          "version": { "type": "integer" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "deletedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "LocationCreate": {
+        "type": "object",
+        "required": ["name", "lat", "lng"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "address": { "type": "string", "maxLength": 1000, "default": "" },
+          "lat": { "type": "number", "format": "double" },
+          "lng": { "type": "number", "format": "double" },
+          "icon": { "type": "string", "maxLength": 100, "default": "MapPin" },
+          "color": { "type": "string", "maxLength": 50, "default": "blue" }
+        }
+      },
+      "LocationUpdate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "address": { "type": "string", "maxLength": 1000 },
+          "lat": { "type": "number", "format": "double" },
+          "lng": { "type": "number", "format": "double" },
+          "icon": { "type": "string", "maxLength": 100 },
+          "color": { "type": "string", "maxLength": 50 },
+          "baseVersion": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "ContactReminder": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "contactId": { "type": "string", "nullable": true },
+          "contactName": { "type": "string" },
+          "frequency": { "type": "string", "enum": ["daily", "weekly", "monthly"] },
+          "lastContacted": { "type": "string", "format": "date-time", "nullable": true },
+          "nextReminder": { "type": "string", "format": "date-time", "nullable": true },
+          "active": { "type": "boolean" },
+          "version": { "type": "integer" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "deletedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "ReminderCreate": {
+        "type": "object",
+        "required": ["contactName"],
+        "additionalProperties": false,
+        "properties": {
+          "contactId": { "type": "string", "minLength": 1, "maxLength": 100, "nullable": true },
+          "contactName": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "frequency": { "type": "string", "enum": ["daily", "weekly", "monthly"], "default": "weekly" },
+          "lastContacted": { "type": "string", "format": "date-time", "nullable": true },
+          "nextReminder": { "type": "string", "format": "date-time", "nullable": true },
+          "active": { "type": "boolean", "default": true }
+        }
+      },
+      "ReminderUpdate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "contactId": { "type": "string", "minLength": 1, "maxLength": 100, "nullable": true },
+          "contactName": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "frequency": { "type": "string", "enum": ["daily", "weekly", "monthly"] },
+          "lastContacted": { "type": "string", "format": "date-time", "nullable": true },
+          "nextReminder": { "type": "string", "format": "date-time", "nullable": true },
+          "active": { "type": "boolean" },
+          "baseVersion": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "ScheduledMessage": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "recipient": { "type": "string" },
+          "message": { "type": "string" },
+          "channel": { "type": "string", "enum": ["whatsapp", "sms", "telegram", "email"] },
+          "scheduledAt": { "type": "string", "format": "date-time" },
+          "sent": { "type": "boolean" },
+          "version": { "type": "integer" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "deletedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "ScheduledMessageCreate": {
+        "type": "object",
+        "required": ["recipient", "message", "scheduledAt"],
+        "additionalProperties": false,
+        "properties": {
+          "recipient": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "message": { "type": "string", "maxLength": 10000 },
+          "channel": { "type": "string", "enum": ["whatsapp", "sms", "telegram", "email"], "default": "whatsapp" },
+          "scheduledAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ScheduledMessageUpdate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "recipient": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "message": { "type": "string", "maxLength": 10000 },
+          "channel": { "type": "string", "enum": ["whatsapp", "sms", "telegram", "email"] },
+          "scheduledAt": { "type": "string", "format": "date-time" },
+          "sent": { "type": "boolean" },
+          "baseVersion": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "AutomationRule": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "name": { "type": "string" },
+          "trigger": { "type": "string" },
+          "action": { "type": "string" },
+          "config": { "type": "string", "nullable": true },
+          "active": { "type": "boolean" },
+          "version": { "type": "integer" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "deletedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "AutomationCreate": {
+        "type": "object",
+        "required": ["name", "trigger", "action"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "trigger": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "action": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "config": { "type": "string", "maxLength": 20000, "nullable": true },
+          "active": { "type": "boolean", "default": true }
+        }
+      },
+      "AutomationUpdate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "trigger": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "action": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "config": { "type": "string", "maxLength": 20000, "nullable": true },
+          "active": { "type": "boolean" },
+          "baseVersion": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "Suggestion": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "title": { "type": "string" },
+          "content": { "type": "string" },
+          "category": { "type": "string" },
+          "status": { "type": "string", "enum": ["pending", "accepted", "rejected"] },
+          "version": { "type": "integer" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "deletedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "SuggestionCreate": {
+        "type": "object",
+        "required": ["title", "content"],
+        "additionalProperties": false,
+        "properties": {
+          "title": { "type": "string", "minLength": 1, "maxLength": 500 },
+          "content": { "type": "string", "maxLength": 20000 },
+          "category": { "type": "string", "maxLength": 100, "default": "general" },
+          "status": { "type": "string", "enum": ["pending", "accepted", "rejected"], "default": "pending" }
+        }
+      },
+      "SuggestionUpdate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "title": { "type": "string", "minLength": 1, "maxLength": 500 },
+          "content": { "type": "string", "maxLength": 20000 },
+          "category": { "type": "string", "maxLength": 100 },
+          "status": { "type": "string", "enum": ["pending", "accepted", "rejected"] },
+          "baseVersion": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "Integration": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "service": { "type": "string", "enum": ["google_calendar", "google_drive", "telegram", "email", "github", "google_contacts", "cloud_sync"] },
+          "name": { "type": "string" },
+          "connected": { "type": "boolean" },
+          "config": { "type": "string", "nullable": true },
+          "lastSync": { "type": "string", "format": "date-time", "nullable": true },
+          "version": { "type": "integer" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "deletedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "IntegrationCreate": {
+        "type": "object",
+        "required": ["service", "name"],
+        "additionalProperties": false,
+        "properties": {
+          "service": { "type": "string", "enum": ["google_calendar", "google_drive", "telegram", "email", "github", "google_contacts", "cloud_sync"] },
+          "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "connected": { "type": "boolean", "default": false },
+          "config": { "type": "string", "maxLength": 20000, "nullable": true }
+        }
+      },
+      "IntegrationUpdate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "connected": { "type": "boolean" },
+          "config": { "type": "string", "maxLength": 20000, "nullable": true },
+          "lastSync": { "type": "string", "format": "date-time", "nullable": true },
+          "baseVersion": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "HappinessLog": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "date": { "type": "string", "format": "date-time" },
+          "score": { "type": "integer", "minimum": 1, "maximum": 10 },
+          "factors": { "type": "string", "nullable": true },
+          "note": { "type": "string", "nullable": true },
+          "version": { "type": "integer" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "deletedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "HappinessCreate": {
+        "type": "object",
+        "required": ["date", "score"],
+        "additionalProperties": false,
+        "properties": {
+          "date": { "type": "string", "format": "date-time" },
+          "score": { "type": "integer", "minimum": 1, "maximum": 10 },
+          "factors": { "type": "string", "maxLength": 20000, "nullable": true },
+          "note": { "type": "string", "maxLength": 5000, "nullable": true }
+        }
+      },
+      "HappinessUpdate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "date": { "type": "string", "format": "date-time" },
+          "score": { "type": "integer", "minimum": 1, "maximum": 10 },
+          "factors": { "type": "string", "maxLength": 20000, "nullable": true },
+          "note": { "type": "string", "maxLength": 5000, "nullable": true },
+          "baseVersion": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "DeleteResult": {
+        "allOf": [
+          { "$ref": "#/components/schemas/SuccessEnvelope" },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "deleted": { "type": "boolean", "example": true },
+                  "soft": { "type": "boolean", "description": "true for soft-delete, false for hard delete (?force=true)." }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "operations": {
+      "listTasks": {
+        "tags": ["Tasks"],
+        "summary": "List tasks",
+        "description": "Returns tasks owned by the current user. Supports pagination, filtering, sorting, search, date-range, and includeDeleted.",
+        "parameters": [
+          { "$ref": "#/components/parameters/Page" },
+          { "$ref": "#/components/parameters/PageSize" },
+          { "$ref": "#/components/parameters/Sort" },
+          { "$ref": "#/components/parameters/Search" },
+          { "$ref": "#/components/parameters/DateFrom" },
+          { "$ref": "#/components/parameters/DateTo" },
+          { "$ref": "#/components/parameters/IncludeDeleted" },
+          { "name": "status", "in": "query", "schema": { "type": "string", "enum": ["todo", "doing", "done"] } },
+          { "name": "priority", "in": "query", "schema": { "type": "string", "enum": ["low", "medium", "high"] } },
+          { "name": "category", "in": "query", "schema": { "type": "string" } },
+          { "name": "projectId", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of tasks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ListEnvelope" },
+                    { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Task" } } } }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      },
+      "createTask": {
+        "tags": ["Tasks"],
+        "summary": "Create a task",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TaskCreate" } } } },
+        "responses": {
+          "201": {
+            "description": "Task created",
+            "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Task" } } } ] } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "422": { "$ref": "#/components/responses/ValidationError" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      },
+      "getTask": {
+        "tags": ["Tasks"],
+        "summary": "Get a task",
+        "parameters": [
+          { "$ref": "#/components/parameters/PathId" },
+          { "$ref": "#/components/parameters/IncludeDeleted" }
+        ],
+        "responses": {
+          "200": { "description": "Task details", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Task" } } } ] } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      },
+      "updateTask": {
+        "tags": ["Tasks"],
+        "summary": "Update a task",
+        "parameters": [ { "$ref": "#/components/parameters/PathId" } ],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TaskUpdate" } } } },
+        "responses": {
+          "200": { "description": "Task updated", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Task" } } } ] } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "422": { "$ref": "#/components/responses/ValidationError" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      },
+      "deleteTask": {
+        "tags": ["Tasks"],
+        "summary": "Delete a task",
+        "parameters": [
+          { "$ref": "#/components/parameters/PathId" },
+          { "$ref": "#/components/parameters/Force" }
+        ],
+        "responses": {
+          "200": { "description": "Task deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DeleteResult" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      },
+      "listContacts": { "tags": ["Contacts"], "summary": "List contacts", "parameters": [ { "$ref": "#/components/parameters/Page" }, { "$ref": "#/components/parameters/PageSize" }, { "$ref": "#/components/parameters/Sort" }, { "$ref": "#/components/parameters/Search" }, { "$ref": "#/components/parameters/IncludeDeleted" }, { "name": "relation", "in": "query", "schema": { "type": "string", "enum": ["family", "friend", "work", "business", "other"] } }, { "name": "category", "in": "query", "schema": { "type": "string" } }, { "name": "favorite", "in": "query", "schema": { "type": "string", "enum": ["true", "false"] } } ], "responses": { "200": { "description": "List of contacts", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/ListEnvelope" }, { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Contact" } } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "createContact": { "tags": ["Contacts"], "summary": "Create a contact", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ContactCreate" } } } }, "responses": { "201": { "description": "Contact created", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Contact" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "getContact": { "tags": ["Contacts"], "summary": "Get a contact", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/IncludeDeleted" } ], "responses": { "200": { "description": "Contact details", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Contact" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "updateContact": { "tags": ["Contacts"], "summary": "Update a contact", "parameters": [ { "$ref": "#/components/parameters/PathId" } ], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ContactUpdate" } } } }, "responses": { "200": { "description": "Contact updated", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Contact" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "deleteContact": { "tags": ["Contacts"], "summary": "Delete a contact", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/Force" } ], "responses": { "200": { "description": "Contact deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DeleteResult" } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "listNotes": { "tags": ["Notes"], "summary": "List notes", "parameters": [ { "$ref": "#/components/parameters/Page" }, { "$ref": "#/components/parameters/PageSize" }, { "$ref": "#/components/parameters/Sort" }, { "$ref": "#/components/parameters/Search" }, { "$ref": "#/components/parameters/IncludeDeleted" }, { "name": "color", "in": "query", "schema": { "type": "string", "enum": ["default", "yellow", "green", "blue", "red", "purple"] } }, { "name": "pinned", "in": "query", "schema": { "type": "string", "enum": ["true", "false"] } } ], "responses": { "200": { "description": "List of notes", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/ListEnvelope" }, { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Note" } } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "createNote": { "tags": ["Notes"], "summary": "Create a note", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/NoteCreate" } } } }, "responses": { "201": { "description": "Note created", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Note" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "getNote": { "tags": ["Notes"], "summary": "Get a note", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/IncludeDeleted" } ], "responses": { "200": { "description": "Note details", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Note" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "updateNote": { "tags": ["Notes"], "summary": "Update a note", "parameters": [ { "$ref": "#/components/parameters/PathId" } ], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/NoteUpdate" } } } }, "responses": { "200": { "description": "Note updated", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Note" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "deleteNote": { "tags": ["Notes"], "summary": "Delete a note", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/Force" } ], "responses": { "200": { "description": "Note deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DeleteResult" } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "listEvents": { "tags": ["Events"], "summary": "List events", "parameters": [ { "$ref": "#/components/parameters/Page" }, { "$ref": "#/components/parameters/PageSize" }, { "$ref": "#/components/parameters/Sort" }, { "$ref": "#/components/parameters/Search" }, { "$ref": "#/components/parameters/DateFrom" }, { "$ref": "#/components/parameters/DateTo" }, { "$ref": "#/components/parameters/IncludeDeleted" }, { "name": "type", "in": "query", "schema": { "type": "string", "enum": ["work", "personal", "family", "health", "other"] } }, { "name": "color", "in": "query", "schema": { "type": "string", "enum": ["emerald", "amber", "rose", "blue", "violet", "slate"] } } ], "responses": { "200": { "description": "List of events", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/ListEnvelope" }, { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Event" } } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "createEvent": { "tags": ["Events"], "summary": "Create an event", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EventCreate" } } } }, "responses": { "201": { "description": "Event created", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Event" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "getEvent": { "tags": ["Events"], "summary": "Get an event", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/IncludeDeleted" } ], "responses": { "200": { "description": "Event details", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Event" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "updateEvent": { "tags": ["Events"], "summary": "Update an event", "parameters": [ { "$ref": "#/components/parameters/PathId" } ], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EventUpdate" } } } }, "responses": { "200": { "description": "Event updated", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Event" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "deleteEvent": { "tags": ["Events"], "summary": "Delete an event", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/Force" } ], "responses": { "200": { "description": "Event deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DeleteResult" } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "listExpenses": { "tags": ["Expenses"], "summary": "List expenses", "parameters": [ { "$ref": "#/components/parameters/Page" }, { "$ref": "#/components/parameters/PageSize" }, { "$ref": "#/components/parameters/Sort" }, { "$ref": "#/components/parameters/Search" }, { "$ref": "#/components/parameters/DateFrom" }, { "$ref": "#/components/parameters/DateTo" }, { "$ref": "#/components/parameters/IncludeDeleted" }, { "name": "category", "in": "query", "schema": { "type": "string" } }, { "name": "currency", "in": "query", "schema": { "type": "string", "enum": ["syp", "usd"] } }, { "name": "accountId", "in": "query", "schema": { "type": "string" } } ], "responses": { "200": { "description": "List of expenses", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/ListEnvelope" }, { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Expense" } } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "createExpense": { "tags": ["Expenses"], "summary": "Create an expense", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ExpenseCreate" } } } }, "responses": { "201": { "description": "Expense created", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Expense" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "getExpense": { "tags": ["Expenses"], "summary": "Get an expense", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/IncludeDeleted" } ], "responses": { "200": { "description": "Expense details", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Expense" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "updateExpense": { "tags": ["Expenses"], "summary": "Update an expense", "parameters": [ { "$ref": "#/components/parameters/PathId" } ], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ExpenseUpdate" } } } }, "responses": { "200": { "description": "Expense updated", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Expense" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "deleteExpense": { "tags": ["Expenses"], "summary": "Delete an expense", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/Force" } ], "responses": { "200": { "description": "Expense deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DeleteResult" } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "listAccounts": { "tags": ["Accounts"], "summary": "List accounts", "parameters": [ { "$ref": "#/components/parameters/Page" }, { "$ref": "#/components/parameters/PageSize" }, { "$ref": "#/components/parameters/Sort" }, { "$ref": "#/components/parameters/Search" }, { "$ref": "#/components/parameters/IncludeDeleted" }, { "name": "type", "in": "query", "schema": { "type": "string", "enum": ["bank", "cash", "savings", "credit"] } }, { "name": "currency", "in": "query", "schema": { "type": "string", "enum": ["syp", "usd"] } } ], "responses": { "200": { "description": "List of accounts", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/ListEnvelope" }, { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Account" } } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "createAccount": { "tags": ["Accounts"], "summary": "Create an account", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AccountCreate" } } } }, "responses": { "201": { "description": "Account created", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Account" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "getAccount": { "tags": ["Accounts"], "summary": "Get an account", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/IncludeDeleted" } ], "responses": { "200": { "description": "Account details", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Account" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "updateAccount": { "tags": ["Accounts"], "summary": "Update an account", "parameters": [ { "$ref": "#/components/parameters/PathId" } ], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AccountUpdate" } } } }, "responses": { "200": { "description": "Account updated", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Account" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "deleteAccount": { "tags": ["Accounts"], "summary": "Delete an account", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/Force" } ], "responses": { "200": { "description": "Account deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DeleteResult" } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "listAssets": { "tags": ["Assets"], "summary": "List assets", "parameters": [ { "$ref": "#/components/parameters/Page" }, { "$ref": "#/components/parameters/PageSize" }, { "$ref": "#/components/parameters/Sort" }, { "$ref": "#/components/parameters/Search" }, { "$ref": "#/components/parameters/IncludeDeleted" }, { "name": "type", "in": "query", "schema": { "type": "string", "enum": ["cash", "bank", "real-estate", "gold", "stocks", "other"] } }, { "name": "currency", "in": "query", "schema": { "type": "string", "enum": ["syp", "usd"] } } ], "responses": { "200": { "description": "List of assets", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/ListEnvelope" }, { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Asset" } } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "createAsset": { "tags": ["Assets"], "summary": "Create an asset", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AssetCreate" } } } }, "responses": { "201": { "description": "Asset created", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Asset" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "getAsset": { "tags": ["Assets"], "summary": "Get an asset", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/IncludeDeleted" } ], "responses": { "200": { "description": "Asset details", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Asset" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "updateAsset": { "tags": ["Assets"], "summary": "Update an asset", "parameters": [ { "$ref": "#/components/parameters/PathId" } ], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AssetUpdate" } } } }, "responses": { "200": { "description": "Asset updated", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Asset" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "deleteAsset": { "tags": ["Assets"], "summary": "Delete an asset", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/Force" } ], "responses": { "200": { "description": "Asset deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DeleteResult" } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "listDebts": { "tags": ["Debts"], "summary": "List debts", "parameters": [ { "$ref": "#/components/parameters/Page" }, { "$ref": "#/components/parameters/PageSize" }, { "$ref": "#/components/parameters/Sort" }, { "$ref": "#/components/parameters/Search" }, { "$ref": "#/components/parameters/IncludeDeleted" }, { "name": "type", "in": "query", "schema": { "type": "string", "enum": ["owed", "owe"] } }, { "name": "currency", "in": "query", "schema": { "type": "string", "enum": ["syp", "usd"] } }, { "name": "settled", "in": "query", "schema": { "type": "string", "enum": ["true", "false"] } } ], "responses": { "200": { "description": "List of debts", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/ListEnvelope" }, { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Debt" } } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "createDebt": { "tags": ["Debts"], "summary": "Create a debt", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DebtCreate" } } } }, "responses": { "201": { "description": "Debt created", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Debt" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "getDebt": { "tags": ["Debts"], "summary": "Get a debt", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/IncludeDeleted" } ], "responses": { "200": { "description": "Debt details", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Debt" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "updateDebt": { "tags": ["Debts"], "summary": "Update a debt", "parameters": [ { "$ref": "#/components/parameters/PathId" } ], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DebtUpdate" } } } }, "responses": { "200": { "description": "Debt updated", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Debt" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "deleteDebt": { "tags": ["Debts"], "summary": "Delete a debt", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/Force" } ], "responses": { "200": { "description": "Debt deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DeleteResult" } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "listBudgets": { "tags": ["Budgets"], "summary": "List budgets", "parameters": [ { "$ref": "#/components/parameters/Page" }, { "$ref": "#/components/parameters/PageSize" }, { "$ref": "#/components/parameters/Sort" }, { "$ref": "#/components/parameters/IncludeDeleted" }, { "name": "category", "in": "query", "schema": { "type": "string" } }, { "name": "month", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 12 } }, { "name": "year", "in": "query", "schema": { "type": "integer", "minimum": 2000, "maximum": 2100 } } ], "responses": { "200": { "description": "List of budgets", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/ListEnvelope" }, { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Budget" } } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "createBudget": { "tags": ["Budgets"], "summary": "Create a budget", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/BudgetCreate" } } } }, "responses": { "201": { "description": "Budget created", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Budget" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "getBudget": { "tags": ["Budgets"], "summary": "Get a budget", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/IncludeDeleted" } ], "responses": { "200": { "description": "Budget details", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Budget" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "updateBudget": { "tags": ["Budgets"], "summary": "Update a budget", "parameters": [ { "$ref": "#/components/parameters/PathId" } ], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/BudgetUpdate" } } } }, "responses": { "200": { "description": "Budget updated", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Budget" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "deleteBudget": { "tags": ["Budgets"], "summary": "Delete a budget", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/Force" } ], "responses": { "200": { "description": "Budget deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DeleteResult" } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "listProjects": { "tags": ["Projects"], "summary": "List projects", "parameters": [ { "$ref": "#/components/parameters/Page" }, { "$ref": "#/components/parameters/PageSize" }, { "$ref": "#/components/parameters/Sort" }, { "$ref": "#/components/parameters/Search" }, { "$ref": "#/components/parameters/IncludeDeleted" }, { "name": "status", "in": "query", "schema": { "type": "string", "enum": ["active", "paused", "completed", "archived"] } }, { "name": "color", "in": "query", "schema": { "type": "string" } } ], "responses": { "200": { "description": "List of projects", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/ListEnvelope" }, { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Project" } } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "createProject": { "tags": ["Projects"], "summary": "Create a project", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProjectCreate" } } } }, "responses": { "201": { "description": "Project created", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Project" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "getProject": { "tags": ["Projects"], "summary": "Get a project", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/IncludeDeleted" } ], "responses": { "200": { "description": "Project details", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Project" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "updateProject": { "tags": ["Projects"], "summary": "Update a project", "parameters": [ { "$ref": "#/components/parameters/PathId" } ], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProjectUpdate" } } } }, "responses": { "200": { "description": "Project updated", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Project" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "deleteProject": { "tags": ["Projects"], "summary": "Delete a project", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/Force" } ], "responses": { "200": { "description": "Project deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DeleteResult" } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "listMeetings": { "tags": ["Meetings"], "summary": "List meetings", "parameters": [ { "$ref": "#/components/parameters/Page" }, { "$ref": "#/components/parameters/PageSize" }, { "$ref": "#/components/parameters/Sort" }, { "$ref": "#/components/parameters/Search" }, { "$ref": "#/components/parameters/DateFrom" }, { "$ref": "#/components/parameters/DateTo" }, { "$ref": "#/components/parameters/IncludeDeleted" }, { "name": "status", "in": "query", "schema": { "type": "string", "enum": ["scheduled", "completed", "cancelled"] } } ], "responses": { "200": { "description": "List of meetings", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/ListEnvelope" }, { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Meeting" } } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "createMeeting": { "tags": ["Meetings"], "summary": "Create a meeting", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MeetingCreate" } } } }, "responses": { "201": { "description": "Meeting created", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Meeting" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "getMeeting": { "tags": ["Meetings"], "summary": "Get a meeting", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/IncludeDeleted" } ], "responses": { "200": { "description": "Meeting details", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Meeting" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "updateMeeting": { "tags": ["Meetings"], "summary": "Update a meeting", "parameters": [ { "$ref": "#/components/parameters/PathId" } ], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MeetingUpdate" } } } }, "responses": { "200": { "description": "Meeting updated", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Meeting" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "deleteMeeting": { "tags": ["Meetings"], "summary": "Delete a meeting", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/Force" } ], "responses": { "200": { "description": "Meeting deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DeleteResult" } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "listOccasions": { "tags": ["Occasions"], "summary": "List occasions", "parameters": [ { "$ref": "#/components/parameters/Page" }, { "$ref": "#/components/parameters/PageSize" }, { "$ref": "#/components/parameters/Sort" }, { "$ref": "#/components/parameters/Search" }, { "$ref": "#/components/parameters/DateFrom" }, { "$ref": "#/components/parameters/DateTo" }, { "$ref": "#/components/parameters/IncludeDeleted" }, { "name": "type", "in": "query", "schema": { "type": "string", "enum": ["birthday", "anniversary", "holiday", "other"] } }, { "name": "recurring", "in": "query", "schema": { "type": "string", "enum": ["true", "false"] } } ], "responses": { "200": { "description": "List of occasions", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/ListEnvelope" }, { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Occasion" } } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "createOccasion": { "tags": ["Occasions"], "summary": "Create an occasion", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OccasionCreate" } } } }, "responses": { "201": { "description": "Occasion created", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Occasion" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "getOccasion": { "tags": ["Occasions"], "summary": "Get an occasion", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/IncludeDeleted" } ], "responses": { "200": { "description": "Occasion details", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Occasion" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "updateOccasion": { "tags": ["Occasions"], "summary": "Update an occasion", "parameters": [ { "$ref": "#/components/parameters/PathId" } ], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OccasionUpdate" } } } }, "responses": { "200": { "description": "Occasion updated", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Occasion" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "deleteOccasion": { "tags": ["Occasions"], "summary": "Delete an occasion", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/Force" } ], "responses": { "200": { "description": "Occasion deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DeleteResult" } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "listDiary": { "tags": ["Diary"], "summary": "List diary entries", "parameters": [ { "$ref": "#/components/parameters/Page" }, { "$ref": "#/components/parameters/PageSize" }, { "$ref": "#/components/parameters/Sort" }, { "$ref": "#/components/parameters/Search" }, { "$ref": "#/components/parameters/DateFrom" }, { "$ref": "#/components/parameters/DateTo" }, { "$ref": "#/components/parameters/IncludeDeleted" }, { "name": "mood", "in": "query", "schema": { "type": "string", "enum": ["happy", "sad", "neutral", "angry", "excited", "anxious"] } } ], "responses": { "200": { "description": "List of diary entries", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/ListEnvelope" }, { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/DiaryEntry" } } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "createDiary": { "tags": ["Diary"], "summary": "Create a diary entry", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DiaryCreate" } } } }, "responses": { "201": { "description": "Diary entry created", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/DiaryEntry" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "getDiary": { "tags": ["Diary"], "summary": "Get a diary entry", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/IncludeDeleted" } ], "responses": { "200": { "description": "Diary entry details", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/DiaryEntry" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "updateDiary": { "tags": ["Diary"], "summary": "Update a diary entry", "parameters": [ { "$ref": "#/components/parameters/PathId" } ], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DiaryUpdate" } } } }, "responses": { "200": { "description": "Diary entry updated", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/DiaryEntry" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "deleteDiary": { "tags": ["Diary"], "summary": "Delete a diary entry", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/Force" } ], "responses": { "200": { "description": "Diary entry deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DeleteResult" } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "listHabits": { "tags": ["Habits"], "summary": "List habits", "parameters": [ { "$ref": "#/components/parameters/Page" }, { "$ref": "#/components/parameters/PageSize" }, { "$ref": "#/components/parameters/Sort" }, { "$ref": "#/components/parameters/Search" }, { "$ref": "#/components/parameters/IncludeDeleted" }, { "name": "frequency", "in": "query", "schema": { "type": "string", "enum": ["daily", "weekly"] } }, { "name": "active", "in": "query", "schema": { "type": "string", "enum": ["true", "false"] } } ], "responses": { "200": { "description": "List of habits", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/ListEnvelope" }, { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Habit" } } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "createHabit": { "tags": ["Habits"], "summary": "Create a habit", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HabitCreate" } } } }, "responses": { "201": { "description": "Habit created", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Habit" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "getHabit": { "tags": ["Habits"], "summary": "Get a habit", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/IncludeDeleted" } ], "responses": { "200": { "description": "Habit details", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Habit" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "updateHabit": { "tags": ["Habits"], "summary": "Update a habit", "parameters": [ { "$ref": "#/components/parameters/PathId" } ], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HabitUpdate" } } } }, "responses": { "200": { "description": "Habit updated", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Habit" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "deleteHabit": { "tags": ["Habits"], "summary": "Delete a habit", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/Force" } ], "responses": { "200": { "description": "Habit deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DeleteResult" } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "listMedications": { "tags": ["Medications"], "summary": "List medications", "parameters": [ { "$ref": "#/components/parameters/Page" }, { "$ref": "#/components/parameters/PageSize" }, { "$ref": "#/components/parameters/Sort" }, { "$ref": "#/components/parameters/Search" }, { "$ref": "#/components/parameters/IncludeDeleted" }, { "name": "active", "in": "query", "schema": { "type": "string", "enum": ["true", "false"] } }, { "name": "frequency", "in": "query", "schema": { "type": "string" } } ], "responses": { "200": { "description": "List of medications", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/ListEnvelope" }, { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Medication" } } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "createMedication": { "tags": ["Medications"], "summary": "Create a medication", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MedicationCreate" } } } }, "responses": { "201": { "description": "Medication created", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Medication" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "getMedication": { "tags": ["Medications"], "summary": "Get a medication", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/IncludeDeleted" } ], "responses": { "200": { "description": "Medication details", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Medication" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "updateMedication": { "tags": ["Medications"], "summary": "Update a medication", "parameters": [ { "$ref": "#/components/parameters/PathId" } ], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MedicationUpdate" } } } }, "responses": { "200": { "description": "Medication updated", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Medication" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "deleteMedication": { "tags": ["Medications"], "summary": "Delete a medication", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/Force" } ], "responses": { "200": { "description": "Medication deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DeleteResult" } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "listPantry": { "tags": ["Pantry"], "summary": "List pantry items", "parameters": [ { "$ref": "#/components/parameters/Page" }, { "$ref": "#/components/parameters/PageSize" }, { "$ref": "#/components/parameters/Sort" }, { "$ref": "#/components/parameters/Search" }, { "$ref": "#/components/parameters/IncludeDeleted" }, { "name": "category", "in": "query", "schema": { "type": "string", "enum": ["grains", "dairy", "meat", "vegetables", "fruits", "beverages", "cleaning", "other"] } }, { "name": "unit", "in": "query", "schema": { "type": "string", "enum": ["piece", "kg", "g", "l", "ml", "pack"] } } ], "responses": { "200": { "description": "List of pantry items", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/ListEnvelope" }, { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/PantryItem" } } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "createPantry": { "tags": ["Pantry"], "summary": "Create a pantry item", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PantryCreate" } } } }, "responses": { "201": { "description": "Pantry item created", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/PantryItem" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "getPantry": { "tags": ["Pantry"], "summary": "Get a pantry item", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/IncludeDeleted" } ], "responses": { "200": { "description": "Pantry item details", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/PantryItem" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "updatePantry": { "tags": ["Pantry"], "summary": "Update a pantry item", "parameters": [ { "$ref": "#/components/parameters/PathId" } ], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PantryUpdate" } } } }, "responses": { "200": { "description": "Pantry item updated", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/PantryItem" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "deletePantry": { "tags": ["Pantry"], "summary": "Delete a pantry item", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/Force" } ], "responses": { "200": { "description": "Pantry item deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DeleteResult" } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "listWaitingList": { "tags": ["Waiting-List"], "summary": "List waiting-list items", "parameters": [ { "$ref": "#/components/parameters/Page" }, { "$ref": "#/components/parameters/PageSize" }, { "$ref": "#/components/parameters/Sort" }, { "$ref": "#/components/parameters/Search" }, { "$ref": "#/components/parameters/IncludeDeleted" }, { "name": "ready", "in": "query", "schema": { "type": "string", "enum": ["true", "false"] } }, { "name": "priority", "in": "query", "schema": { "type": "integer", "minimum": 0, "maximum": 100 } } ], "responses": { "200": { "description": "List of waiting-list items", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/ListEnvelope" }, { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/WaitingItem" } } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "createWaitingList": { "tags": ["Waiting-List"], "summary": "Create a waiting-list item", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WaitingCreate" } } } }, "responses": { "201": { "description": "Waiting-list item created", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/WaitingItem" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "getWaitingList": { "tags": ["Waiting-List"], "summary": "Get a waiting-list item", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/IncludeDeleted" } ], "responses": { "200": { "description": "Waiting-list item details", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/WaitingItem" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "updateWaitingList": { "tags": ["Waiting-List"], "summary": "Update a waiting-list item", "parameters": [ { "$ref": "#/components/parameters/PathId" } ], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WaitingUpdate" } } } }, "responses": { "200": { "description": "Waiting-list item updated", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/WaitingItem" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "deleteWaitingList": { "tags": ["Waiting-List"], "summary": "Delete a waiting-list item", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/Force" } ], "responses": { "200": { "description": "Waiting-list item deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DeleteResult" } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "listLocations": { "tags": ["Locations"], "summary": "List saved locations", "parameters": [ { "$ref": "#/components/parameters/Page" }, { "$ref": "#/components/parameters/PageSize" }, { "$ref": "#/components/parameters/Sort" }, { "$ref": "#/components/parameters/Search" }, { "$ref": "#/components/parameters/IncludeDeleted" }, { "name": "color", "in": "query", "schema": { "type": "string" } } ], "responses": { "200": { "description": "List of saved locations", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/ListEnvelope" }, { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/SavedLocation" } } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "createLocation": { "tags": ["Locations"], "summary": "Create a saved location", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LocationCreate" } } } }, "responses": { "201": { "description": "Saved location created", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/SavedLocation" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "getLocation": { "tags": ["Locations"], "summary": "Get a saved location", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/IncludeDeleted" } ], "responses": { "200": { "description": "Saved location details", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/SavedLocation" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "updateLocation": { "tags": ["Locations"], "summary": "Update a saved location", "parameters": [ { "$ref": "#/components/parameters/PathId" } ], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LocationUpdate" } } } }, "responses": { "200": { "description": "Saved location updated", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/SavedLocation" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "deleteLocation": { "tags": ["Locations"], "summary": "Delete a saved location", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/Force" } ], "responses": { "200": { "description": "Saved location deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DeleteResult" } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "listReminders": { "tags": ["Reminders"], "summary": "List contact reminders", "parameters": [ { "$ref": "#/components/parameters/Page" }, { "$ref": "#/components/parameters/PageSize" }, { "$ref": "#/components/parameters/Sort" }, { "$ref": "#/components/parameters/Search" }, { "$ref": "#/components/parameters/IncludeDeleted" }, { "name": "frequency", "in": "query", "schema": { "type": "string", "enum": ["daily", "weekly", "monthly"] } }, { "name": "active", "in": "query", "schema": { "type": "string", "enum": ["true", "false"] } }, { "name": "contactId", "in": "query", "schema": { "type": "string" } } ], "responses": { "200": { "description": "List of contact reminders", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/ListEnvelope" }, { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/ContactReminder" } } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "createReminder": { "tags": ["Reminders"], "summary": "Create a contact reminder", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ReminderCreate" } } } }, "responses": { "201": { "description": "Contact reminder created", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/ContactReminder" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "getReminder": { "tags": ["Reminders"], "summary": "Get a contact reminder", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/IncludeDeleted" } ], "responses": { "200": { "description": "Contact reminder details", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/ContactReminder" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "updateReminder": { "tags": ["Reminders"], "summary": "Update a contact reminder", "parameters": [ { "$ref": "#/components/parameters/PathId" } ], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ReminderUpdate" } } } }, "responses": { "200": { "description": "Contact reminder updated", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/ContactReminder" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "deleteReminder": { "tags": ["Reminders"], "summary": "Delete a contact reminder", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/Force" } ], "responses": { "200": { "description": "Contact reminder deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DeleteResult" } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "listScheduledMessages": { "tags": ["Scheduled-Messages"], "summary": "List scheduled messages", "parameters": [ { "$ref": "#/components/parameters/Page" }, { "$ref": "#/components/parameters/PageSize" }, { "$ref": "#/components/parameters/Sort" }, { "$ref": "#/components/parameters/Search" }, { "$ref": "#/components/parameters/DateFrom" }, { "$ref": "#/components/parameters/DateTo" }, { "$ref": "#/components/parameters/IncludeDeleted" }, { "name": "channel", "in": "query", "schema": { "type": "string", "enum": ["whatsapp", "sms", "telegram", "email"] } }, { "name": "sent", "in": "query", "schema": { "type": "string", "enum": ["true", "false"] } } ], "responses": { "200": { "description": "List of scheduled messages", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/ListEnvelope" }, { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/ScheduledMessage" } } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "createScheduledMessage": { "tags": ["Scheduled-Messages"], "summary": "Create a scheduled message", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ScheduledMessageCreate" } } } }, "responses": { "201": { "description": "Scheduled message created", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/ScheduledMessage" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "getScheduledMessage": { "tags": ["Scheduled-Messages"], "summary": "Get a scheduled message", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/IncludeDeleted" } ], "responses": { "200": { "description": "Scheduled message details", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/ScheduledMessage" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "updateScheduledMessage": { "tags": ["Scheduled-Messages"], "summary": "Update a scheduled message", "parameters": [ { "$ref": "#/components/parameters/PathId" } ], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ScheduledMessageUpdate" } } } }, "responses": { "200": { "description": "Scheduled message updated", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/ScheduledMessage" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "deleteScheduledMessage": { "tags": ["Scheduled-Messages"], "summary": "Delete a scheduled message", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/Force" } ], "responses": { "200": { "description": "Scheduled message deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DeleteResult" } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "listAutomation": { "tags": ["Automation"], "summary": "List automation rules", "parameters": [ { "$ref": "#/components/parameters/Page" }, { "$ref": "#/components/parameters/PageSize" }, { "$ref": "#/components/parameters/Sort" }, { "$ref": "#/components/parameters/Search" }, { "$ref": "#/components/parameters/IncludeDeleted" }, { "name": "active", "in": "query", "schema": { "type": "string", "enum": ["true", "false"] } }, { "name": "trigger", "in": "query", "schema": { "type": "string" } } ], "responses": { "200": { "description": "List of automation rules", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/ListEnvelope" }, { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/AutomationRule" } } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "createAutomation": { "tags": ["Automation"], "summary": "Create an automation rule", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AutomationCreate" } } } }, "responses": { "201": { "description": "Automation rule created", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/AutomationRule" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "getAutomation": { "tags": ["Automation"], "summary": "Get an automation rule", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/IncludeDeleted" } ], "responses": { "200": { "description": "Automation rule details", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/AutomationRule" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "updateAutomation": { "tags": ["Automation"], "summary": "Update an automation rule", "parameters": [ { "$ref": "#/components/parameters/PathId" } ], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AutomationUpdate" } } } }, "responses": { "200": { "description": "Automation rule updated", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/AutomationRule" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "deleteAutomation": { "tags": ["Automation"], "summary": "Delete an automation rule", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/Force" } ], "responses": { "200": { "description": "Automation rule deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DeleteResult" } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "listSuggestions": { "tags": ["Suggestions"], "summary": "List suggestions", "parameters": [ { "$ref": "#/components/parameters/Page" }, { "$ref": "#/components/parameters/PageSize" }, { "$ref": "#/components/parameters/Sort" }, { "$ref": "#/components/parameters/Search" }, { "$ref": "#/components/parameters/IncludeDeleted" }, { "name": "category", "in": "query", "schema": { "type": "string" } }, { "name": "status", "in": "query", "schema": { "type": "string", "enum": ["pending", "accepted", "rejected"] } } ], "responses": { "200": { "description": "List of suggestions", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/ListEnvelope" }, { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Suggestion" } } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "createSuggestion": { "tags": ["Suggestions"], "summary": "Create a suggestion", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuggestionCreate" } } } }, "responses": { "201": { "description": "Suggestion created", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Suggestion" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "getSuggestion": { "tags": ["Suggestions"], "summary": "Get a suggestion", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/IncludeDeleted" } ], "responses": { "200": { "description": "Suggestion details", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Suggestion" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "updateSuggestion": { "tags": ["Suggestions"], "summary": "Update a suggestion", "parameters": [ { "$ref": "#/components/parameters/PathId" } ], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuggestionUpdate" } } } }, "responses": { "200": { "description": "Suggestion updated", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Suggestion" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "deleteSuggestion": { "tags": ["Suggestions"], "summary": "Delete a suggestion", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/Force" } ], "responses": { "200": { "description": "Suggestion deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DeleteResult" } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "listIntegrations": { "tags": ["Integrations"], "summary": "List integrations", "parameters": [ { "$ref": "#/components/parameters/Page" }, { "$ref": "#/components/parameters/PageSize" }, { "$ref": "#/components/parameters/Sort" }, { "$ref": "#/components/parameters/Search" }, { "$ref": "#/components/parameters/IncludeDeleted" }, { "name": "service", "in": "query", "schema": { "type": "string", "enum": ["google_calendar", "google_drive", "telegram", "email", "github", "google_contacts", "cloud_sync"] } }, { "name": "connected", "in": "query", "schema": { "type": "string", "enum": ["true", "false"] } } ], "responses": { "200": { "description": "List of integrations", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/ListEnvelope" }, { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Integration" } } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "createIntegration": { "tags": ["Integrations"], "summary": "Create an integration", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/IntegrationCreate" } } } }, "responses": { "201": { "description": "Integration created", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Integration" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "getIntegration": { "tags": ["Integrations"], "summary": "Get an integration", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/IncludeDeleted" } ], "responses": { "200": { "description": "Integration details", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Integration" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "updateIntegration": { "tags": ["Integrations"], "summary": "Update an integration", "parameters": [ { "$ref": "#/components/parameters/PathId" } ], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/IntegrationUpdate" } } } }, "responses": { "200": { "description": "Integration updated", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Integration" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "deleteIntegration": { "tags": ["Integrations"], "summary": "Delete an integration", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/Force" } ], "responses": { "200": { "description": "Integration deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DeleteResult" } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "listHappiness": { "tags": ["Happiness"], "summary": "List happiness logs", "parameters": [ { "$ref": "#/components/parameters/Page" }, { "$ref": "#/components/parameters/PageSize" }, { "$ref": "#/components/parameters/Sort" }, { "$ref": "#/components/parameters/Search" }, { "$ref": "#/components/parameters/DateFrom" }, { "$ref": "#/components/parameters/DateTo" }, { "$ref": "#/components/parameters/IncludeDeleted" } ], "responses": { "200": { "description": "List of happiness logs", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/ListEnvelope" }, { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/HappinessLog" } } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "createHappiness": { "tags": ["Happiness"], "summary": "Create a happiness log", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HappinessCreate" } } } }, "responses": { "201": { "description": "Happiness log created", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/HappinessLog" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "getHappiness": { "tags": ["Happiness"], "summary": "Get a happiness log", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/IncludeDeleted" } ], "responses": { "200": { "description": "Happiness log details", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/HappinessLog" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "updateHappiness": { "tags": ["Happiness"], "summary": "Update a happiness log", "parameters": [ { "$ref": "#/components/parameters/PathId" } ], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HappinessUpdate" } } } }, "responses": { "200": { "description": "Happiness log updated", "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/HappinessLog" } } } ] } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "409": { "$ref": "#/components/responses/Conflict" }, "422": { "$ref": "#/components/responses/ValidationError" }, "500": { "$ref": "#/components/responses/InternalError" } } },
+      "deleteHappiness": { "tags": ["Happiness"], "summary": "Delete a happiness log", "parameters": [ { "$ref": "#/components/parameters/PathId" }, { "$ref": "#/components/parameters/Force" } ], "responses": { "200": { "description": "Happiness log deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DeleteResult" } } } }, "401": { "$ref": "#/components/responses/Unauthorized" }, "404": { "$ref": "#/components/responses/NotFound" }, "500": { "$ref": "#/components/responses/InternalError" } } }
+    }
+  }
+}
