@@ -2,23 +2,24 @@
 // Electron Main Process — spawns Next.js Standalone Server.
 // =============================================================================
 //
-// Architecture (Phase 1 fix):
+// Architecture (Phase 2 — production-safe with logging):
 //
 //   Electron Main
 //        ↓
-//   spawn(.next/standalone/server.js, PORT, HOSTNAME=127.0.0.1)
+//   resolve server.js path (multiple fallbacks)
 //        ↓
-//   wait for "ready" (HTTP GET / returns 200)
+//   load .env file from server directory (if exists)
+//        ↓
+//   spawn(node, [server.js], { cwd, env: merged })
+//        ↓
+//   capture stdout + stderr to log file + console
+//        ↓
+//   HTTP health check (GET /) with 30s timeout + 250ms retries
 //        ↓
 //   BrowserWindow.loadURL(http://127.0.0.1:PORT)
-//        ↓
-//   Next.js API routes + NextAuth + Prisma/Neon all work via localhost
 //
-// Previously this loaded `out/index.html` (static export) which has no server
-// → no API routes, no auth, no database. The standalone server fixes that.
-//
-// Port strategy: try 3310, 3311, 3312, ... up to 3399 (avoids common dev
-// port 3000 and ephemeral ports). First available wins.
+// Logging: writes to %APPDATA%/Silah/logs/electron-main.log on Windows
+// or ~/Library/Application Support/Silah/logs on macOS.
 
 const { app, BrowserWindow, ipcMain, shell, dialog } = require("electron");
 const path = require("path");
@@ -32,26 +33,66 @@ const isDev = !app.isPackaged;
 const HOSTNAME = "127.0.0.1"; // loopback only — never expose to network
 const PORT_START = 3310;
 const PORT_END = 3399;
-const SERVER_STARTUP_TIMEOUT_MS = 30_000; // 30s max for Next.js to boot
-const HEALTH_CHECK_INTERVAL_MS = 200;
+const SERVER_STARTUP_TIMEOUT_MS = 30_000; // 30s — NOT increased; root-cause instead
+const HEALTH_CHECK_INTERVAL_MS = 250;
 
 let mainWindow = null;
 let nextServerProcess = null;
 let nextServerPort = null;
+let logStream = null;
+
+// ---- Logging ----
+
+function getLogPath() {
+  const dir = path.join(app.getPath("userData"), "logs");
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  return path.join(dir, "electron-main.log");
+}
+
+function initLogging() {
+  const logPath = getLogPath();
+  try {
+    logStream = fs.createWriteStream(logPath, { flags: "a" });
+    log(`=== Silah Electron Main started at ${new Date().toISOString()} ===`);
+    log(`isDev: ${isDev}, app.isPackaged: ${app.isPackaged}`);
+    log(`app.getAppPath(): ${app.getAppPath()}`);
+    log(`process.resourcesPath: ${process.resourcesPath}`);
+    log(`__dirname: ${__dirname}`);
+    log(`process.cwd(): ${process.cwd()}`);
+    log(`platform: ${process.platform}, arch: ${process.arch}`);
+  } catch (err) {
+    console.error("[electron] Failed to init logging:", err);
+  }
+}
+
+function log(msg) {
+  const line = `[${new Date().toISOString()}] ${msg}`;
+  console.log(line);
+  if (logStream) {
+    try { logStream.write(line + "\n"); } catch {}
+  }
+}
 
 // ---- Port selection (find first free port) ----
 
 function findFreePort(start, end) {
   return new Promise((resolve, reject) => {
+    const net = require("net");
     const tryPort = (port) => {
       if (port > end) {
         reject(new Error(`No free port in range ${start}-${end}`));
         return;
       }
-      const tester = require("net").createServer();
-      tester.once("error", () => tryPort(port + 1));
+      const tester = net.createServer();
+      tester.once("error", (err) => {
+        log(`Port ${port} busy (${err.code}), trying ${port + 1}`);
+        tryPort(port + 1);
+      });
       tester.once("listening", () => {
-        tester.close(() => resolve(port));
+        tester.close(() => {
+          log(`Found free port: ${port}`);
+          resolve(port);
+        });
       });
       tester.listen(port, HOSTNAME);
     };
@@ -59,70 +100,152 @@ function findFreePort(start, end) {
   });
 }
 
+// ---- Locate server.js ----
+
+function locateServer() {
+  const candidates = isDev
+    ? [
+        path.join(__dirname, "..", ".next", "standalone", "server.js"),
+        path.join(process.cwd(), ".next", "standalone", "server.js"),
+      ]
+    : [
+        path.join(process.resourcesPath, "app-next", "server.js"),
+        path.join(process.resourcesPath, "app", ".next", "standalone", "server.js"),
+        path.join(__dirname, "..", ".next", "standalone", "server.js"),
+        path.join(__dirname, ".next", "standalone", "server.js"),
+      ];
+
+  for (const p of candidates) {
+    if (fs.existsSync(p)) {
+      log(`✓ Found server.js: ${p}`);
+      return p;
+    }
+    log(`✗ Not found: ${p}`);
+  }
+  return null;
+}
+
+// ---- Load .env from server directory (production-safe) ----
+
+function loadEnvFile(envPath) {
+  if (!fs.existsSync(envPath)) {
+    log(`No .env file at ${envPath} — relying on process.env only`);
+    return {};
+  }
+  log(`Loading .env from ${envPath}`);
+  const content = fs.readFileSync(envPath, "utf8");
+  const env = {};
+  for (const line of content.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const match = trimmed.match(/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/);
+    if (match) {
+      const key = match[1];
+      let value = match[2];
+      // Strip surrounding quotes
+      if ((value.startsWith('"') && value.endsWith('"')) ||
+          (value.startsWith("'") && value.endsWith("'"))) {
+        value = value.slice(1, -1);
+      }
+      env[key] = value;
+    }
+  }
+  log(`Loaded ${Object.keys(env).length} env vars from .env file`);
+  return env;
+}
+
 // ---- Start Next.js standalone server ----
 
 function startNextServer(port) {
   return new Promise((resolve, reject) => {
-    // Locate server.js — in dev it's in .next/standalone, in packaged app
-    // it's in resources/app-next/ (extraResources — avoids Windows path-length issues).
-    const possiblePaths = isDev
-      ? [
-          path.join(__dirname, "..", ".next", "standalone", "server.js"),
-          path.join(process.cwd(), ".next", "standalone", "server.js"),
-        ]
-      : [
-          path.join(process.resourcesPath, "app-next", "server.js"),
-          path.join(process.resourcesPath, "app", ".next", "standalone", "server.js"),
-          path.join(__dirname, "..", ".next", "standalone", "server.js"),
-        ];
-
-    const serverPath = possiblePaths.find((p) => fs.existsSync(p));
+    const serverPath = locateServer();
     if (!serverPath) {
-      reject(
-        new Error(
-          "Next.js standalone server.js not found. Run `bun run build:standalone` first.\n" +
-            `Searched: ${possiblePaths.join(", ")}`
-        )
-      );
+      reject(new Error(
+        "Next.js standalone server.js not found.\n" +
+        "Searched paths:\n" +
+        (isDev
+          ? `  ${path.join(__dirname, "..", ".next", "standalone", "server.js")}\n`
+          : `  ${path.join(process.resourcesPath, "app-next", "server.js")}\n`) +
+        "\nPlease reinstall the application or contact support."
+      ));
       return;
     }
 
     const serverDir = path.dirname(serverPath);
-    console.log(`[electron] Starting Next.js server: ${serverPath}`);
 
-    // Spawn the Next.js standalone server as a child process.
-    // We pass PORT + HOSTNAME via env (the standalone server.js reads them).
-    // We also forward all relevant server-side env vars so Prisma/NextAuth
-    // work correctly (these come from the build-time .env or system env).
+    // Verify required files exist
+    const requiredFiles = ["server.js", "package.json"];
+    for (const f of requiredFiles) {
+      const fp = path.join(serverDir, f);
+      if (!fs.existsSync(fp)) {
+        reject(new Error(`Required file missing in server directory: ${f} (expected at ${fp})`));
+        return;
+      }
+    }
+
+    // Check if .next/ subdir exists (standalone needs it)
+    const nextDir = path.join(serverDir, ".next");
+    if (!fs.existsSync(nextDir)) {
+      log(`⚠ WARNING: .next directory missing at ${nextDir}`);
+    } else {
+      log(`✓ .next directory exists at ${nextDir}`);
+    }
+
+    // Check node_modules
+    const nmDir = path.join(serverDir, "node_modules");
+    if (!fs.existsSync(nmDir)) {
+      log(`⚠ WARNING: node_modules missing at ${nmDir}`);
+    } else {
+      log(`✓ node_modules exists at ${nmDir}`);
+    }
+
+    // Load .env from server dir (production .env baked by Next.js standalone build)
+    const envFilePath = path.join(serverDir, ".env");
+    const envFileVars = loadEnvFile(envFilePath);
+
+    // Merge env: process.env (CI secrets) > .env file > defaults
+    const serverEnv = {
+      ...envFileVars,        // .env from standalone build
+      ...process.env,        // CI/runner env (overrides .env)
+      PORT: String(port),
+      HOSTNAME,
+      NODE_ENV: isDev ? "development" : "production",
+      ELECTRON_RUN: "1",
+    };
+
+    log(`Starting Next.js server:`);
+    log(`  cwd: ${serverDir}`);
+    log(`  PORT: ${port}`);
+    log(`  HOSTNAME: ${HOSTNAME}`);
+    log(`  NODE_ENV: ${serverEnv.NODE_ENV}`);
+    log(`  DATABASE_URL present: ${Boolean(serverEnv.DATABASE_URL)}`);
+    log(`  GOOGLE_CLIENT_ID present: ${Boolean(serverEnv.GOOGLE_CLIENT_ID)}`);
+    log(`  AUTH_SECRET present: ${Boolean(serverEnv.AUTH_SECRET)}`);
+
     nextServerProcess = spawn("node", [serverPath], {
       cwd: serverDir,
-      env: {
-        ...process.env,
-        PORT: String(port),
-        HOSTNAME,
-        NODE_ENV: isDev ? "development" : "production",
-        ELECTRON_RUN: "1",
-      },
+      env: serverEnv,
       stdio: ["ignore", "pipe", "pipe"],
     });
 
     nextServerProcess.stdout.on("data", (data) => {
       const line = data.toString().trim();
-      if (line) console.log(`[next-server] ${line}`);
+      if (line) log(`[next-server:out] ${line}`);
     });
 
     nextServerProcess.stderr.on("data", (data) => {
       const line = data.toString().trim();
-      if (line) console.error(`[next-server] ${line}`);
+      if (line) log(`[next-server:err] ${line}`);
     });
 
     nextServerProcess.on("error", (err) => {
-      console.error("[electron] Failed to start Next.js server:", err);
+      log(`✗ Failed to spawn Next.js server: ${err.message}`);
+      log(`  err.code: ${err.code}`);
       reject(err);
     });
 
     nextServerProcess.on("exit", (code, signal) => {
-      console.log(`[electron] Next.js server exited (code=${code}, signal=${signal})`);
+      log(`Next.js server exited (code=${code}, signal=${signal})`);
       nextServerProcess = null;
     });
 
@@ -135,9 +258,15 @@ function startNextServer(port) {
 function waitForServerReady(port) {
   return new Promise((resolve, reject) => {
     const deadline = Date.now() + SERVER_STARTUP_TIMEOUT_MS;
+    let lastErr = null;
     const check = () => {
       if (Date.now() > deadline) {
-        reject(new Error(`Server did not become ready within ${SERVER_STARTUP_TIMEOUT_MS}ms`));
+        reject(new Error(
+          `Server did not become ready within ${SERVER_STARTUP_TIMEOUT_MS}ms.\n` +
+          `Last error: ${lastErr || "none"}\n` +
+          `Server process ${nextServerProcess ? "still running" : "EXITED"}.\n` +
+          `Check log file at: ${getLogPath()}`
+        ));
         return;
       }
       const req = http.get(
@@ -145,6 +274,7 @@ function waitForServerReady(port) {
         (res) => {
           if (res.statusCode >= 200 && res.statusCode < 500) {
             res.resume();
+            log(`✓ Server ready (HTTP ${res.statusCode})`);
             resolve(true);
           } else {
             res.resume();
@@ -152,7 +282,10 @@ function waitForServerReady(port) {
           }
         }
       );
-      req.on("error", () => setTimeout(check, HEALTH_CHECK_INTERVAL_MS));
+      req.on("error", (err) => {
+        lastErr = err.message;
+        setTimeout(check, HEALTH_CHECK_INTERVAL_MS);
+      });
       req.on("timeout", () => {
         req.destroy();
         setTimeout(check, HEALTH_CHECK_INTERVAL_MS);
@@ -166,17 +299,17 @@ function waitForServerReady(port) {
 
 function killNextServer() {
   if (nextServerProcess && !nextServerProcess.killed) {
-    console.log("[electron] Stopping Next.js server...");
+    log("Stopping Next.js server...");
     try {
-      // Try graceful SIGTERM first, then SIGKILL after 3s
       nextServerProcess.kill("SIGTERM");
       setTimeout(() => {
         if (nextServerProcess && !nextServerProcess.killed) {
+          log("Server didn't exit on SIGTERM, sending SIGKILL");
           nextServerProcess.kill("SIGKILL");
         }
       }, 3000);
     } catch (err) {
-      console.error("[electron] Error killing server:", err);
+      log(`Error killing server: ${err.message}`);
     }
     nextServerProcess = null;
   }
@@ -185,18 +318,20 @@ function killNextServer() {
 // ---- Window creation ----
 
 async function createWindow() {
-  // Find a free port + start the Next.js server
+  initLogging();
+
   try {
     nextServerPort = await findFreePort(PORT_START, PORT_END);
-    console.log(`[electron] Using port ${nextServerPort}`);
     await startNextServer(nextServerPort);
     await waitForServerReady(nextServerPort);
-    console.log(`[electron] Next.js server ready at http://${HOSTNAME}:${nextServerPort}`);
+    log(`✓ Next.js server ready at http://${HOSTNAME}:${nextServerPort}`);
   } catch (err) {
-    console.error("[electron] FATAL:", err.message);
+    log(`✗ FATAL: ${err.message}`);
+    const logPath = getLogPath();
     dialog.showErrorBox(
-      "Silah — Failed to start",
-      `Could not start the application server.\n\n${err.message}\n\nPlease restart the app.`
+      "صلة — Failed to start",
+      `تعذر تشغيل المكون المحلي للتطبيق.\n\n${err.message}\n\n` +
+      `تم حفظ سجل الخطأ هنا:\n${logPath}`
     );
     app.quit();
     return;
@@ -216,13 +351,13 @@ async function createWindow() {
       sandbox: true,
     },
     icon: path.join(__dirname, "..", "public", "logo.svg"),
-    title: "صلة — لوحة التحكم",
+    title: "صلة سكوب",
     backgroundColor: "#0a0e1a",
     show: false,
   });
 
-  // Load from the local Next.js server (NOT static file)
   const url = `http://${HOSTNAME}:${nextServerPort}/`;
+  log(`Loading URL: ${url}`);
   mainWindow.loadURL(url);
 
   if (isDev) {
@@ -230,13 +365,22 @@ async function createWindow() {
   }
 
   mainWindow.once("ready-to-show", () => {
+    log("BrowserWindow ready-to-show");
     mainWindow.show();
   });
 
-  // Open external links (http/https) in the default browser —
-  // important for Google OAuth flow.
+  mainWindow.webContents.on("did-fail-load", (e, code, desc, url) => {
+    log(`✗ did-fail-load: code=${code} desc=${desc} url=${url}`);
+  });
+
+  mainWindow.webContents.on("did-finish-load", () => {
+    log("✓ did-finish-load");
+  });
+
+  // Open external links (http/https) in the default browser — for OAuth.
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith("http://") || url.startsWith("https://")) {
+      log(`Opening external URL: ${url}`);
       shell.openExternal(url);
       return { action: "deny" };
     }
@@ -248,7 +392,7 @@ async function createWindow() {
   });
 }
 
-// ---- IPC Handlers (preserved from original) ----
+// ---- IPC Handlers (preserved) ----
 
 ipcMain.handle("platform:info", () => ({
   isElectron: true,
@@ -257,6 +401,7 @@ ipcMain.handle("platform:info", () => ({
   appPath: app.getAppPath(),
   userData: app.getPath("userData"),
   nextServerPort,
+  logPath: getLogPath(),
 }));
 
 ipcMain.handle("fs:writeFile", async (event, filename, content) => {
@@ -337,6 +482,14 @@ ipcMain.handle("dialog:showMessage", async (event, { title, message }) => {
   return { success: true };
 });
 
+// Open log file in default editor (for user-facing error reporting)
+ipcMain.handle("app:openLog", async () => {
+  const logPath = getLogPath();
+  log(`User requested to open log: ${logPath}`);
+  shell.openPath(logPath);
+  return { success: true, path: logPath };
+});
+
 // ---- App lifecycle ----
 
 app.whenReady().then(createWindow);
@@ -354,8 +507,22 @@ app.on("activate", () => {
   }
 });
 
+// Single instance lock — prevent 2 instances from fighting over the port.
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) {
+  log("Another instance is already running — quitting");
+  app.quit();
+} else {
+  app.on("second-instance", () => {
+    log("Second instance blocked — focusing existing window");
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+  });
+}
+
 // Security: prevent navigation to untrusted URLs.
-// Allow only: our local server (http://127.0.0.1:PORT) + file:// (dev assets).
 app.on("web-contents-created", (event, contents) => {
   contents.on("will-navigate", (event, navigationUrl) => {
     const allowedPrefix = `http://${HOSTNAME}:${nextServerPort}`;
@@ -369,8 +536,13 @@ app.on("web-contents-created", (event, contents) => {
   });
 });
 
-// Clean up the child server process when Electron exits.
-app.on("before-quit", killNextServer);
+// Clean up on exit
+app.on("before-quit", () => {
+  killNextServer();
+  if (logStream) {
+    try { logStream.end(); } catch {}
+  }
+});
 process.on("exit", killNextServer);
 process.on("SIGTERM", killNextServer);
 process.on("SIGINT", killNextServer);
