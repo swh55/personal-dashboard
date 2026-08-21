@@ -7,13 +7,17 @@
   },
   "files": [
     "electron/**/*",
-    ".next/standalone/**/*",
-    ".next/static/**/*",
     "public/**/*"
   ],
-  "asar": true,
-  "asarUnpack": [
-    ".next/standalone/**/*"
+  "extraResources": [
+    {
+      "from": ".next/standalone",
+      "to": "app-next"
+    },
+    {
+      "from": ".next/static",
+      "to": "app-next/.next/static"
+    }
   ],
   "win": {
     "target": [

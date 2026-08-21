@@ -64,13 +64,14 @@ function findFreePort(start, end) {
 function startNextServer(port) {
   return new Promise((resolve, reject) => {
     // Locate server.js — in dev it's in .next/standalone, in packaged app
-    // it's in resources/app/.next/standalone (asar is disabled for this dir).
+    // it's in resources/app-next/ (extraResources — avoids Windows path-length issues).
     const possiblePaths = isDev
       ? [
           path.join(__dirname, "..", ".next", "standalone", "server.js"),
           path.join(process.cwd(), ".next", "standalone", "server.js"),
         ]
       : [
+          path.join(process.resourcesPath, "app-next", "server.js"),
           path.join(process.resourcesPath, "app", ".next", "standalone", "server.js"),
           path.join(__dirname, "..", ".next", "standalone", "server.js"),
         ];
