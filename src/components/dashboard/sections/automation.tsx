@@ -432,7 +432,7 @@ export function AutomationSection() {
                         {config && (
                           <pre
                             dir="ltr"
-                            className="mt-2 max-h-24 overflow-auto custom-scroll rounded-md border border-border/60 bg-muted/30 p-2 text-left text-[11px] font-mono"
+                            className="mt-2 max-h-24 overflow-auto custom-scroll rounded-md border border-border/60 bg-muted/30 p-2 text-end text-[11px] font-mono"
                           >
                             {JSON.stringify(config, null, 2)}
                           </pre>

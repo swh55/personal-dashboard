@@ -143,8 +143,8 @@ export function GamificationSection() {
           <div className="flex flex-col gap-1">
             {/* Hero level card */}
             <Card className="relative overflow-hidden border-emerald-glow/30 bg-gradient-to-br from-emerald-glow/10 via-transparent to-amber-glow/10">
-              <div className="pointer-events-none absolute -left-12 -top-12 size-48 rounded-full bg-emerald-glow/10 blur-3xl" />
-              <div className="pointer-events-none absolute -right-12 -bottom-12 size-48 rounded-full bg-amber-glow/10 blur-3xl" />
+              <div className="pointer-events-none absolute -start-12 -top-12 size-48 rounded-full bg-emerald-glow/10 blur-3xl" />
+              <div className="pointer-events-none absolute -end-12 -bottom-12 size-48 rounded-full bg-amber-glow/10 blur-3xl" />
               <CardContent className="relative p-1">
                 <div className="flex flex-wrap items-center justify-between gap-1">
                   {/* Level badge */}

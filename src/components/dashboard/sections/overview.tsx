@@ -19,7 +19,7 @@ import {
   CalendarDays,
   Phone,
   Bell,
-  ArrowLeft,
+  ArrowRight,
   Sparkles,
   PhoneCall,
   Calendar,
@@ -266,7 +266,7 @@ export function OverviewSection() {
                   </CardTitle>
                   <Button variant="ghost" size="sm" onClick={() => setPanel("calendar")}>
                     الكل
-                    <ArrowLeft className="size-3.5" />
+                    <ArrowRight className="size-3.5" />
                   </Button>
                 </div>
               </CardHeader>
@@ -314,7 +314,7 @@ export function OverviewSection() {
                   </CardTitle>
                   <Button variant="ghost" size="sm" onClick={() => setPanel("smartnotifs")}>
                     الكل
-                    <ArrowLeft className="size-3.5" />
+                    <ArrowRight className="size-3.5" />
                   </Button>
                 </div>
               </CardHeader>
@@ -392,7 +392,7 @@ export function OverviewSection() {
                   </CardTitle>
                   <Button variant="ghost" size="sm" onClick={() => setPanel("callpad")}>
                     الكل
-                    <ArrowLeft className="size-3.5" />
+                    <ArrowRight className="size-3.5" />
                   </Button>
                 </div>
               </CardHeader>

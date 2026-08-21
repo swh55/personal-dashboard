@@ -26,7 +26,6 @@ export type PanelId =
   | "maps"
   | "aiinsights"
   | "budget"
-  | "integrations"
   | "scheduledmsgs"
   | "waitinglist"
   | "reminders"
@@ -59,7 +58,7 @@ function getInitialPanel(): PanelId {
       "habits", "expenses", "finances", "debts", "projects", "meetings",
       "islamic", "health", "diary", "accounts", "occasions", "activity",
       "recyclebin", "settings", "maps", "aiinsights", "budget",
-      "integrations", "scheduledmsgs", "waitinglist", "reminders",
+      "scheduledmsgs", "waitinglist", "reminders",
       "appearance", "home", "gamification", "analytics", "smartnotifs",
       "shopping", "ai", "pomodoro", "notifications", "device",
     ];
@@ -97,7 +96,7 @@ if (typeof window !== "undefined") {
       "habits", "expenses", "finances", "debts", "projects", "meetings",
       "islamic", "health", "diary", "accounts", "occasions", "activity",
       "recyclebin", "settings", "maps", "aiinsights", "budget",
-      "integrations", "scheduledmsgs", "waitinglist", "reminders",
+      "scheduledmsgs", "waitinglist", "reminders",
       "appearance", "home", "gamification", "analytics", "smartnotifs",
       "shopping", "ai", "pomodoro", "notifications", "device",
     ];

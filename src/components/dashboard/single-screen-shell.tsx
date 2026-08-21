@@ -101,7 +101,6 @@ const ALL_NAV_ITEMS: NavItem[] = [
   { id: "waitinglist", label: "الانتظار", icon: Hourglass },
   { id: "reminders", label: "التذكيرات", icon: Bell },
   { id: "scheduledmsgs", label: "الرسائل", icon: Send },
-  { id: "integrations", label: "التكاملات", icon: Plug },
   { id: "analytics", label: "التحليلات", icon: BarChart3 },
   { id: "gamification", label: "التحفيز", icon: Trophy },
   { id: "aiinsights", label: "رؤى ذكية", icon: Brain },

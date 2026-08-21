@@ -348,7 +348,7 @@ export function BudgetSection() {
                         </p>
                       </div>
                     </div>
-                    <div className="text-left">
+                    <div className="text-end">
                       <p
                         className={
                           "text-lg font-bold " +

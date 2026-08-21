@@ -26,7 +26,6 @@ import { SettingsSection } from "@/components/dashboard/sections/settings";
 import { MapsSection } from "@/components/dashboard/sections/maps";
 import { AiInsightsSection } from "@/components/dashboard/sections/ai-insights";
 import { BudgetSection } from "@/components/dashboard/sections/budget";
-import { IntegrationsSection } from "@/components/dashboard/sections/integrations";
 import { ScheduledMessagesSection } from "@/components/dashboard/sections/scheduled-messages";
 import { WaitingListSection } from "@/components/dashboard/sections/waiting-list";
 import { ContactRemindersSection } from "@/components/dashboard/sections/contact-reminders";
@@ -72,7 +71,6 @@ export default function Home() {
       case "maps": return <MapsSection />;
       case "aiinsights": return <AiInsightsSection />;
       case "budget": return <BudgetSection />;
-      case "integrations": return <IntegrationsSection />;
       case "scheduledmsgs": return <ScheduledMessagesSection />;
       case "waitinglist": return <WaitingListSection />;
       case "reminders": return <ContactRemindersSection />;

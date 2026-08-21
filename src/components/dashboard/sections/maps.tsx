@@ -630,7 +630,7 @@ export function MapsSection() {
                           key={loc.id}
                           onClick={() => setSelected(loc)}
                           className={
-                            "group flex items-start gap-1 rounded-lg border p-2 text-right transition-colors " +
+                            "group flex items-start gap-1 rounded-lg border p-2 text-start transition-colors " +
                             (isSelected
                               ? "border-emerald-glow/60 bg-emerald-glow/10"
                               : "border-transparent hover:bg-muted/40")

@@ -14,7 +14,7 @@ import {
   Hourglass,
   ListChecks,
   ShoppingCart,
-  ArrowLeft,
+  ArrowRight,
   Home,
 } from "lucide-react";
 import { useApi, toast } from "@/lib/api";
@@ -432,7 +432,7 @@ export function HomeManagementSection() {
                                 <Plus className="size-3" />
                               </Button>
                             </div>
-                            <div className="text-[10px] text-muted-foreground text-left">
+                            <div className="text-[10px] text-muted-foreground text-end">
                               <div>الحد: <span dir="ltr">{it.lowStock}</span></div>
                             </div>
                           </div>
@@ -466,7 +466,7 @@ export function HomeManagementSection() {
                 </div>
                 <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setPanel("waitinglist")}>
                   عرض الكل
-                  <ArrowLeft className="size-3.5" />
+                  <ArrowRight className="size-3.5" />
                 </Button>
               </div>
               <Card>
@@ -477,7 +477,7 @@ export function HomeManagementSection() {
                         <button
                           key={w.id}
                           onClick={() => setPanel("waitinglist")}
-                          className="flex items-center gap-1 p-2 text-right hover:bg-muted/50 transition"
+                          className="flex items-center gap-1 p-2 text-start hover:bg-muted/50 transition"
                         >
                           <div className="flex items-center gap-0.5 shrink-0">
                             {priorityStars(w.priority, w.priority >= 4 ? "text-rose-500" : "text-amber-500")}
@@ -509,7 +509,7 @@ export function HomeManagementSection() {
                       <ListChecks className="size-6 text-muted-foreground/40" />
                       <p className="text-sm font-medium">قائمة الانتظار فارغة</p>
                       <Button size="sm" variant="outline" className="mt-1" onClick={() => setPanel("waitinglist")}>
-                        <ArrowLeft className="size-4" />
+                        <ArrowRight className="size-4" />
                         فتح قائمة الانتظار
                       </Button>
                     </div>

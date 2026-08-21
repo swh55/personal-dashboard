@@ -376,7 +376,7 @@ export function ExpensesSection() {
                         </div>
                         <div className="text-sm font-medium truncate mt-0.5">{e.description || "بدون وصف"}</div>
                       </div>
-                      <div className="text-left shrink-0">
+                      <div className="text-end shrink-0">
                         <div className={`text-sm font-bold ${isUSD ? "text-amber-glow" : "text-emerald-glow"}`}>
                           {formatCurrency(e.amount, e.currency)}
                         </div>

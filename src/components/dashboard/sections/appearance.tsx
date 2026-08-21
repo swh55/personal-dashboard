@@ -155,7 +155,7 @@ export function AppearanceSection() {
               <div className="grid grid-cols-2 gap-1">
                 <button
                   onClick={() => changeTheme("dark")}
-                  className={`flex flex-col items-start gap-1 rounded-xl border p-2 text-right transition ${renderedTheme === "dark" ? "border-emerald-glow bg-emerald-glow/5 shadow-sm" : "border-border hover:bg-muted"}`}
+                  className={`flex flex-col items-start gap-1 rounded-xl border p-2 text-start transition ${renderedTheme === "dark" ? "border-emerald-glow bg-emerald-glow/5 shadow-sm" : "border-border hover:bg-muted"}`}
                   aria-pressed={renderedTheme === "dark"}
                 >
                   <div className="flex items-center justify-between w-full">
@@ -171,7 +171,7 @@ export function AppearanceSection() {
                 </button>
                 <button
                   onClick={() => changeTheme("light")}
-                  className={`flex flex-col items-start gap-1 rounded-xl border p-2 text-right transition ${renderedTheme === "light" ? "border-emerald-glow bg-emerald-glow/5 shadow-sm" : "border-border hover:bg-muted"}`}
+                  className={`flex flex-col items-start gap-1 rounded-xl border p-2 text-start transition ${renderedTheme === "light" ? "border-emerald-glow bg-emerald-glow/5 shadow-sm" : "border-border hover:bg-muted"}`}
                   aria-pressed={renderedTheme === "light"}
                 >
                   <div className="flex items-center justify-between w-full">

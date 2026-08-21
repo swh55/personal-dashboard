@@ -456,7 +456,7 @@ export function CalendarSection() {
                       key={key}
                       type="button"
                       onClick={() => setSelectedDay(day)}
-                      className={`relative aspect-square rounded-md border p-1 text-right transition-colors ${
+                      className={`relative aspect-square rounded-md border p-1 text-start transition-colors ${
                         isSel
                           ? "border-emerald-glow bg-emerald-glow/10"
                           : "border-transparent hover:bg-accent"

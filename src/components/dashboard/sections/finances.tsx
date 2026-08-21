@@ -506,7 +506,7 @@ export function FinancesSection() {
                               ) : null}
                             </div>
                             {/* balance — prominent */}
-                            <div className="text-left shrink-0">
+                            <div className="text-end shrink-0">
                               <div className={`text-sm font-bold ${a.balance >= 0 ? "text-emerald-glow" : "text-rose-500"}`}>
                                 {formatCurrency(a.balance, a.currency)}
                               </div>

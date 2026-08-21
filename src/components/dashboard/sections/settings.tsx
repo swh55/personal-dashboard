@@ -475,7 +475,7 @@ export function SettingsSection() {
                 <div className="grid grid-cols-2 gap-1">
                   <button
                     onClick={() => changeTheme("dark")}
-                    className={`flex items-center gap-1 rounded-lg border p-2 text-right transition ${renderedTheme === "dark" ? "border-emerald-glow bg-emerald-glow/5" : "border-border hover:bg-muted"}`}
+                    className={`flex items-center gap-1 rounded-lg border p-2 text-start transition ${renderedTheme === "dark" ? "border-emerald-glow bg-emerald-glow/5" : "border-border hover:bg-muted"}`}
                   >
                     <Moon className={`size-5 ${renderedTheme === "dark" ? "text-emerald-glow" : "text-muted-foreground"}`} />
                     <div className="flex-1">
@@ -486,7 +486,7 @@ export function SettingsSection() {
                   </button>
                   <button
                     onClick={() => changeTheme("light")}
-                    className={`flex items-center gap-1 rounded-lg border p-2 text-right transition ${renderedTheme === "light" ? "border-emerald-glow bg-emerald-glow/5" : "border-border hover:bg-muted"}`}
+                    className={`flex items-center gap-1 rounded-lg border p-2 text-start transition ${renderedTheme === "light" ? "border-emerald-glow bg-emerald-glow/5" : "border-border hover:bg-muted"}`}
                   >
                     <Sun className={`size-5 ${renderedTheme === "light" ? "text-emerald-glow" : "text-muted-foreground"}`} />
                     <div className="flex-1">
@@ -627,7 +627,7 @@ export function SettingsSection() {
                     value={rateInput}
                     onChange={(e) => setRateInput(e.target.value.replace(/[^\d.]/g, ""))}
                     placeholder="12500"
-                    className="text-right"
+                    className="text-start"
                   />
                   <Badge variant="secondary" className="shrink-0">ل.س</Badge>
                 </div>
@@ -662,7 +662,7 @@ export function SettingsSection() {
                     value={aiKeyInput}
                     onChange={(e) => setAiKeyInput(e.target.value)}
                     placeholder="••••••••••••••••••••••••"
-                    className="pe-10 text-right"
+                    className="pe-10 text-start"
                   />
                   <button
                     type="button"
@@ -697,7 +697,7 @@ export function SettingsSection() {
                   value={aiBaseUrlInput}
                   onChange={(e) => setAiBaseUrlInput(e.target.value)}
                   placeholder="https://api.z.ai/api/paas/v4"
-                  className="text-right"
+                  className="text-start"
                 />
                 <p className="text-[10px] text-muted-foreground">
                   اتركه فارغاً لاستخدام العنوان الافتراضي. مفيد لنقاط نهاية مخصصة.

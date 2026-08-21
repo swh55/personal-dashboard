@@ -32,7 +32,7 @@ export class SectionErrorBoundary extends React.Component<
             <p className="text-sm font-medium text-destructive">
               خطأ في تحميل القسم: {this.props.name || "غير معروف"}
             </p>
-            <pre className="mt-2 max-h-96 overflow-auto text-left text-xs text-muted-foreground">
+            <pre className="mt-2 max-h-96 overflow-auto text-end text-xs text-muted-foreground">
               {this.state.error?.message || "Unknown error"}
               {"\n\n"}
               {this.state.error?.stack}
