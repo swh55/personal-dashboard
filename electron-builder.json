@@ -1,14 +1,19 @@
 {
   "appId": "com.abdullah.dashboard",
-  "productName": "Personal Dashboard",
+  "productName": "Silah",
   "copyright": "Copyright 2025",
   "directories": {
     "output": "dist-electron"
   },
   "files": [
     "electron/**/*",
-    "out/**/*",
+    ".next/standalone/**/*",
+    ".next/static/**/*",
     "public/**/*"
+  ],
+  "asar": true,
+  "asarUnpack": [
+    ".next/standalone/**/*"
   ],
   "win": {
     "target": [
@@ -24,6 +29,6 @@
     "allowToChangeInstallationDirectory": true,
     "createDesktopShortcut": true,
     "createStartMenuShortcut": true,
-    "shortcutName": "Dashboard"
+    "shortcutName": "Silah"
   }
 }

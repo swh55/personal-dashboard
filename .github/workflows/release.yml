@@ -114,9 +114,7 @@ jobs:
         run: npm install
       - name: Generate Prisma
         run: npx prisma generate
-      - name: Build static export
-        run: npm run build:apk
-      - name: Build Electron
+      - name: Build Next.js standalone + Electron
         run: npm run electron:build
       - name: List output files
         run: dir dist-electron\
